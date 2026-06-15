@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Anton, Barlow } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
@@ -18,10 +18,22 @@ const barlow = Barlow({
   display: "swap",
 });
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export const metadata: Metadata = {
   title: "BioFido — il segugio del biologico vicino a te",
   description:
     "BioFido trova sulla mappa i produttori, i negozi e le attività biologiche vicino alla tua posizione, fino a 70 km (chilometro zero), e ti aiuta a raggiungerli.",
+  manifest: `${BASE}/manifest.webmanifest`,
+  appleWebApp: { capable: true, title: "BioFido", statusBarStyle: "default" },
+  icons: {
+    icon: `${BASE}/brand/icon-192.png`,
+    apple: `${BASE}/brand/icon-180.png`,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#5baf38",
 };
 
 export default function RootLayout({
