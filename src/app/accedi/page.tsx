@@ -1,0 +1,79 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
+
+export default function AccediPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    const { data, error: err } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    setLoading(false);
+    if (err) {
+      setError(err.message);
+      return;
+    }
+    const isAdmin =
+      data.user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    router.push(isAdmin ? "/admin" : "/dashboard");
+  }
+
+  return (
+    <div className="mx-auto max-w-md px-4 py-16">
+      <div className="text-xs font-bold uppercase tracking-wide text-lime-500">
+        Area aziende
+      </div>
+      <h1 className="title-pangea mt-2 text-4xl text-green-700">Accedi</h1>
+      <p className="mt-3 text-green-900/80">
+        Entra nella tua area per gestire azienda e prodotti.
+      </p>
+
+      <form onSubmit={handleSubmit} className="card mt-8 space-y-4 p-6">
+        <label className="block">
+          <span className="label">Email</span>
+          <input
+            type="email"
+            className="field mt-1"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="label">Password</span>
+          <input
+            type="password"
+            className="field mt-1"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </label>
+
+        {error && <p className="text-sm font-semibold text-traffic-red">{error}</p>}
+
+        <button type="submit" className="btn-lime w-full" disabled={loading}>
+          {loading ? "Accesso…" : "Accedi"}
+        </button>
+        <p className="text-center text-sm text-green-900/70">
+          Non hai un account?{" "}
+          <Link href="/registrati" className="font-bold text-green-700 hover:text-lime-500">
+            Iscrivi la tua azienda
+          </Link>
+        </p>
+      </form>
+    </div>
+  );
+}

@@ -1,0 +1,228 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { geocode, nearestPlace } from "@/lib/geo";
+import { loadBusinesses, type Business } from "@/lib/biofido-data";
+import { CATEGORIES, CATEGORY_MAP, PLAN_MAP, type CategoryId } from "@/lib/categories";
+
+// La mappa Leaflet usa `window`: va caricata solo lato browser.
+const BioFidoMap = dynamic(() => import("./BioFidoMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[420px] items-center justify-center rounded-2xl bg-leaf text-green-700">
+      Carico la mappa…
+    </div>
+  ),
+});
+
+/** distanza in km tra due coordinate (Haversine), arrotondata. */
+function distKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
+  const R = 6371;
+  const dLat = ((bLat - aLat) * Math.PI) / 180;
+  const dLon = ((bLon - aLon) * Math.PI) / 180;
+  const la1 = (aLat * Math.PI) / 180;
+  const la2 = (bLat * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(h)));
+}
+
+const MAX_RADIUS = 70; // km — limite teorico del "chilometro zero"
+
+export function MapExperience() {
+  const [center, setCenter] = useState({ lat: 44.41, lon: 8.93 }); // Genova
+  const [label, setLabel] = useState("Genova");
+  const [city, setCity] = useState("Genova");
+  const [radius, setRadius] = useState(30);
+  const [cat, setCat] = useState<"all" | CategoryId>("all");
+  const [all, setAll] = useState<Business[]>([]);
+  const [source, setSource] = useState<"supabase" | "demo">("demo");
+  const [geoMsg, setGeoMsg] = useState<string | null>(null);
+
+  // carica le attività dal database (o demo) all'avvio
+  useEffect(() => {
+    loadBusinesses().then(({ items, source }) => {
+      setAll(items);
+      setSource(source);
+    });
+  }, []);
+
+  function useMyPosition() {
+    if (!navigator.geolocation) {
+      setGeoMsg("Il tuo browser non supporta la geolocalizzazione.");
+      return;
+    }
+    setGeoMsg("Individuo la tua posizione…");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setCenter({ lat: latitude, lon: longitude });
+        const near = nearestPlace(latitude, longitude);
+        setLabel(near?.name ? `Vicino a ${near.name}` : "La tua posizione");
+        setGeoMsg(null);
+      },
+      () => setGeoMsg("Posizione non concessa. Digita la tua città qui sotto."),
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
+
+  function applyCity(name: string) {
+    setCity(name);
+    const g = geocode(name);
+    if (g) {
+      setCenter({ lat: g.lat, lon: g.lon });
+      setLabel(g.name);
+      setGeoMsg(null);
+    }
+    // se la città non è (ancora) riconosciuta non mostro errori: l'utente
+    // sta probabilmente ancora digitando.
+  }
+
+  const results = useMemo(() => {
+    return all
+      .filter((b) => cat === "all" || b.category === cat)
+      .map((b) => ({ ...b, dist: distKm(center.lat, center.lon, b.lat, b.lon) }))
+      .filter((b) => b.dist <= radius)
+      .sort(
+        (a, b) =>
+          PLAN_MAP[b.plan].priority - PLAN_MAP[a.plan].priority || a.dist - b.dist
+      );
+  }, [all, cat, center, radius]);
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      {/* CONTROLLI */}
+      <div className="card grid gap-4 p-5 md:grid-cols-[auto_1.3fr_1fr] md:items-end">
+        <div>
+          <span className="label">La tua posizione</span>
+          <div className="mt-1 flex flex-col gap-2">
+            <button type="button" className="btn-lime justify-center" onClick={useMyPosition}>
+              📍 Usa la mia posizione
+            </button>
+          </div>
+        </div>
+        <div>
+          <span className="label">…oppure scrivi la città</span>
+          <div className="mt-1">
+            <input
+              className="field"
+              value={city}
+              placeholder="Es. Genova, Roma, Milano…"
+              onChange={(e) => applyCity(e.target.value)}
+            />
+          </div>
+        </div>
+        <div>
+          <span className="label">Raggio: {radius} km</span>
+          <input
+            type="range"
+            min={1}
+            max={MAX_RADIUS}
+            step={1}
+            value={radius}
+            onChange={(e) => setRadius(Number(e.target.value))}
+            className="mt-2 w-full accent-[var(--lime-500)]"
+          />
+          <div className="flex justify-between text-[11px] text-green-900/50">
+            <span>1 km</span>
+            <span>km 0 · max {MAX_RADIUS} km</span>
+          </div>
+        </div>
+      </div>
+
+      {/* FILTRI CATEGORIA */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setCat("all")}
+          className={`rounded-full px-3 py-1 text-sm font-semibold ${
+            cat === "all" ? "bg-green-700 text-white" : "bg-leaf text-green-800"
+          }`}
+        >
+          Tutte
+        </button>
+        {CATEGORIES.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setCat(c.id)}
+            className={`rounded-full px-3 py-1 text-sm font-semibold ${
+              cat === c.id ? "text-white" : "bg-leaf text-green-800"
+            }`}
+            style={cat === c.id ? { background: c.color } : undefined}
+          >
+            {c.emoji} {c.label}
+          </button>
+        ))}
+      </div>
+
+      {geoMsg && (
+        <p className="mt-3 rounded-lg bg-leaf px-3 py-2 text-sm font-semibold text-green-700">
+          {geoMsg}
+        </p>
+      )}
+
+      {/* MAPPA + RISULTATI */}
+      <div className="mt-5 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="card overflow-hidden p-0">
+          <BioFidoMap center={center} radiusKm={radius} businesses={results} userLabel={label} />
+        </div>
+        <div>
+          <h2 className="font-display text-2xl text-green-800">
+            {results.length} attività bio entro {radius} km
+          </h2>
+          <p className="text-xs text-green-900/50">
+            Dati: {source === "supabase" ? "database BioFido (live)" : "demo offline"}
+          </p>
+          {results.length === 0 ? (
+            <p className="mt-3 text-green-900/70">
+              Nessuna attività bio in quest&apos;area. Allarga il raggio o cambia città.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {results.map((r) => {
+                const c = CATEGORY_MAP[r.category];
+                return (
+                  <li
+                    key={r.id}
+                    className="flex items-center justify-between rounded-xl border border-[#e3eed7] bg-white px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 font-semibold text-green-800">
+                        <span>{c.emoji}</span>
+                        <span className="truncate">{r.name}</span>
+                        {r.plan === "gold" && (
+                          <span className="rounded-full bg-badge-yellow px-2 text-[10px] font-bold text-[#7a1f00]">
+                            ★ GOLD
+                          </span>
+                        )}
+                        {r.plan === "silver" && (
+                          <span className="rounded-full bg-[#c9d3da] px-2 text-[10px] font-bold text-[#33414a]">
+                            SILVER
+                          </span>
+                        )}
+                      </div>
+                      <div className="truncate text-xs text-green-900/60">
+                        {c.label} · {r.city}
+                      </div>
+                    </div>
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-3 shrink-0 text-right"
+                    >
+                      <div className="font-display text-lg text-lime-500">{r.dist} km</div>
+                      <div className="text-[11px] font-semibold text-green-700">🐾 vai</div>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

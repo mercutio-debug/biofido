@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+/* ============================================================
+   ECO-VISA — design system
+   Palette estratta dal PDF Pangea Etico (pagg. 6-7-8)
+   verde scuro  #2f6f12 / #327413   (titoli, pannelli scuri)
+   verde medio  #639e26             (pattern mappa)
+   verde lime   #5baf38 / #8cc63f   (bottoni, accenti)
+   semaforo     rosso/giallo/verde
+   ============================================================ */
+
+:root {
+  --background: #ffffff;
+  --foreground: #1c2b14;
+
+  --green-900: #1f4a0c;
+  --green-800: #2f6f12;
+  --green-700: #327413;
+  --green-600: #4a8f1e;
+  --green-500: #639e26;
+  --lime-500: #5baf38;
+  --lime-400: #8cc63f;
+  --lime-300: #b6e06a;
+
+  --leaf-bg: #eef6e6;
+  --leaf-bg-2: #e2f0d4;
+
+  --traffic-red: #e2231a;
+  --traffic-yellow: #f6c416;
+  --traffic-green: #45a82f;
+
+  --cape-red: #e8332a;
+  --badge-yellow: #f7d417;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-green-900: var(--green-900);
+  --color-green-800: var(--green-800);
+  --color-green-700: var(--green-700);
+  --color-green-600: var(--green-600);
+  --color-green-500: var(--green-500);
+  --color-lime-500: var(--lime-500);
+  --color-lime-400: var(--lime-400);
+  --color-lime-300: var(--lime-300);
+  --color-leaf: var(--leaf-bg);
+  --color-leaf-2: var(--leaf-bg-2);
+  --color-traffic-red: var(--traffic-red);
+  --color-traffic-yellow: var(--traffic-yellow);
+  --color-traffic-green: var(--traffic-green);
+  --color-cape-red: var(--cape-red);
+  --color-badge-yellow: var(--badge-yellow);
+
+  --font-display: var(--font-anton);
+  --font-sans: var(--font-barlow);
+}
+
+/* niente dark-mode automatico: il brand è chiaro */
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  /* pattern mappa-mondo puntinato, molto tenue, come nel PDF */
+  background-image: radial-gradient(var(--leaf-bg-2) 1.4px, transparent 1.4px);
+  background-size: 22px 22px;
+  background-attachment: fixed;
+}
+
+.font-display {
+  font-family: var(--font-display), Impact, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* Titolo gigante in stile PDF: corsivo, verde, leggermente "stampato" */
+.title-pangea {
+  font-family: var(--font-display), Impact, sans-serif;
+  font-style: italic;
+  line-height: 0.92;
+  color: var(--green-600);
+  text-transform: uppercase;
+}
+
+/* Pannello verde scuro (come i box "calcola il preventivo ecologico") */
+.panel-dark {
+  background: linear-gradient(160deg, var(--green-600) 0%, var(--green-800) 70%, var(--green-900) 100%);
+  color: #f4fbe9;
+}
+
+.btn-lime {
+  background: linear-gradient(180deg, var(--lime-400) 0%, var(--lime-500) 100%);
+  color: #143306;
+  font-weight: 700;
+  border-radius: 9999px;
+  padding: 0.6rem 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 0 #3f7d22, 0 6px 16px rgba(91, 175, 56, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  cursor: pointer;
+}
+.btn-lime:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 #3f7d22, 0 10px 22px rgba(91, 175, 56, 0.45);
+}
+.btn-lime:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #3f7d22;
+}
+
+.btn-ghost {
+  border: 2px solid var(--green-600);
+  color: var(--green-800);
+  font-weight: 700;
+  border-radius: 9999px;
+  padding: 0.55rem 1.3rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background 0.12s ease;
+  cursor: pointer;
+}
+.btn-ghost:hover {
+  background: var(--leaf-bg);
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e3eed7;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(20, 51, 6, 0.04), 0 12px 30px rgba(20, 51, 6, 0.06);
+}
+
+.field {
+  width: 100%;
+  border: 1.5px solid #cfe0bb;
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.field:focus {
+  border-color: var(--lime-500);
+  box-shadow: 0 0 0 3px rgba(140, 198, 63, 0.25);
+}
+
+.label {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--green-800);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* tabella ingredienti stile PDF: righe alternate verdi */
+.eco-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.eco-table thead th {
+  background: var(--green-700);
+  color: #eef9df;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  font-weight: 600;
+}
+.eco-table tbody td {
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid #e8f1dc;
+}
+.eco-table tbody tr:nth-child(odd) {
+  background: var(--leaf-bg);
+}
+.eco-table tfoot td {
+  background: var(--green-800);
+  color: #fff;
+  font-weight: 700;
+  padding: 0.6rem 0.7rem;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.pulse-soft { animation: pulse-soft 1.6s ease-in-out infinite; }
