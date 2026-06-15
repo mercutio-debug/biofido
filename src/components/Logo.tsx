@@ -1,4 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
+
+const LOGO_BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 /** Logo ECO-VISA: globo + foglia, ispirato al globo Pangea del PDF. */
 export function EcoVisaLogo({ size = 38 }: { size?: number }) {
@@ -84,77 +87,21 @@ export function BioFidoBadge({ size = 56 }: { size?: number }) {
 }
 
 /**
- * Logo BioFido completo, fedele all'originale di Maurizio:
- * scudo/mantello rosso con diamante giallo + foglia e scritta "Bio",
- * combinato con l'osso bianco su cui è scritto "fido".
+ * Logo BioFido: usa direttamente il file originale di Maurizio
+ * (public/brand/biofido-solologo.png, 300×210, sfondo trasparente).
+ * Si dimensiona in base all'altezza richiesta mantenendo le proporzioni.
  */
 export function BioFidoLogo({ height = 46 }: { height?: number }) {
-  const w = (height * 260) / 160;
+  const width = Math.round((height * 300) / 210);
   return (
-    <svg
-      width={w}
+    <Image
+      src={`${LOGO_BASE}/brand/biofido-solologo.png`}
+      alt="BioFido"
+      width={width}
       height={height}
-      viewBox="0 0 260 160"
-      aria-label="BioFido"
-      role="img"
-    >
-      <defs>
-        <linearGradient id="bf-gold" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffe45c" />
-          <stop offset="1" stopColor="#f2a200" />
-        </linearGradient>
-      </defs>
-
-      {/* scudo rosso (mantello) */}
-      <rect
-        x="82" y="30" width="96" height="96" rx="18"
-        transform="rotate(45 130 78)"
-        fill="#e2231a" stroke="#b71c12" strokeWidth="3"
-      />
-      {/* diamante giallo interno */}
-      <rect
-        x="93" y="41" width="74" height="74" rx="12"
-        transform="rotate(45 130 78)"
-        fill="url(#bf-gold)"
-      />
-      {/* foglia bio */}
-      <path d="M130 46 C141 49 145 60 138 71 C127 69 123 57 130 46 Z" fill="#4a8f1e" />
-      <path d="M131 50 C131 58 131 65 134 70" stroke="#2f6f12" strokeWidth="1.5" fill="none" />
-      {/* scritta "Bio" */}
-      <text
-        x="130" y="100" textAnchor="middle"
-        fontFamily="Anton, Impact, sans-serif" fontSize="30" fill="#2f6f12"
-      >
-        Bio
-      </text>
-
-      {/* osso con "fido" */}
-      <g transform="translate(130 138) rotate(-7)">
-        {/* contorno grigio (osso leggermente più grande, fa da bordo) */}
-        <g fill="#cdd3c7" transform="scale(1.07)">
-          <rect x="-58" y="-13" width="116" height="26" rx="13" />
-          <circle cx="-58" cy="-9" r="15" />
-          <circle cx="-58" cy="9" r="15" />
-          <circle cx="58" cy="-9" r="15" />
-          <circle cx="58" cy="9" r="15" />
-        </g>
-        {/* osso bianco */}
-        <g fill="#ffffff">
-          <rect x="-58" y="-13" width="116" height="26" rx="13" />
-          <circle cx="-58" cy="-9" r="15" />
-          <circle cx="-58" cy="9" r="15" />
-          <circle cx="58" cy="-9" r="15" />
-          <circle cx="58" cy="9" r="15" />
-        </g>
-        <text
-          x="0" y="9" textAnchor="middle"
-          fontFamily="Anton, Impact, sans-serif" fontSize="28" fontStyle="italic"
-          fill="#2f6f12"
-        >
-          fido
-        </text>
-      </g>
-    </svg>
+      priority
+      style={{ height, width: "auto" }}
+    />
   );
 }
 
