@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { geocode, nearestPlace } from "@/lib/geo";
 import { loadBusinesses, type Business } from "@/lib/biofido-data";
-import { CATEGORIES, CATEGORY_MAP, PLAN_MAP, type CategoryId } from "@/lib/categories";
+import { CATEGORIES, CATEGORY_MAP, rankScore, type CategoryId } from "@/lib/categories";
 
 // La mappa Leaflet usa `window`: va caricata solo lato browser.
 const BioFidoMap = dynamic(() => import("./BioFidoMap"), {
@@ -84,10 +84,10 @@ export function MapExperience() {
       .filter((b) => cat === "all" || b.category === cat)
       .map((b) => ({ ...b, dist: distKm(center.lat, center.lon, b.lat, b.lon) }))
       .filter((b) => b.dist <= radius)
-      .sort(
-        (a, b) =>
-          PLAN_MAP[b.plan].priority - PLAN_MAP[a.plan].priority || a.dist - b.dist
-      );
+      // Ordinamento "in evidenza": la distanza domina sempre (km0 credibile),
+      // ma il piano dà una spinta misurabile (rankScore). A parità di zona un
+      // Gold sale sopra un Free; non può però scavalcare chi è molto più vicino.
+      .sort((a, b) => rankScore(b.plan, b.dist) - rankScore(a.plan, a.dist));
   }, [all, cat, center, radius]);
 
   return (
