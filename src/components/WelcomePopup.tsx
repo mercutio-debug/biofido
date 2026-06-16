@@ -50,13 +50,17 @@ export function WelcomePopup() {
             Esci dalla scatola
           </div>
           <p className="mt-2 text-lg font-semibold leading-snug text-green-900 sm:text-xl">
-            Non chiuderti tra le tue quattro mura ad aspettare che il mondo ti
-            arrivi rinchiuso in un pacchetto.{" "}
+            Non rimanere ad aspettare che il mondo ti arrivi rinchiuso dentro ad
+            un pacchetto:{" "}
             <span className="text-green-700">
-              Vieni a conoscere, visitare e incontrare chi lavora per rendere
-              anche il tuo mondo un posto migliore
+              vieni a conoscere, visitare ed incontrare chi lavora anche per
+              rendere il TUO MONDO un posto migliore
+            </span>{" "}
+            → prenota una visita all&apos;interno di un&apos;azienda agricola, di
+            una fattoria didattica o di un laboratorio artigianale,{" "}
+            <span className="text-green-700">
+              esplora nuovi universi, dietro casa tua!
             </span>
-            : prenota una visita in azienda ed esplora nuovi mondi.
           </p>
 
           <CartonShip className="mt-5 w-full" />
