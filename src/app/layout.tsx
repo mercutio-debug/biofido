@@ -3,6 +3,7 @@ import { Anton, Barlow } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { WelcomePopup } from "@/components/WelcomePopup";
 
 const anton = Anton({
   weight: "400",
@@ -45,6 +46,7 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        <WelcomePopup />
       </body>
     </html>
   );
