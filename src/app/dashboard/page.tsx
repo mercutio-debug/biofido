@@ -10,6 +10,18 @@ import { Semaforo } from "@/components/Semaforo";
 import { PianiAbbonamento } from "@/components/Abbonamenti";
 import { PLAN_MAP, type Plan } from "@/lib/categories";
 import { billingEnabled, startCheckout } from "@/lib/billing";
+import {
+  listMyExperiences,
+  createExperience,
+  deleteExperience,
+  listMyBookings,
+  setBookingStatus,
+  euroCents,
+  STATO_LABEL,
+  type Experience,
+  type Booking,
+  type BookingStatus,
+} from "@/lib/bookings";
 
 type Azienda = {
   id: string;
@@ -114,6 +126,13 @@ export default function DashboardPage() {
 
       <AbbonamentoCard />
 
+      {user && (
+        <>
+          <EsperienzeCard ownerId={user.id} />
+          <PrenotazioniCard ownerId={user.id} />
+        </>
+      )}
+
       {azienda && (
         <>
           <StabilimentiCard
@@ -191,6 +210,289 @@ function AbbonamentoCard() {
         <p className="mt-4 rounded-xl bg-leaf px-4 py-3 text-sm font-semibold text-green-800">
           {msg}
         </p>
+      )}
+    </section>
+  );
+}
+
+/* ------------------- ESPERIENZE (produttore) ------------------- */
+function EsperienzeCard({ ownerId }: { ownerId: string }) {
+  const [plan, setPlan] = useState<Plan>("free");
+  const [items, setItems] = useState<Experience[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [titolo, setTitolo] = useState("");
+  const [descrizione, setDescrizione] = useState("");
+  const [prezzo, setPrezzo] = useState("");
+  const [durata, setDurata] = useState("");
+  const [maxP, setMaxP] = useState("10");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setItems(await listMyExperiences(ownerId));
+    setLoading(false);
+  }, [ownerId]);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("biofido_plan") as Plan | null;
+    if (saved && saved in PLAN_MAP) setPlan(saved);
+    load();
+  }, [load]);
+
+  const info = PLAN_MAP[plan];
+  const atLimit = items.length >= info.maxEvents;
+
+  async function add() {
+    const cents = Math.round(parseFloat(prezzo.replace(",", ".")) * 100);
+    if (!titolo.trim() || isNaN(cents)) {
+      setMsg("Inserisci almeno titolo e prezzo.");
+      return;
+    }
+    setSaving(true);
+    setMsg(null);
+    const { error } = await createExperience(ownerId, {
+      titolo,
+      descrizione,
+      prezzoCents: cents,
+      durataMin: durata ? Number(durata) : undefined,
+      maxPersone: Math.max(1, Number(maxP) || 1),
+      attiva: true,
+    });
+    setSaving(false);
+    if (error) {
+      setMsg("Errore: " + error);
+      return;
+    }
+    setTitolo("");
+    setDescrizione("");
+    setPrezzo("");
+    setDurata("");
+    setMaxP("10");
+    load();
+  }
+
+  return (
+    <section className="card mt-6 p-6">
+      <h2 className="font-display text-2xl text-green-800">Le tue esperienze</h2>
+      <p className="mt-1 text-sm text-green-900/70">
+        Visite, degustazioni e corsi prenotabili dal portale. Commissione BioFido{" "}
+        {Math.round(info.commissionRate * 100)}% sulle prenotazioni confermate.
+      </p>
+
+      {!info.canSell ? (
+        <div className="mt-4 rounded-xl bg-leaf p-4 text-sm text-green-900/80">
+          Le esperienze prenotabili sono disponibili dai piani{" "}
+          <strong>Silver</strong> e <strong>Gold</strong>.{" "}
+          <Link href="/abbonamenti" className="font-bold text-green-700 hover:text-lime-500">
+            Scopri gli abbonamenti →
+          </Link>
+        </div>
+      ) : (
+        <>
+          {loading ? (
+            <p className="mt-4 text-sm text-green-900/60">Caricamento…</p>
+          ) : (
+            items.length > 0 && (
+              <ul className="mt-4 space-y-2">
+                {items.map((e) => (
+                  <li
+                    key={e.id}
+                    className="flex items-center justify-between rounded-xl border border-[#e3eed7] bg-white px-4 py-2"
+                  >
+                    <span className="min-w-0">
+                      <span className="font-semibold text-green-800">{e.titolo}</span>
+                      <span className="ml-2 text-sm text-green-900/60">
+                        {euroCents(e.prezzoCents)}
+                        {e.durataMin ? ` · ${e.durataMin} min` : ""} · max {e.maxPersone}
+                      </span>
+                    </span>
+                    <button
+                      className="text-xs font-bold text-traffic-red hover:underline"
+                      onClick={async () => {
+                        await deleteExperience(e.id);
+                        load();
+                      }}
+                    >
+                      Elimina
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )
+          )}
+
+          {atLimit ? (
+            <p className="mt-4 rounded-xl bg-leaf p-3 text-sm font-semibold text-green-800">
+              Hai raggiunto il limite di esperienze del piano {info.label}. Passa
+              a Gold per esperienze illimitate.
+            </p>
+          ) : (
+            <div className="mt-5 rounded-2xl border-2 border-dashed border-[#cfe3b4] bg-leaf/40 p-5">
+              <h3 className="font-display text-xl text-green-800">
+                Aggiungi un&apos;esperienza
+              </h3>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <label className="block md:col-span-2">
+                  <span className="label">Titolo *</span>
+                  <input
+                    className="field mt-1"
+                    value={titolo}
+                    onChange={(e) => setTitolo(e.target.value)}
+                    placeholder="Es. Visita guidata in cantina"
+                  />
+                </label>
+                <label className="block">
+                  <span className="label">Prezzo a persona (€) *</span>
+                  <input
+                    className="field mt-1"
+                    value={prezzo}
+                    onChange={(e) => setPrezzo(e.target.value)}
+                    placeholder="15"
+                  />
+                </label>
+                <label className="block">
+                  <span className="label">Durata (min)</span>
+                  <input
+                    className="field mt-1"
+                    value={durata}
+                    onChange={(e) => setDurata(e.target.value)}
+                    placeholder="90"
+                  />
+                </label>
+                <label className="block">
+                  <span className="label">Max persone</span>
+                  <input
+                    type="number"
+                    min={1}
+                    className="field mt-1"
+                    value={maxP}
+                    onChange={(e) => setMaxP(e.target.value)}
+                  />
+                </label>
+                <label className="block md:col-span-2">
+                  <span className="label">Descrizione</span>
+                  <textarea
+                    className="field mt-1"
+                    rows={2}
+                    value={descrizione}
+                    onChange={(e) => setDescrizione(e.target.value)}
+                  />
+                </label>
+              </div>
+              <button
+                className="btn-lime mt-4"
+                onClick={add}
+                disabled={saving || !titolo.trim()}
+              >
+                {saving ? "Salvataggio…" : "Salva esperienza"}
+              </button>
+              {msg && (
+                <span className="ml-3 text-sm font-semibold text-traffic-red">{msg}</span>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+/* ------------------- PRENOTAZIONI RICEVUTE (produttore) ------------------- */
+function StatoBadge({ stato }: { stato: BookingStatus }) {
+  const color =
+    stato === "confermata"
+      ? "bg-traffic-green text-white"
+      : stato === "rifiutata" || stato === "annullata"
+      ? "bg-[#c9d3da] text-[#33414a]"
+      : "bg-badge-yellow text-green-900";
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${color}`}>
+      {STATO_LABEL[stato]}
+    </span>
+  );
+}
+
+function PrenotazioniCard({ ownerId }: { ownerId: string }) {
+  const [items, setItems] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setItems(await listMyBookings(ownerId));
+    setLoading(false);
+  }, [ownerId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function act(id: string, stato: BookingStatus) {
+    await setBookingStatus(id, stato);
+    load();
+  }
+
+  return (
+    <section className="card mt-6 p-6">
+      <h2 className="font-display text-2xl text-green-800">Prenotazioni ricevute</h2>
+      {loading ? (
+        <p className="mt-3 text-sm text-green-900/60">Caricamento…</p>
+      ) : items.length === 0 ? (
+        <p className="mt-3 text-sm text-green-900/70">
+          Nessuna richiesta per ora. Pubblica un&apos;esperienza qui sopra per
+          riceverne.
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-3">
+          {items.map((b) => (
+            <li key={b.id} className="rounded-2xl border border-[#e3eed7] bg-white p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-semibold text-green-800">
+                    {b.titolo ?? "Esperienza"} · {b.persone} persone
+                  </div>
+                  <div className="text-xs text-green-900/60">
+                    {b.clienteNome} · {b.clienteEmail}
+                    {b.clienteTel ? ` · ${b.clienteTel}` : ""}
+                  </div>
+                  <div className="text-xs text-green-900/60">
+                    Data richiesta: {b.dataRichiesta}
+                  </div>
+                  {b.note && (
+                    <div className="mt-1 text-xs italic text-green-900/55">“{b.note}”</div>
+                  )}
+                </div>
+                <div className="text-right">
+                  <div className="font-display text-lg text-green-800">
+                    {euroCents(b.totaleCents)}
+                  </div>
+                  <div className="text-[11px] text-green-900/55">
+                    commissione {euroCents(b.commissioneCents)}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <StatoBadge stato={b.stato} />
+                {b.stato === "in_attesa" && (
+                  <>
+                    <button
+                      className="rounded-full bg-traffic-green px-3 py-1 text-xs font-bold text-white"
+                      onClick={() => act(b.id, "confermata")}
+                    >
+                      Conferma
+                    </button>
+                    <button
+                      className="rounded-full border border-traffic-red px-3 py-1 text-xs font-bold text-traffic-red"
+                      onClick={() => act(b.id, "rifiutata")}
+                    >
+                      Rifiuta
+                    </button>
+                  </>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

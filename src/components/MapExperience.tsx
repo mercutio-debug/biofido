@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { geocode, nearestPlace } from "@/lib/geo";
 import { loadBusinesses, type Business } from "@/lib/biofido-data";
 import { CATEGORIES, CATEGORY_MAP, rankScore, type CategoryId } from "@/lib/categories";
+import { experiencesByOwners } from "@/lib/bookings";
+import { PrenotaModal } from "./PrenotaModal";
 
 // La mappa Leaflet usa `window`: va caricata solo lato browser.
 const BioFidoMap = dynamic(() => import("./BioFidoMap"), {
@@ -39,10 +41,20 @@ export function MapExperience() {
   const [all, setAll] = useState<Business[]>([]);
   const [source, setSource] = useState<"supabase" | "demo">("demo");
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
+  const [prenota, setPrenota] = useState<Business | null>(null);
 
   // carica le attività dal database (o demo) all'avvio
   useEffect(() => {
-    loadBusinesses().then(({ items, source }) => {
+    loadBusinesses().then(async ({ items, source }) => {
+      // in modalità live carico le esperienze prenotabili e le lego ai produttori
+      if (source === "supabase") {
+        const byOwner = await experiencesByOwners(
+          items.map((b) => b.owner).filter((o): o is string => Boolean(o)),
+        );
+        items = items.map((b) =>
+          b.owner && byOwner[b.owner] ? { ...b, experiences: byOwner[b.owner] } : b,
+        );
+      }
       setAll(items);
       setSource(source);
     });
@@ -206,6 +218,15 @@ export function MapExperience() {
                       <div className="truncate text-xs text-green-900/60">
                         {c.label} · {r.city}
                       </div>
+                      {r.experiences && r.experiences.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setPrenota(r)}
+                          className="mt-2 rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
+                        >
+                          🗓️ Prenota un&apos;esperienza
+                        </button>
+                      )}
                     </div>
                     <a
                       href={`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}`}
@@ -223,6 +244,14 @@ export function MapExperience() {
           )}
         </div>
       </div>
+
+      {prenota && (
+        <PrenotaModal
+          business={prenota}
+          demo={source !== "supabase"}
+          onClose={() => setPrenota(null)}
+        />
+      )}
     </div>
   );
 }

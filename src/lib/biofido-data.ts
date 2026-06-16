@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { CategoryId, Plan } from "./categories";
+import type { Experience } from "./bookings";
 
 /**
  * Un'attività biologica mostrata sulla mappa di BioFido.
@@ -28,6 +29,10 @@ export type Business = {
   phone?: string;
   /** prodotti con foto e prezzi (solo piano Gold) */
   products?: Product[];
+  /** id utente proprietario della scheda (per legare le esperienze) */
+  owner?: string;
+  /** esperienze prenotabili del produttore (caricate a parte o demo) */
+  experiences?: Experience[];
 };
 
 /** Dati dimostrativi: attività bio reali-verosimili attorno alla Liguria. */
@@ -47,6 +52,21 @@ export const DEMO_BUSINESSES: Business[] = [
       { name: "Cassetta ortaggi misti", price: "€ 15,00" },
       { name: "Pomodori cuore di bue (kg)", price: "€ 4,50" },
       { name: "Insalata novella (cespo)", price: "€ 1,80" },
+    ],
+    owner: "demo-owner-1",
+    experiences: [
+      {
+        id: "demo-exp-1", owner: "demo-owner-1",
+        titolo: "Visita guidata all'orto bio",
+        descrizione: "Tour dei campi con raccolta e assaggio di stagione.",
+        prezzoCents: 1500, durataMin: 90, maxPersone: 12, attiva: true,
+      },
+      {
+        id: "demo-exp-2", owner: "demo-owner-1",
+        titolo: "Degustazione conserve della cascina",
+        descrizione: "Sott'oli, salse e confetture con pane fatto in casa.",
+        prezzoCents: 2500, durataMin: 60, maxPersone: 8, attiva: true,
+      },
     ],
   },
   {
@@ -134,6 +154,7 @@ type Row = {
   website?: string | null;
   phone?: string | null;
   products?: Product[] | null;
+  owner?: string | null;
 };
 
 function fromRow(r: Row): Business {
@@ -150,6 +171,7 @@ function fromRow(r: Row): Business {
     website: r.website ?? undefined,
     phone: r.phone ?? undefined,
     products: r.products ?? undefined,
+    owner: r.owner ?? undefined,
   };
 }
 
@@ -161,7 +183,7 @@ export async function loadBusinesses(): Promise<{ items: Business[]; source: "su
   try {
     const { data, error } = await supabase
       .from("biofido_businesses")
-      .select("id,name,category,plan,lat,lon,city,address,description,website,phone,products");
+      .select("id,name,category,plan,lat,lon,city,address,description,website,phone,products,owner");
     if (error) throw error;
     if (data && data.length > 0) {
       return { items: (data as Row[]).map(fromRow), source: "supabase" };
