@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { WelcomePopup } from "@/components/WelcomePopup";
+import { AccessibilityWidget } from "@/components/AccessibilityWidget";
 
 const anton = Anton({
   weight: "400",
@@ -47,6 +48,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <WelcomePopup />
+        <AccessibilityWidget />
       </body>
     </html>
   );

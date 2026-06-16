@@ -191,3 +191,47 @@ body {
   50% { opacity: 0.55; }
 }
 .pulse-soft { animation: pulse-soft 1.6s ease-in-out infinite; }
+
+/* ============================================================
+   Accessibilità: focus da tastiera ben visibile + alto contrasto
+   ============================================================ */
+:focus-visible {
+  outline: 3px solid var(--green-800);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Modalità alto contrasto (attivata dal widget: <html class="hc">) */
+html.hc {
+  --foreground: #0c1606;
+}
+html.hc body {
+  background: #ffffff;
+  color: #0c1606;
+}
+/* testi attenuati (text-green-900/NN) resi pieni e scuri */
+html.hc [class*="text-green-900/"] {
+  color: #14250a !important;
+}
+html.hc .text-lime-500,
+html.hc .text-green-700,
+html.hc .text-green-600 {
+  color: #1f4a0c !important;
+}
+/* bordi e campi più marcati */
+html.hc .card {
+  border-color: #2f6f12 !important;
+  border-width: 2px;
+}
+html.hc .field {
+  border-color: #2f6f12 !important;
+}
+/* link nel testo sottolineati (esclusi i bottoni) */
+html.hc a:not(.btn-lime):not(.btn-ghost):not([class*="rounded-full"]) {
+  text-decoration: underline;
+}
+/* focus ancora più evidente in alto contrasto */
+html.hc :focus-visible {
+  outline-color: #0c1606;
+  outline-width: 4px;
+}
