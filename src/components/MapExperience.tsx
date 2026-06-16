@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { geocode, nearestPlace } from "@/lib/geo";
 import { loadBusinesses, type Business } from "@/lib/biofido-data";
-import { CATEGORIES, CATEGORY_MAP, rankScore, type CategoryId } from "@/lib/categories";
+import { CATEGORIES, CATEGORY_MAP, PLAN_MAP, rankScore, type CategoryId } from "@/lib/categories";
 import { experiencesByOwners } from "@/lib/bookings";
 import { PrenotaModal } from "./PrenotaModal";
 
@@ -218,7 +218,7 @@ export function MapExperience() {
                       <div className="truncate text-xs text-green-900/60">
                         {c.label} · {r.city}
                       </div>
-                      {r.experiences && r.experiences.length > 0 && (
+                      {r.experiences && r.experiences.length > 0 && PLAN_MAP[r.plan].canSell && (
                         <button
                           type="button"
                           onClick={() => setPrenota(r)}

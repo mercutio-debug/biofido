@@ -70,6 +70,10 @@ export default function DashboardPage() {
   const [azienda, setAzienda] = useState<Azienda | null>(null);
   const [stabilimenti, setStabilimenti] = useState<Stabilimento[]>([]);
   const [prodotti, setProdotti] = useState<Prodotto[]>([]);
+  // piano effettivo (pagato/admin) e piano che l'azienda sta configurando
+  const [activePlan, setActivePlan] = useState<Plan>("free");
+  const [pianoScelto, setPianoScelto] = useState<Plan>("free");
+  const [periodo, setPeriodo] = useState<"monthly" | "annual">("annual");
 
   // ---- caricamento dati ----
   const loadAll = useCallback(async () => {
@@ -114,6 +118,22 @@ export default function DashboardPage() {
     loadAll();
   }, [authLoading, user, router, loadAll]);
 
+  // piano attivo + inizializzazione del piano scelto per la configurazione
+  useEffect(() => {
+    if (!user) return;
+    getMyPlan().then((p) => {
+      setActivePlan(p);
+      const saved = window.localStorage.getItem("biofido_piano_scelto") as Plan | null;
+      setPianoScelto(p !== "free" ? p : saved && saved in PLAN_MAP ? saved : "silver");
+    });
+  }, [user]);
+
+  function scegliPiano(p: Plan, per: "monthly" | "annual") {
+    setPianoScelto(p);
+    setPeriodo(per);
+    window.localStorage.setItem("biofido_piano_scelto", p);
+  }
+
   if (authLoading || loading) {
     return <div className="mx-auto max-w-4xl px-4 py-16 text-green-900/70">Caricamento…</div>;
   }
@@ -140,28 +160,28 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {user && <GuidaCard ownerId={user.id} />}
+      <PianoSelector scelto={pianoScelto} attivo={activePlan} onScegli={scegliPiano} />
+
+      {user && <GuidaCard ownerId={user.id} plan={pianoScelto} />}
 
       <div id="notifiche">
         <NotificheToggle />
       </div>
+
+      {user && (
+        <>
+          <SchedaMappaCard ownerId={user.id} plan={pianoScelto} activePlan={activePlan} />
+          <PagamentiCard ownerId={user.id} />
+          <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
+          <PrenotazioniCard ownerId={user.id} />
+        </>
+      )}
 
       <AnagraficaCard
         azienda={azienda}
         initialNome={(user?.user_metadata as { nome?: string })?.nome}
         onSaved={loadAll}
       />
-
-      <AbbonamentoCard />
-
-      {user && (
-        <>
-          <SchedaMappaCard ownerId={user.id} />
-          <PagamentiCard ownerId={user.id} />
-          <EsperienzeCard ownerId={user.id} />
-          <PrenotazioniCard ownerId={user.id} />
-        </>
-      )}
 
       {azienda && (
         <>
@@ -178,74 +198,114 @@ export default function DashboardPage() {
           />
         </>
       )}
+
+      <PagamentoFinale scelto={pianoScelto} attivo={activePlan} periodo={periodo} />
     </div>
   );
 }
 
-/* ------------------- ABBONAMENTO ------------------- */
-function AbbonamentoCard() {
-  const [current, setCurrent] = useState<Plan>("free");
-  const [selected, setSelected] = useState<Plan | undefined>(undefined);
+/* ------------------- SCELTA PIANO (senza pagamento) ------------------- */
+function PianoSelector({
+  scelto,
+  attivo,
+  onScegli,
+}: {
+  scelto: Plan;
+  attivo: Plan;
+  onScegli: (p: Plan, per: "monthly" | "annual") => void;
+}) {
+  return (
+    <section className="card mt-6 p-6">
+      <div className="text-xs font-bold uppercase tracking-wide text-lime-500">
+        1 · Scegli il piano
+      </div>
+      <h2 className="font-display text-2xl text-green-800">Con cosa vuoi partire</h2>
+      <p className="mt-1 text-sm text-green-900/70">
+        Seleziona un piano per sbloccare i campi qui sotto.{" "}
+        <strong>Paghi solo alla fine</strong>, dopo aver compilato tutto.
+      </p>
+      <div className="mt-4">
+        <PianiAbbonamento currentPlan={attivo} selectedPlan={scelto} onSelect={onScegli} />
+      </div>
+    </section>
+  );
+}
+
+/* ------------------- PAGAMENTO FINALE ------------------- */
+function PagamentoFinale({
+  scelto,
+  attivo,
+  periodo,
+}: {
+  scelto: Plan;
+  attivo: Plan;
+  periodo: "monthly" | "annual";
+}) {
+  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // Il piano corrente è la fonte di verità lato server (Stripe o admin).
-  useEffect(() => {
-    getMyPlan().then(setCurrent);
-  }, []);
+  const giaAttivo = attivo === scelto && attivo !== "free";
 
-  async function choose(plan: Plan, period: "monthly" | "annual") {
-    setSelected(plan);
-
-    // Con Stripe attivo, i piani a pagamento aprono il Checkout; al ritorno il
-    // webhook avrà aggiornato il piano. Senza Stripe, salviamo la scelta in
-    // locale (l'app resta navigabile in attesa dell'attivazione pagamenti).
-    if (billingEnabled && plan !== "free") {
-      setMsg("Ti porto al pagamento sicuro…");
-      try {
-        await startCheckout(plan, period);
-      } catch (e) {
-        setMsg((e as Error).message);
-      }
-      return;
+  async function paga() {
+    setBusy(true);
+    setMsg(null);
+    try {
+      await startCheckout(scelto, periodo);
+    } catch (e) {
+      setBusy(false);
+      setMsg((e as Error).message);
     }
+  }
 
-    window.localStorage.setItem("biofido_plan", plan);
-    setCurrent(plan);
-    setMsg(
-      plan === "free"
-        ? "Sei sul piano Free."
-        : `Hai scelto il piano ${PLAN_MAP[plan].label} (${
-            period === "annual" ? "annuale" : "mensile"
-          }). Attiveremo il pagamento a breve.`
+  if (scelto === "free") {
+    return (
+      <section className="card mt-6 p-6 text-center">
+        <h2 className="font-display text-2xl text-green-800">Tutto pronto, gratis</h2>
+        <p className="mt-1 text-sm text-green-900/70">
+          Con il piano Free la tua scheda è già pubblica sulla mappa. Niente da pagare.
+        </p>
+      </section>
     );
   }
 
-  return (
-    <section className="card mt-6 p-6">
-      <h2 className="font-display text-2xl text-green-800">Il tuo abbonamento</h2>
-      <p className="mt-1 text-sm text-green-900/70">
-        Mostra il tuo valore vero, non il prezzo più basso. Cambia piano quando
-        vuoi: i costi sono sempre qui sotto.
-      </p>
-      <div className="mt-6">
-        <PianiAbbonamento
-          currentPlan={current}
-          selectedPlan={selected}
-          onSelect={choose}
-        />
-      </div>
-      {msg && (
-        <p className="mt-4 rounded-xl bg-leaf px-4 py-3 text-sm font-semibold text-green-800">
-          {msg}
+  if (giaAttivo) {
+    return (
+      <section className="card mt-6 p-6 text-center">
+        <h2 className="font-display text-2xl text-green-800">
+          Piano {PLAN_MAP[scelto].label} attivo ✅
+        </h2>
+        <p className="mt-1 text-sm text-green-900/70">
+          Il tuo abbonamento è attivo: tutte le funzioni del piano sono disponibili.
         </p>
+      </section>
+    );
+  }
+
+  const prezzo =
+    periodo === "annual"
+      ? `${PLAN_MAP[scelto].annualPrice} €/anno`
+      : `${PLAN_MAP[scelto].monthlyPrice} €/mese`;
+
+  return (
+    <section className="panel-dark mt-6 rounded-2xl p-6 text-center">
+      <h2 className="font-display text-2xl">Hai compilato la tua scheda?</h2>
+      <p className="mt-1 text-[#eaf7d8]">
+        Attiva il piano {PLAN_MAP[scelto].label} per pubblicare tutto e ricevere prenotazioni.
+      </p>
+      {billingEnabled ? (
+        <button className="btn-lime mt-4" onClick={paga} disabled={busy}>
+          {busy ? "Apro il pagamento…" : `Vai al pagamento — ${prezzo}`}
+        </button>
+      ) : (
+        <p className="mt-3 text-sm text-[#eaf7d8]">Pagamenti non ancora attivi.</p>
       )}
+      {msg && <p className="mt-3 text-sm font-semibold text-badge-yellow">{msg}</p>}
     </section>
   );
 }
 
 /* ------------------- GUIDA / SCHEDA CLIENTE ------------------- */
-function GuidaCard({ ownerId }: { ownerId: string }) {
-  const [plan, setPlan] = useState<Plan>("free");
+function GuidaCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
   const [done, setDone] = useState<Record<PassoKey, boolean>>({
     scheda: false,
     notifiche: false,
@@ -255,7 +315,6 @@ function GuidaCard({ ownerId }: { ownerId: string }) {
   });
 
   useEffect(() => {
-    getMyPlan().then(setPlan);
     (async () => {
       const [biz, exps, acc, push] = await Promise.all([
         loadMyBusiness(ownerId),
@@ -429,8 +488,15 @@ function GuidaCard({ ownerId }: { ownerId: string }) {
 }
 
 /* ------------------- SCHEDA SULLA MAPPA (produttore) ------------------- */
-function SchedaMappaCard({ ownerId }: { ownerId: string }) {
-  const [plan, setPlan] = useState<Plan>("free");
+function SchedaMappaCard({
+  ownerId,
+  plan,
+  activePlan,
+}: {
+  ownerId: string;
+  plan: Plan;
+  activePlan: Plan;
+}) {
   const [existing, setExisting] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
@@ -464,7 +530,6 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
   }, [ownerId]);
 
   useEffect(() => {
-    getMyPlan().then(setPlan);
     load();
   }, [load]);
 
@@ -484,7 +549,7 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
       {
         name,
         category,
-        plan,
+        plan: activePlan,
         city,
         lat: coord.lat,
         lon: coord.lon,
@@ -492,9 +557,7 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
         description,
         website,
         phone,
-        products: PLAN_MAP[plan].showProducts
-          ? products.filter((p) => p.name.trim())
-          : undefined,
+        products: products.filter((p) => p.name.trim()),
       },
       existing?.id,
     );
@@ -721,8 +784,7 @@ function PagamentiCard({ ownerId }: { ownerId: string }) {
 }
 
 /* ------------------- ESPERIENZE (produttore) ------------------- */
-function EsperienzeCard({ ownerId }: { ownerId: string }) {
-  const [plan, setPlan] = useState<Plan>("free");
+function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
   const [items, setItems] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
   const [titolo, setTitolo] = useState("");
@@ -740,7 +802,6 @@ function EsperienzeCard({ ownerId }: { ownerId: string }) {
   }, [ownerId]);
 
   useEffect(() => {
-    getMyPlan().then(setPlan);
     load();
   }, [load]);
 
