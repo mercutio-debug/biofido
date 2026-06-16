@@ -44,8 +44,12 @@ repo i due segreti `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
 ## Database (per passare da demo a live)
 
-Le attività vengono lette dalla tabella `biofido_businesses`. Per crearla,
-incolla questo SQL nell'editor SQL di Supabase:
+Lo schema completo è in **`supabase/migrations/`** (attività, abbonamenti,
+prenotazioni, messaggi, push): esegui quei file nell'SQL Editor di Supabase, in
+ordine. Vedi anche `STRIPE.md` e `NOTIFICHE.md` per le integrazioni.
+
+Per riferimento, la tabella base delle attività
+(`supabase/migrations/20260615_biofido_businesses.sql`):
 
 ```sql
 create table if not exists public.biofido_businesses (
