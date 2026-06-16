@@ -25,7 +25,7 @@ import {
   type PassoKey,
 } from "@/lib/funzioni";
 import { billingEnabled, startCheckout } from "@/lib/billing";
-import { startOnboarding } from "@/lib/connect";
+import { startOnboarding, refreshConnectStatus } from "@/lib/connect";
 import {
   listMyExperiences,
   createExperience,
@@ -41,6 +41,7 @@ import {
 } from "@/lib/bookings";
 import { ChatPrenotazione } from "@/components/ChatPrenotazione";
 import { NotificheToggle } from "@/components/NotificheToggle";
+import { pushConfigured } from "@/lib/push";
 
 type Azienda = {
   id: string;
@@ -277,8 +278,11 @@ function GuidaCard({ ownerId }: { ownerId: string }) {
   const next = nextPlan(plan);
   const bloccate = FUNZIONI.filter((f) => !planAllows(plan, f.minPlan));
 
+  // nascondi il passo notifiche finché il push non è configurato (chiave VAPID)
+  const passi = PASSI.filter((p) => p.key !== "notifiche" || pushConfigured);
+
   // avanzamento: solo sui passi disponibili nel piano
-  const disponibili = PASSI.filter((p) => planAllows(plan, p.minPlan));
+  const disponibili = passi.filter((p) => planAllows(plan, p.minPlan));
   const fatti = disponibili.filter((p) => done[p.key]).length;
   const totale = disponibili.length;
   const perc = totale ? Math.round((fatti / totale) * 100) : 0;
@@ -321,7 +325,7 @@ function GuidaCard({ ownerId }: { ownerId: string }) {
 
       {/* passi operativi */}
       <ol className="mt-4 space-y-2">
-        {PASSI.map((p, i) => {
+        {passi.map((p, i) => {
           const ok = planAllows(plan, p.minPlan);
           const fatto = ok && done[p.key];
           return (
@@ -616,12 +620,16 @@ function PagamentiCard({ ownerId }: { ownerId: string }) {
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    // valore rapido dal DB, poi conferma autorevole da Stripe
     supabase
       .from("stripe_accounts")
       .select("charges_enabled")
       .eq("user_id", ownerId)
       .maybeSingle()
       .then(({ data }) => setReady(Boolean((data as { charges_enabled?: boolean })?.charges_enabled)));
+    refreshConnectStatus().then((live) => {
+      if (live !== null) setReady(live);
+    });
   }, [ownerId]);
 
   if (!billingEnabled) return null;

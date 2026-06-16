@@ -41,3 +41,32 @@ export function startOnboarding(): Promise<void> {
 export function payBooking(prenotazioneId: string): Promise<void> {
   return callAndRedirect("booking-pay", { prenotazioneId });
 }
+
+/**
+ * Rilegge da Stripe lo stato dell'account Connect del produttore e aggiorna il
+ * database. Ritorna true se può ricevere pagamenti. Non lancia: in caso di
+ * errore ritorna null (il chiamante usa il valore già in DB).
+ */
+export async function refreshConnectStatus(): Promise<boolean | null> {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return null;
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/connect-status`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      },
+    );
+    if (!res.ok) return null;
+    const { connected } = await res.json();
+    return Boolean(connected);
+  } catch {
+    return null;
+  }
+}
