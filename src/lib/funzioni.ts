@@ -18,8 +18,17 @@ export function nextPlan(plan: Plan): Plan | null {
   return null;
 }
 
-/** Passi operativi: cosa fare, in ordine. `anchor` = sezione a cui scorrere. */
+/** Passi operativi: cosa fare, in ordine. `anchor` = sezione a cui scorrere.
+ *  `key` identifica il passo per spuntarlo come completato. */
+export type PassoKey =
+  | "scheda"
+  | "notifiche"
+  | "esperienze"
+  | "pagamenti"
+  | "prodotti";
+
 export type Passo = {
+  key: PassoKey;
   titolo: string;
   descr: string;
   anchor: string;
@@ -28,30 +37,35 @@ export type Passo = {
 
 export const PASSI: Passo[] = [
   {
+    key: "scheda",
     titolo: "Completa la scheda della tua attività",
     descr: "Nome, categoria, città, contatti e descrizione: è ciò che appare sulla mappa.",
     anchor: "scheda",
     minPlan: "free",
   },
   {
+    key: "notifiche",
     titolo: "Attiva le notifiche",
     descr: "Ricevi un avviso quando arriva una prenotazione o un messaggio.",
     anchor: "notifiche",
     minPlan: "free",
   },
   {
+    key: "esperienze",
     titolo: "Pubblica un'esperienza prenotabile",
     descr: "Visite, degustazioni o corsi che i clienti possono prenotare dal portale.",
     anchor: "esperienze",
     minPlan: "silver",
   },
   {
+    key: "pagamenti",
     titolo: "Collega Stripe per incassare",
     descr: "Ricevi online i pagamenti delle prenotazioni confermate.",
     anchor: "pagamenti",
     minPlan: "silver",
   },
   {
+    key: "prodotti",
     titolo: "Aggiungi i tuoi prodotti",
     descr: "Mostra prodotti con foto e prezzi direttamente sulla tua scheda mappa.",
     anchor: "scheda",

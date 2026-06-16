@@ -22,6 +22,7 @@ import {
   FUNZIONI,
   planAllows,
   nextPlan,
+  type PassoKey,
 } from "@/lib/funzioni";
 import { billingEnabled, startCheckout } from "@/lib/billing";
 import { startOnboarding } from "@/lib/connect";
@@ -136,7 +137,7 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {user && <GuidaCard />}
+      {user && <GuidaCard ownerId={user.id} />}
 
       <div id="notifiche">
         <NotificheToggle />
@@ -240,14 +241,48 @@ function AbbonamentoCard() {
 }
 
 /* ------------------- GUIDA / SCHEDA CLIENTE ------------------- */
-function GuidaCard() {
+function GuidaCard({ ownerId }: { ownerId: string }) {
   const [plan, setPlan] = useState<Plan>("free");
+  const [done, setDone] = useState<Record<PassoKey, boolean>>({
+    scheda: false,
+    notifiche: false,
+    esperienze: false,
+    pagamenti: false,
+    prodotti: false,
+  });
+
   useEffect(() => {
     getMyPlan().then(setPlan);
-  }, []);
+    (async () => {
+      const [biz, exps, acc, push] = await Promise.all([
+        loadMyBusiness(ownerId),
+        listMyExperiences(ownerId),
+        supabase
+          .from("stripe_accounts")
+          .select("charges_enabled")
+          .eq("user_id", ownerId)
+          .maybeSingle(),
+        supabase.from("push_subscriptions").select("id").eq("user_id", ownerId).limit(1),
+      ]);
+      setDone({
+        scheda: !!biz,
+        notifiche: (push.data?.length ?? 0) > 0,
+        esperienze: exps.length > 0,
+        pagamenti: !!(acc.data as { charges_enabled?: boolean } | null)?.charges_enabled,
+        prodotti: !!(biz?.products && biz.products.length > 0),
+      });
+    })();
+  }, [ownerId]);
 
   const next = nextPlan(plan);
   const bloccate = FUNZIONI.filter((f) => !planAllows(plan, f.minPlan));
+
+  // avanzamento: solo sui passi disponibili nel piano
+  const disponibili = PASSI.filter((p) => planAllows(plan, p.minPlan));
+  const fatti = disponibili.filter((p) => done[p.key]).length;
+  const totale = disponibili.length;
+  const perc = totale ? Math.round((fatti / totale) * 100) : 0;
+  const completo = fatti === totale && totale > 0;
 
   function vai(anchor: string) {
     document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -268,26 +303,55 @@ function GuidaCard() {
         passando al piano successivo.
       </p>
 
+      {/* indicatore di completamento */}
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-sm font-semibold text-green-800">
+          <span>
+            {completo ? "Scheda completa! 🎉" : `${fatti} di ${totale} passi completati`}
+          </span>
+          <span className="text-green-900/60">{perc}%</span>
+        </div>
+        <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-leaf">
+          <div
+            className="h-full rounded-full bg-lime-500 transition-all"
+            style={{ width: `${perc}%` }}
+          />
+        </div>
+      </div>
+
       {/* passi operativi */}
       <ol className="mt-4 space-y-2">
         {PASSI.map((p, i) => {
           const ok = planAllows(plan, p.minPlan);
+          const fatto = ok && done[p.key];
           return (
             <li
               key={i}
               className={`flex items-start gap-3 rounded-xl border p-3 ${
-                ok ? "border-[#e3eed7] bg-white" : "border-dashed border-[#dfe7d2] bg-leaf/30"
+                fatto
+                  ? "border-[#cfe3b4] bg-leaf/50"
+                  : ok
+                  ? "border-[#e3eed7] bg-white"
+                  : "border-dashed border-[#dfe7d2] bg-leaf/30"
               }`}
             >
               <span
                 className={`mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-full text-xs font-bold ${
-                  ok ? "bg-green-700 text-white" : "bg-[#cfe0bb] text-green-900/50"
+                  fatto
+                    ? "bg-traffic-green text-white"
+                    : ok
+                    ? "bg-green-700 text-white"
+                    : "bg-[#cfe0bb] text-green-900/50"
                 }`}
               >
-                {ok ? i + 1 : "🔒"}
+                {fatto ? "✓" : ok ? i + 1 : "🔒"}
               </span>
               <div className="min-w-0 flex-1">
-                <div className={`font-semibold ${ok ? "text-green-800" : "text-green-900/55"}`}>
+                <div
+                  className={`font-semibold ${
+                    fatto ? "text-green-700" : ok ? "text-green-800" : "text-green-900/55"
+                  }`}
+                >
                   {p.titolo}
                 </div>
                 <div className="text-xs text-green-900/60">{p.descr}</div>
@@ -296,7 +360,7 @@ function GuidaCard() {
                     onClick={() => vai(p.anchor)}
                     className="mt-1 text-xs font-bold text-green-700 hover:text-lime-500"
                   >
-                    → Vai
+                    {fatto ? "Rivedi" : "→ Vai"}
                   </button>
                 ) : (
                   <span className="mt-1 inline-block text-xs font-semibold text-green-900/55">
