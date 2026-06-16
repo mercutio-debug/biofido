@@ -8,7 +8,14 @@ import { useAuth } from "@/lib/useAuth";
 import { computeFootprint } from "@/lib/footprint";
 import { Semaforo } from "@/components/Semaforo";
 import { PianiAbbonamento } from "@/components/Abbonamenti";
-import { PLAN_MAP, type Plan } from "@/lib/categories";
+import { PLAN_MAP, CATEGORIES, type Plan, type CategoryId } from "@/lib/categories";
+import {
+  loadMyBusiness,
+  saveMyBusiness,
+  type Business,
+  type Product,
+} from "@/lib/biofido-data";
+import { geocode } from "@/lib/geo";
 import { billingEnabled, startCheckout } from "@/lib/billing";
 import {
   listMyExperiences,
@@ -133,6 +140,7 @@ export default function DashboardPage() {
 
       {user && (
         <>
+          <SchedaMappaCard ownerId={user.id} />
           <EsperienzeCard ownerId={user.id} />
           <PrenotazioniCard ownerId={user.id} />
         </>
@@ -215,6 +223,194 @@ function AbbonamentoCard() {
         <p className="mt-4 rounded-xl bg-leaf px-4 py-3 text-sm font-semibold text-green-800">
           {msg}
         </p>
+      )}
+    </section>
+  );
+}
+
+/* ------------------- SCHEDA SULLA MAPPA (produttore) ------------------- */
+function SchedaMappaCard({ ownerId }: { ownerId: string }) {
+  const [plan, setPlan] = useState<Plan>("free");
+  const [existing, setExisting] = useState<Business | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState<CategoryId>("agricola");
+  const [city, setCity] = useState("");
+  const [address, setAddress] = useState("");
+  const [description, setDescription] = useState("");
+  const [website, setWebsite] = useState("");
+  const [phone, setPhone] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const b = await loadMyBusiness(ownerId);
+    setExisting(b);
+    if (b) {
+      setName(b.name);
+      setCategory(b.category);
+      setCity(b.city);
+      setAddress(b.address ?? "");
+      setDescription(b.description ?? "");
+      setWebsite(b.website ?? "");
+      setPhone(b.phone ?? "");
+      setProducts(b.products ?? []);
+    }
+    setLoading(false);
+  }, [ownerId]);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("biofido_plan") as Plan | null;
+    if (saved && saved in PLAN_MAP) setPlan(saved);
+    load();
+  }, [load]);
+
+  async function save() {
+    if (!name.trim() || !city.trim()) {
+      setMsg("Inserisci almeno nome e città.");
+      return;
+    }
+    const geo = geocode(city);
+    if (!geo) {
+      setMsg(`Città "${city}" non riconosciuta: prova con il capoluogo più vicino.`);
+      return;
+    }
+    setSaving(true);
+    setMsg(null);
+    const { error } = await saveMyBusiness(
+      ownerId,
+      {
+        name,
+        category,
+        plan,
+        city: geo.name,
+        lat: geo.lat,
+        lon: geo.lon,
+        address,
+        description,
+        website,
+        phone,
+        products: PLAN_MAP[plan].showProducts
+          ? products.filter((p) => p.name.trim())
+          : undefined,
+      },
+      existing?.id,
+    );
+    setSaving(false);
+    if (error) {
+      setMsg("Errore: " + error);
+      return;
+    }
+    setMsg("Scheda salvata ✓ — la tua attività è sulla mappa.");
+    load();
+  }
+
+  return (
+    <section className="card mt-6 p-6">
+      <h2 className="font-display text-2xl text-green-800">
+        La tua scheda sulla mappa
+      </h2>
+      <p className="mt-1 text-sm text-green-900/70">
+        Questi dati appaiono sul segnaposto BioFido. La posizione si ricava dalla
+        città. Il piano <strong>{PLAN_MAP[plan].label}</strong> determina la
+        visibilità e cosa puoi mostrare.
+      </p>
+
+      {loading ? (
+        <p className="mt-4 text-sm text-green-900/60">Caricamento…</p>
+      ) : (
+        <>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <label className="block md:col-span-2">
+              <span className="label">Nome attività *</span>
+              <input className="field mt-1" value={name} onChange={(e) => setName(e.target.value)} placeholder="Es. Cascina Verde — Ortaggi Bio" />
+            </label>
+            <label className="block">
+              <span className="label">Categoria *</span>
+              <select className="field mt-1" value={category} onChange={(e) => setCategory(e.target.value as CategoryId)}>
+                {CATEGORIES.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.emoji} {c.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="label">Città *</span>
+              <input className="field mt-1" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Es. Genova" />
+            </label>
+            <label className="block">
+              <span className="label">Indirizzo</span>
+              <input className="field mt-1" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Via dei Campi 12" />
+            </label>
+            <label className="block">
+              <span className="label">Telefono</span>
+              <input className="field mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="label">Sito web</span>
+              <input className="field mt-1" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="www.esempio.it" />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="label">Descrizione</span>
+              <textarea className="field mt-1" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Racconta la tua attività…" />
+            </label>
+          </div>
+
+          {PLAN_MAP[plan].showProducts ? (
+            <div className="mt-5 rounded-2xl border-2 border-dashed border-[#cfe3b4] bg-leaf/40 p-5">
+              <h3 className="font-display text-xl text-green-800">
+                I tuoi prodotti <span className="text-sm font-normal text-green-900/60">(mostrati sulla mappa, piano Gold)</span>
+              </h3>
+              <div className="mt-3 space-y-2">
+                {products.map((p, i) => (
+                  <div key={i} className="grid gap-2 md:grid-cols-[1fr_140px_auto] md:items-center">
+                    <input
+                      className="field"
+                      value={p.name}
+                      onChange={(e) =>
+                        setProducts((prev) => prev.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)))
+                      }
+                      placeholder="Nome prodotto (es. Cassetta ortaggi misti)"
+                    />
+                    <input
+                      className="field"
+                      value={p.price ?? ""}
+                      onChange={(e) =>
+                        setProducts((prev) => prev.map((x, idx) => (idx === i ? { ...x, price: e.target.value } : x)))
+                      }
+                      placeholder="Prezzo (€ 15,00)"
+                    />
+                    <button
+                      className="text-xs font-bold text-traffic-red hover:underline"
+                      onClick={() => setProducts((prev) => prev.filter((_, idx) => idx !== i))}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                className="btn-ghost mt-2 text-sm"
+                onClick={() => setProducts((prev) => [...prev, { name: "", price: "" }])}
+              >
+                + Aggiungi prodotto
+              </button>
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-green-900/55">
+              I prodotti con foto e prezzi sulla mappa sono una funzione del piano Gold.
+            </p>
+          )}
+
+          <div className="mt-4 flex items-center gap-3">
+            <button className="btn-lime" onClick={save} disabled={saving || !name.trim()}>
+              {saving ? "Salvataggio…" : existing ? "Aggiorna scheda" : "Pubblica sulla mappa"}
+            </button>
+            {msg && <span className="text-sm font-semibold text-green-700">{msg}</span>}
+          </div>
+        </>
       )}
     </section>
   );

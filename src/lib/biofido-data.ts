@@ -193,3 +193,58 @@ export async function loadBusinesses(): Promise<{ items: Business[]; source: "su
   }
   return { items: DEMO_BUSINESSES, source: "demo" };
 }
+
+/* ---- gestione della propria scheda (produttore) ---- */
+
+/** Carica la scheda mappa del produttore loggato (se esiste). */
+export async function loadMyBusiness(owner: string): Promise<Business | null> {
+  const { data } = await supabase
+    .from("biofido_businesses")
+    .select(
+      "id,name,category,plan,lat,lon,city,address,description,website,phone,products,owner",
+    )
+    .eq("owner", owner)
+    .limit(1)
+    .maybeSingle();
+  return data ? fromRow(data as Row) : null;
+}
+
+export type SaveBusinessInput = {
+  name: string;
+  category: CategoryId;
+  plan: Plan;
+  city: string;
+  lat: number;
+  lon: number;
+  address?: string;
+  description?: string;
+  website?: string;
+  phone?: string;
+  products?: Product[];
+};
+
+/** Crea o aggiorna la scheda mappa del produttore. */
+export async function saveMyBusiness(
+  owner: string,
+  input: SaveBusinessInput,
+  id?: string,
+): Promise<{ error?: string }> {
+  const payload = {
+    owner,
+    name: input.name,
+    category: input.category,
+    plan: input.plan,
+    lat: input.lat,
+    lon: input.lon,
+    city: input.city,
+    address: input.address || null,
+    description: input.description || null,
+    website: input.website || null,
+    phone: input.phone || null,
+    products: input.products && input.products.length ? input.products : null,
+  };
+  const { error } = id
+    ? await supabase.from("biofido_businesses").update(payload).eq("id", id)
+    : await supabase.from("biofido_businesses").insert(payload);
+  return { error: error?.message };
+}
