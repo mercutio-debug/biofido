@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
  * ad alto contrasto. Le preferenze sono salvate e riapplicate ad ogni visita.
  * Ingrandire il testo agisce sulla dimensione base (rem) di tutta la pagina.
  */
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const SIZES = ["100%", "112%", "125%", "137%", "150%"];
 
 function applica(livello: number, contrasto: boolean) {
@@ -118,12 +119,18 @@ export function AccessibilityWidget() {
 
       <button
         onClick={() => setOpen((o) => !o)}
-        aria-label="Opzioni di accessibilità"
+        aria-label="Opzioni di accessibilità per ipovedenti"
         aria-expanded={open}
-        className="btn-lime h-12 w-12 justify-center p-0 text-xl shadow-lg"
-        title="Accessibilità"
+        className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-green-700 bg-white p-2 shadow-lg"
+        title="Accessibilità per ipovedenti"
       >
-        ♿
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${BASE}/brand/accessibilita.png`}
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full object-contain"
+        />
       </button>
     </div>
   );

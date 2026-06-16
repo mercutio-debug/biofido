@@ -73,13 +73,13 @@ export function ManifestoQualita() {
           </div>
           <p className="mt-3 text-2xl font-semibold leading-snug text-green-900 md:text-[1.7rem]">
             Lavori da sempre per fornire qualità e prodotti di altissimo livello,
-            il mercato di oggi che lavora solamente con logiche legate al prezzo è
-            una montagna invalicabile:{" "}
+            eppure, un mercato che si basa quasi unicamente su dinamiche legate al
+            prezzo è una montagna invalicabile:{" "}
             <span className="text-green-700">
               dettiamo noi le regole al mercato
             </span>
             , mostriamo il nostro valore vero, quello su cui abbiamo investito
-            tutta la vita, <span className="text-green-700">i nostri prodotti</span>.
+            tutta la vita: <span className="text-green-700">i nostri prodotti</span>.
             Qui non vince chi taglia i costi a discapito della qualità, della
             sicurezza e dell&apos;ambiente, ma{" "}
             <span className="text-green-700">
@@ -206,13 +206,8 @@ export function PianiAbbonamento({
           const isCurrent = currentPlan === id;
           const isSelected = selectedPlan === id;
           const isFree = id === "free";
-          // Numero grande = prezzo MENSILE. In annuale mostra l'equivalente
-          // al mese (totale annuo / 12), col totale per esteso qui sotto.
-          const monthlyShown = isFree
-            ? 0
-            : period === "annual"
-            ? p.annualPrice / 12
-            : p.monthlyPrice;
+          // Numero grande = prezzo MENSILE reale; sotto, il totale annuale.
+          const monthlyShown = isFree ? 0 : p.monthlyPrice;
 
           return (
             <div

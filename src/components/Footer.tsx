@@ -31,7 +31,11 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-[#dceac9] py-4 text-center text-xs text-green-900/60">
-        © 2026 BioFido — parte del progetto Pangea Etico. Mappe © OpenStreetMap.
+        Tutti i diritti sono riservati - Ligusto Srl 2026 ·{" "}
+        <Link href="/privacy" className="hover:text-lime-500 hover:underline">
+          Privacy e cookie
+        </Link>{" "}
+        · Mappe © OpenStreetMap
       </div>
     </footer>
   );
