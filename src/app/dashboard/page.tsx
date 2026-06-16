@@ -15,7 +15,7 @@ import {
   type Business,
   type Product,
 } from "@/lib/biofido-data";
-import { geocode } from "@/lib/geo";
+import { ComuneAutocomplete } from "@/components/ComuneAutocomplete";
 import { getMyPlan } from "@/lib/plan";
 import {
   PASSI,
@@ -439,6 +439,7 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
   const [website, setWebsite] = useState("");
   const [phone, setPhone] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
+  const [coord, setCoord] = useState<{ lat: number; lon: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -454,6 +455,7 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
       setWebsite(b.website ?? "");
       setPhone(b.phone ?? "");
       setProducts(b.products ?? []);
+      setCoord({ lat: b.lat, lon: b.lon });
     }
     setLoading(false);
   }, [ownerId]);
@@ -464,13 +466,12 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
   }, [load]);
 
   async function save() {
-    if (!name.trim() || !city.trim()) {
-      setMsg("Inserisci almeno nome e città.");
+    if (!name.trim()) {
+      setMsg("Inserisci il nome dell'attività.");
       return;
     }
-    const geo = geocode(city);
-    if (!geo) {
-      setMsg(`Città "${city}" non riconosciuta: prova con il capoluogo più vicino.`);
+    if (!coord) {
+      setMsg("Scegli la città dall'elenco dei suggerimenti.");
       return;
     }
     setSaving(true);
@@ -481,9 +482,9 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
         name,
         category,
         plan,
-        city: geo.name,
-        lat: geo.lat,
-        lon: geo.lon,
+        city,
+        lat: coord.lat,
+        lon: coord.lon,
         address,
         description,
         website,
@@ -534,8 +535,17 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
               </select>
             </label>
             <label className="block">
-              <span className="label">Città *</span>
-              <input className="field mt-1" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Es. Genova" />
+              <span className="label">Città (sede) *</span>
+              <div className="mt-1">
+                <ComuneAutocomplete
+                  value={city}
+                  onSelect={(c) => {
+                    setCity(c.nome);
+                    setCoord({ lat: c.lat, lon: c.lon });
+                  }}
+                  placeholder="Es. gen… → Genova (GE) — Liguria"
+                />
+              </div>
             </label>
             <label className="block">
               <span className="label">Indirizzo</span>
