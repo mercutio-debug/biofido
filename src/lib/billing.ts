@@ -12,7 +12,7 @@ export const billingEnabled =
   process.env.NEXT_PUBLIC_BILLING_ENABLED === "true";
 
 const FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/mollie-subscribe`
+  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-checkout`
   : "";
 
 /**

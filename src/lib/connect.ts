@@ -32,12 +32,12 @@ async function callAndRedirect(fn: string, body?: unknown): Promise<void> {
   window.location.href = url;
 }
 
-/** Avvia/riprende il collegamento Mollie del produttore (OAuth). */
+/** Avvia/riprende l'onboarding Stripe del produttore. */
 export function startOnboarding(): Promise<void> {
-  return callAndRedirect("mollie-connect-start");
+  return callAndRedirect("connect-onboard");
 }
 
-/** Apre il pagamento Mollie per una prenotazione confermata. */
+/** Apre il pagamento Stripe per una prenotazione confermata. */
 export function payBooking(prenotazioneId: string): Promise<void> {
-  return callAndRedirect("mollie-booking-pay", { prenotazioneId });
+  return callAndRedirect("booking-pay", { prenotazioneId });
 }
