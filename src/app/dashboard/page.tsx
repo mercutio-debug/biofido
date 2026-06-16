@@ -17,6 +17,12 @@ import {
 } from "@/lib/biofido-data";
 import { geocode } from "@/lib/geo";
 import { getMyPlan } from "@/lib/plan";
+import {
+  PASSI,
+  FUNZIONI,
+  planAllows,
+  nextPlan,
+} from "@/lib/funzioni";
 import { billingEnabled, startCheckout } from "@/lib/billing";
 import { startOnboarding } from "@/lib/connect";
 import {
@@ -130,7 +136,11 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      <NotificheToggle />
+      {user && <GuidaCard />}
+
+      <div id="notifiche">
+        <NotificheToggle />
+      </div>
 
       <AnagraficaCard
         azienda={azienda}
@@ -229,6 +239,125 @@ function AbbonamentoCard() {
   );
 }
 
+/* ------------------- GUIDA / SCHEDA CLIENTE ------------------- */
+function GuidaCard() {
+  const [plan, setPlan] = useState<Plan>("free");
+  useEffect(() => {
+    getMyPlan().then(setPlan);
+  }, []);
+
+  const next = nextPlan(plan);
+  const bloccate = FUNZIONI.filter((f) => !planAllows(plan, f.minPlan));
+
+  function vai(anchor: string) {
+    document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  return (
+    <section className="card mt-6 p-6">
+      <div className="text-xs font-bold uppercase tracking-wide text-lime-500">
+        Inizia da qui
+      </div>
+      <h2 className="font-display text-2xl text-green-800">
+        La tua scheda · piano{" "}
+        <span className="text-green-700">{PLAN_MAP[plan].label}</span>
+      </h2>
+      <p className="mt-1 text-sm text-green-900/70">
+        Segui i passi per mettere in vetrina la tua attività. Le funzioni del tuo
+        piano sono <strong>attive</strong>; le altre si sbloccano facilmente
+        passando al piano successivo.
+      </p>
+
+      {/* passi operativi */}
+      <ol className="mt-4 space-y-2">
+        {PASSI.map((p, i) => {
+          const ok = planAllows(plan, p.minPlan);
+          return (
+            <li
+              key={i}
+              className={`flex items-start gap-3 rounded-xl border p-3 ${
+                ok ? "border-[#e3eed7] bg-white" : "border-dashed border-[#dfe7d2] bg-leaf/30"
+              }`}
+            >
+              <span
+                className={`mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-full text-xs font-bold ${
+                  ok ? "bg-green-700 text-white" : "bg-[#cfe0bb] text-green-900/50"
+                }`}
+              >
+                {ok ? i + 1 : "🔒"}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className={`font-semibold ${ok ? "text-green-800" : "text-green-900/55"}`}>
+                  {p.titolo}
+                </div>
+                <div className="text-xs text-green-900/60">{p.descr}</div>
+                {ok ? (
+                  <button
+                    onClick={() => vai(p.anchor)}
+                    className="mt-1 text-xs font-bold text-green-700 hover:text-lime-500"
+                  >
+                    → Vai
+                  </button>
+                ) : (
+                  <span className="mt-1 inline-block text-xs font-semibold text-green-900/55">
+                    Disponibile col piano {PLAN_MAP[p.minPlan].label} ·{" "}
+                    <Link href="/abbonamenti" className="text-green-700 hover:text-lime-500">
+                      sblocca
+                    </Link>
+                  </span>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+
+      {/* tutte le funzioni: attive vs da sbloccare */}
+      <h3 className="mt-6 font-display text-xl text-green-800">
+        Le funzioni del tuo piano
+      </h3>
+      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+        {FUNZIONI.map((f) => {
+          const ok = planAllows(plan, f.minPlan);
+          return (
+            <li key={f.label} className="flex items-start gap-2 text-sm">
+              <span className={ok ? "text-lime-500" : "text-green-900/35"}>
+                {ok ? "✓" : "🔒"}
+              </span>
+              <span className={ok ? "text-green-900/90" : "text-green-900/55"}>
+                <span className="font-semibold">{f.label}</span>
+                {!ok && (
+                  <span className="ml-1 rounded-full bg-leaf px-2 py-0.5 text-[10px] font-bold text-green-700">
+                    con {PLAN_MAP[f.minPlan].label}
+                  </span>
+                )}
+                <span className="block text-xs text-green-900/55">{f.descr}</span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* invito all'upgrade */}
+      {next && bloccate.length > 0 && (
+        <div className="panel-dark mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-5">
+          <div>
+            <div className="font-display text-xl">
+              Sblocca {bloccate.length} funzioni in più
+            </div>
+            <div className="text-sm text-[#eaf7d8]">
+              Passa al piano {PLAN_MAP[next].label} e fai crescere la tua vetrina.
+            </div>
+          </div>
+          <Link href="/abbonamenti" className="btn-lime whitespace-nowrap">
+            Vedi i piani
+          </Link>
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ------------------- SCHEDA SULLA MAPPA (produttore) ------------------- */
 function SchedaMappaCard({ ownerId }: { ownerId: string }) {
   const [plan, setPlan] = useState<Plan>("free");
@@ -307,7 +436,7 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
   }
 
   return (
-    <section className="card mt-6 p-6">
+    <section id="scheda" className="card mt-6 p-6 scroll-mt-20">
       <h2 className="font-display text-2xl text-green-800">
         La tua scheda sulla mappa
       </h2>
@@ -445,7 +574,7 @@ function PagamentiCard({ ownerId }: { ownerId: string }) {
   }
 
   return (
-    <section className="card mt-6 p-6">
+    <section id="pagamenti" className="card mt-6 p-6 scroll-mt-20">
       <h2 className="font-display text-2xl text-green-800">Pagamenti</h2>
       <p className="mt-1 text-sm text-green-900/70">
         Collega Stripe per ricevere online i pagamenti delle prenotazioni
@@ -525,7 +654,7 @@ function EsperienzeCard({ ownerId }: { ownerId: string }) {
   }
 
   return (
-    <section className="card mt-6 p-6">
+    <section id="esperienze" className="card mt-6 p-6 scroll-mt-20">
       <h2 className="font-display text-2xl text-green-800">Le tue esperienze</h2>
       <p className="mt-1 text-sm text-green-900/70">
         Visite, degustazioni e corsi prenotabili dal portale. Commissione BioFido{" "}
@@ -694,7 +823,7 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
   }
 
   return (
-    <section className="card mt-6 p-6">
+    <section id="prenotazioni" className="card mt-6 p-6 scroll-mt-20">
       <h2 className="font-display text-2xl text-green-800">Prenotazioni ricevute</h2>
       {loading ? (
         <p className="mt-3 text-sm text-green-900/60">Caricamento…</p>
