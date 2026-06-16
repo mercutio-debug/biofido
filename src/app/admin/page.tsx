@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import { computeFootprint } from "@/lib/footprint";
 import { Semaforo } from "@/components/Semaforo";
+import { adminSetPlan } from "@/lib/admin";
+import { PLAN_MAP, type Plan } from "@/lib/categories";
 
 type Azienda = {
   id: string;
@@ -104,6 +106,8 @@ export default function AdminPage() {
         <span>{stab.length} stabilimenti</span>
       </div>
 
+      <AssegnaAbbonamento />
+
       {aziende.length === 0 && (
         <p className="mt-8 text-green-900/70">Nessuna azienda registrata finora.</p>
       )}
@@ -168,5 +172,77 @@ export default function AdminPage() {
         })}
       </div>
     </div>
+  );
+}
+
+/* ------------------- ASSEGNA ABBONAMENTO (admin) ------------------- */
+function AssegnaAbbonamento() {
+  const [email, setEmail] = useState("");
+  const [plan, setPlan] = useState<Plan>("gold");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function assegna() {
+    if (!email.trim()) {
+      setMsg({ ok: false, text: "Inserisci l'email dell'utente." });
+      return;
+    }
+    setBusy(true);
+    setMsg(null);
+    const res = await adminSetPlan(email.trim(), plan);
+    setBusy(false);
+    if (res.error) setMsg({ ok: false, text: res.error });
+    else
+      setMsg({
+        ok: true,
+        text: `Piano ${PLAN_MAP[plan].label} assegnato a ${res.email}. ✓`,
+      });
+  }
+
+  return (
+    <section className="card mt-6 p-6">
+      <h2 className="font-display text-2xl text-green-800">Assegna un abbonamento</h2>
+      <p className="mt-1 text-sm text-green-900/70">
+        Attribuisci manualmente un piano a un&apos;azienda (per omaggi, Amici di
+        Fido, gestione manuale): nessun pagamento richiesto. L&apos;utente deve
+        essersi già registrato con quell&apos;email.
+      </p>
+      <div className="mt-4 grid gap-3 md:grid-cols-[1fr_180px_auto] md:items-end">
+        <label className="block">
+          <span className="label">Email dell&apos;utente</span>
+          <input
+            type="email"
+            className="field mt-1"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="azienda@esempio.it"
+          />
+        </label>
+        <label className="block">
+          <span className="label">Piano</span>
+          <select
+            className="field mt-1"
+            value={plan}
+            onChange={(e) => setPlan(e.target.value as Plan)}
+          >
+            <option value="free">Gratuito</option>
+            <option value="silver">Silver</option>
+            <option value="gold">Gold</option>
+          </select>
+        </label>
+        <button className="btn-lime" onClick={assegna} disabled={busy || !email.trim()}>
+          {busy ? "Assegno…" : "Assegna"}
+        </button>
+      </div>
+      {msg && (
+        <p
+          className={`mt-3 text-sm font-semibold ${
+            msg.ok ? "text-green-700" : "text-traffic-red"
+          }`}
+        >
+          {msg.text}
+        </p>
+      )}
+    </section>
   );
 }

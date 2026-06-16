@@ -16,6 +16,7 @@ import {
   type Product,
 } from "@/lib/biofido-data";
 import { geocode } from "@/lib/geo";
+import { getMyPlan } from "@/lib/plan";
 import { billingEnabled, startCheckout } from "@/lib/billing";
 import { startOnboarding } from "@/lib/connect";
 import {
@@ -173,11 +174,9 @@ function AbbonamentoCard() {
   const [selected, setSelected] = useState<Plan | undefined>(undefined);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // La scelta del piano è salvata localmente: l'attivazione del pagamento
-  // (Stripe) arriverà con il modulo prenotazioni/commissioni.
+  // Il piano corrente è la fonte di verità lato server (Stripe o admin).
   useEffect(() => {
-    const saved = window.localStorage.getItem("biofido_plan") as Plan | null;
-    if (saved && saved in PLAN_MAP) setCurrent(saved);
+    getMyPlan().then(setCurrent);
   }, []);
 
   async function choose(plan: Plan, period: "monthly" | "annual") {
@@ -263,8 +262,7 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
   }, [ownerId]);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("biofido_plan") as Plan | null;
-    if (saved && saved in PLAN_MAP) setPlan(saved);
+    getMyPlan().then(setPlan);
     load();
   }, [load]);
 
@@ -490,8 +488,7 @@ function EsperienzeCard({ ownerId }: { ownerId: string }) {
   }, [ownerId]);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("biofido_plan") as Plan | null;
-    if (saved && saved in PLAN_MAP) setPlan(saved);
+    getMyPlan().then(setPlan);
     load();
   }, [load]);
 
