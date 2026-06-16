@@ -43,3 +43,17 @@ create policy "messaggi invio parti"
         and (p.owner = auth.uid() or p.cliente_user_id = auth.uid())
     )
   );
+
+-- Realtime: abilita gli aggiornamenti live sulla tabella messaggi (chat in
+-- tempo reale). Idempotente: non fallisce se la tabella è già nella publication.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'messaggi'
+  ) then
+    alter publication supabase_realtime add table public.messaggi;
+  end if;
+end $$;

@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { listMessages, sendMessage, type Message, type Mittente } from "@/lib/bookings";
 
 /**
@@ -19,15 +20,59 @@ export function ChatPrenotazione({
   const [testo, setTesto] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // aggiunge un messaggio evitando i doppioni (load + realtime possono
+  // entrambi consegnare lo stesso messaggio)
+  const addMsg = useCallback((m: Message) => {
+    setMsgs((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
+  }, []);
 
   const load = useCallback(async () => {
     setMsgs(await listMessages(prenotazioneId));
     setLoading(false);
   }, [prenotazioneId]);
 
+  // carico lo storico e mi metto in ascolto dei nuovi messaggi in tempo reale
   useEffect(() => {
     load();
-  }, [load]);
+    const channel = supabase
+      .channel(`messaggi-${prenotazioneId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messaggi",
+          filter: `prenotazione_id=eq.${prenotazioneId}`,
+        },
+        (payload) => {
+          const n = payload.new as {
+            id: number | string;
+            prenotazione_id: number | string;
+            mittente: Mittente;
+            testo: string;
+            created_at?: string;
+          };
+          addMsg({
+            id: String(n.id),
+            prenotazioneId: String(n.prenotazione_id),
+            mittente: n.mittente,
+            testo: n.testo,
+            createdAt: n.created_at,
+          });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [prenotazioneId, load, addMsg]);
+
+  // auto-scroll all'ultimo messaggio
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  }, [msgs]);
 
   async function send() {
     if (!testo.trim()) return;
@@ -36,13 +81,14 @@ export function ChatPrenotazione({
     setSending(false);
     if (!error) {
       setTesto("");
+      // fallback: se il Realtime è lento/non attivo, ricarico comunque
       load();
     }
   }
 
   return (
     <div className="mt-3 rounded-xl border border-[#e3eed7] bg-leaf/40 p-3">
-      <div className="max-h-52 space-y-2 overflow-y-auto">
+      <div ref={scrollRef} className="max-h-52 space-y-2 overflow-y-auto">
         {loading ? (
           <p className="text-xs text-green-900/50">Carico i messaggi…</p>
         ) : msgs.length === 0 ? (
