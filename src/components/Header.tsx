@@ -4,7 +4,7 @@ import { BioFidoLogo } from "./Logo";
 const nav = [
   { href: "/#mappa", label: "Mappa" },
   { href: "/#come-funziona", label: "Come funziona" },
-  { href: "/#piani", label: "Piani" },
+  { href: "/abbonamenti", label: "Abbonamenti" },
   { href: "/accedi", label: "Accedi" },
 ];
 

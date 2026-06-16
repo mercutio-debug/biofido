@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import { computeFootprint } from "@/lib/footprint";
 import { Semaforo } from "@/components/Semaforo";
+import { PianiAbbonamento } from "@/components/Abbonamenti";
+import { PLAN_MAP, type Plan } from "@/lib/categories";
 
 type Azienda = {
   id: string;
@@ -109,6 +111,8 @@ export default function DashboardPage() {
         onSaved={loadAll}
       />
 
+      <AbbonamentoCard />
+
       {azienda && (
         <>
           <StabilimentiCard
@@ -125,6 +129,55 @@ export default function DashboardPage() {
         </>
       )}
     </div>
+  );
+}
+
+/* ------------------- ABBONAMENTO ------------------- */
+function AbbonamentoCard() {
+  const [current, setCurrent] = useState<Plan>("free");
+  const [selected, setSelected] = useState<Plan | undefined>(undefined);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  // La scelta del piano è salvata localmente: l'attivazione del pagamento
+  // (Stripe) arriverà con il modulo prenotazioni/commissioni.
+  useEffect(() => {
+    const saved = window.localStorage.getItem("biofido_plan") as Plan | null;
+    if (saved && saved in PLAN_MAP) setCurrent(saved);
+  }, []);
+
+  function choose(plan: Plan, period: "monthly" | "annual") {
+    setSelected(plan);
+    window.localStorage.setItem("biofido_plan", plan);
+    setCurrent(plan);
+    setMsg(
+      plan === "free"
+        ? "Sei sul piano Free."
+        : `Hai scelto il piano ${PLAN_MAP[plan].label} (${
+            period === "annual" ? "annuale" : "mensile"
+          }). Attiveremo il pagamento a breve.`
+    );
+  }
+
+  return (
+    <section className="card mt-6 p-6">
+      <h2 className="font-display text-2xl text-green-800">Il tuo abbonamento</h2>
+      <p className="mt-1 text-sm text-green-900/70">
+        Mostra il tuo valore vero, non il prezzo più basso. Cambia piano quando
+        vuoi: i costi sono sempre qui sotto.
+      </p>
+      <div className="mt-6">
+        <PianiAbbonamento
+          currentPlan={current}
+          selectedPlan={selected}
+          onSelect={choose}
+        />
+      </div>
+      {msg && (
+        <p className="mt-4 rounded-xl bg-leaf px-4 py-3 text-sm font-semibold text-green-800">
+          {msg}
+        </p>
+      )}
+    </section>
   );
 }
 

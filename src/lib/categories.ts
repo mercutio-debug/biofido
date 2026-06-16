@@ -29,21 +29,103 @@ export const CATEGORY_MAP: Record<CategoryId, Category> = Object.fromEntries(
 
 export type Plan = "free" | "silver" | "gold";
 
+export type StatsLevel = "none" | "base" | "advanced";
+
+/**
+ * I "diritti" di un piano: un'unica fonte di verità che dice, per ogni piano,
+ * cosa l'azienda può fare. È organizzato in tre famiglie, una per leva di
+ * ricavo, così aggiungere prenotazioni o slot sponsor non sparpaglia logica
+ * nel codice: si cambia solo questa tabella.
+ *
+ *  - Presentazione → cosa vede l'utente sulla scheda (Pilastro 1: abbonamenti)
+ *  - Commercio     → vendita e commissioni (Pilastro 2: prenotazioni)
+ *  - Visibilità    → spinta nel ranking (Pilastro 3: "in evidenza")
+ */
 export type PlanInfo = {
   id: Plan;
   label: string;
+  /** prezzo mensile in € (0 = gratuito) */
+  monthlyPrice: number;
+  /** prezzo annuale in € (di norma ~2 mesi gratis rispetto al mensile) */
+  annualPrice: number;
+
+  /* --- Presentazione (Pilastro 1: dati & visibilità scheda) --- */
   /** dimensione del segnaposto sulla mappa, in pixel */
   markerSize: number;
   /** mostra la categoria nel segnaposto (icona grande) */
   showIcon: boolean;
-  /** può caricare foto e prezzi dei prodotti */
+  /** mostra la descrizione/storia dell'attività */
+  showDescription: boolean;
+  /** mostra il sito web e i contatti estesi (il telefono è sempre visibile) */
+  showWebsite: boolean;
+  /** può mostrare prodotti con foto e prezzi */
   showProducts: boolean;
-  /** ordine di priorità nella lista (più alto = più in alto) */
+  /** numero massimo di prodotti pubblicabili (0 = nessuno) */
+  maxProducts: number;
+  /** numero massimo di foto in galleria */
+  maxPhotos: number;
+  /** può inserire un video nella scheda */
+  hasVideo: boolean;
+  /** numero massimo di eventi/degustazioni attivi (0 = nessuno) */
+  maxEvents: number;
+  /** livello di statistiche di traffico disponibili */
+  statsLevel: StatsLevel;
+
+  /* --- Commercio (Pilastro 2: prenotazioni & commissioni) --- */
+  /** può ricevere prenotazioni/ordini tramite il portale */
+  canSell: boolean;
+  /** commissione BioFido sulle esperienze prenotate (0.15 = 15%) */
+  commissionRate: number;
+
+  /* --- Visibilità (Pilastro 3: ranking) --- */
+  /** punti aggiunti al punteggio di ordinamento sulla mappa */
+  searchBoost: number;
+  /** può acquistare lo slot "in evidenza" della zona */
+  featuredEligible: boolean;
+  /** ordine di priorità nella lista (più alto = più in alto) — retrocompat. */
   priority: number;
 };
 
 export const PLAN_MAP: Record<Plan, PlanInfo> = {
-  free: { id: "free", label: "Gratuito", markerSize: 26, showIcon: false, showProducts: false, priority: 0 },
-  silver: { id: "silver", label: "Silver", markerSize: 38, showIcon: true, showProducts: false, priority: 1 },
-  gold: { id: "gold", label: "Gold", markerSize: 50, showIcon: true, showProducts: true, priority: 2 },
+  free: {
+    id: "free", label: "Gratuito", monthlyPrice: 0, annualPrice: 0,
+    markerSize: 26, showIcon: false, showDescription: false, showWebsite: false,
+    showProducts: false, maxProducts: 0, maxPhotos: 0, hasVideo: false,
+    maxEvents: 0, statsLevel: "none",
+    canSell: false, commissionRate: 0,
+    searchBoost: 0, featuredEligible: false, priority: 0,
+  },
+  silver: {
+    id: "silver", label: "Silver", monthlyPrice: 9, annualPrice: 90,
+    markerSize: 38, showIcon: true, showDescription: true, showWebsite: true,
+    showProducts: false, maxProducts: 0, maxPhotos: 5, hasVideo: false,
+    maxEvents: 1, statsLevel: "base",
+    canSell: true, commissionRate: 0.15,   // fee piena
+    searchBoost: 10, featuredEligible: false, priority: 1,
+  },
+  gold: {
+    id: "gold", label: "Gold", monthlyPrice: 24, annualPrice: 240,
+    markerSize: 50, showIcon: true, showDescription: true, showWebsite: true,
+    showProducts: true, maxProducts: Infinity, maxPhotos: 20, hasVideo: true,
+    maxEvents: Infinity, statsLevel: "advanced",
+    canSell: true, commissionRate: 0.08,   // fee ridotta: incentivo a salire di piano
+    searchBoost: 25, featuredEligible: true, priority: 2,
+  },
 };
+
+/**
+ * Commissione applicata in fase di lancio agli ordini di PRODOTTO FISICO
+ * (margini sottili): per ora 0, si attiverà quando il traffico è dimostrabile.
+ * Le esperienze (visite, degustazioni, corsi) usano invece `commissionRate`.
+ */
+export const PRODUCT_COMMISSION_RATE = 0;
+
+/**
+ * Punteggio di ordinamento di un'attività sulla mappa.
+ * La distanza domina sempre (km0 credibile: chi è vicino resta in alto),
+ * ma il piano dà una spinta misurabile (~10 punti di boost ≈ 1 km).
+ * Valori più alti = più in alto nei risultati.
+ */
+export function rankScore(plan: Plan, distanceKm: number): number {
+  return -distanceKm + PLAN_MAP[plan].searchBoost * 0.1;
+}
