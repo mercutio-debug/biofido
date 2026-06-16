@@ -198,7 +198,11 @@ export function MapExperience() {
                 return (
                   <li
                     key={r.id}
-                    className="flex items-center justify-between rounded-xl border border-[#e3eed7] bg-white px-4 py-3"
+                    className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
+                      PLAN_MAP[r.plan].featuredEligible
+                        ? "border-badge-yellow bg-[#fffbe9]"
+                        : "border-[#e3eed7] bg-white"
+                    }`}
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 font-semibold text-green-800">
@@ -206,7 +210,7 @@ export function MapExperience() {
                         <span className="truncate">{r.name}</span>
                         {r.plan === "gold" && (
                           <span className="rounded-full bg-badge-yellow px-2 text-[10px] font-bold text-[#7a1f00]">
-                            ★ GOLD
+                            ★ In evidenza
                           </span>
                         )}
                         {r.plan === "silver" && (
