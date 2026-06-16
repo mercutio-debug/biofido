@@ -83,7 +83,9 @@ Deno.serve(async (req) => {
           await setPlan(userId, active ? plan : "free", {
             status: sub.status,
             stripe_subscription_id: sub.id,
-            current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+            current_period_end: sub.current_period_end
+              ? new Date(sub.current_period_end * 1000).toISOString()
+              : null,
           });
         }
         break;
