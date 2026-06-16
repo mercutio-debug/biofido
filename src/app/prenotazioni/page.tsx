@@ -12,6 +12,7 @@ import {
   type BookingStatus,
 } from "@/lib/bookings";
 import { ChatPrenotazione } from "@/components/ChatPrenotazione";
+import { NotificheToggle } from "@/components/NotificheToggle";
 
 export default function PrenotazioniPage() {
   const router = useRouter();
@@ -49,6 +50,8 @@ export default function PrenotazioniPage() {
       <h1 className="title-pangea text-3xl text-green-700 md:text-4xl">
         Le mie prenotazioni
       </h1>
+
+      <NotificheToggle />
 
       {items.length === 0 ? (
         <p className="mt-6 text-green-900/70">

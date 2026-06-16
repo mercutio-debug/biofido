@@ -24,6 +24,7 @@ import {
   type BookingStatus,
 } from "@/lib/bookings";
 import { ChatPrenotazione } from "@/components/ChatPrenotazione";
+import { NotificheToggle } from "@/components/NotificheToggle";
 
 type Azienda = {
   id: string;
@@ -119,6 +120,8 @@ export default function DashboardPage() {
           Esci
         </button>
       </div>
+
+      <NotificheToggle />
 
       <AnagraficaCard
         azienda={azienda}
