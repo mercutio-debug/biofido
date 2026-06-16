@@ -8,10 +8,24 @@ import type { Experience } from "./bookings";
  * (tabella `biofido_businesses`). Se il database non è raggiungibile o è
  * vuoto, si usano i dati DEMO qui sotto, così l'app è sempre navigabile.
  */
+/** una materia prima del prodotto, con l'origine geolocalizzata (per l'impronta) */
+export type MateriaPrima = {
+  nome: string;
+  origine: string;
+  lat?: number;
+  lon?: number;
+};
+
 export type Product = {
   name: string;
   price?: string;
+  /** unità di prezzo: "a cassetta", "al kg", "a pezzo"… */
+  unit?: string;
+  category?: string;
+  description?: string;
   image?: string;
+  ingredients?: MateriaPrima[];
+  certifications?: string[];
 };
 
 export type Business = {

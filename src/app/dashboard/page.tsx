@@ -16,6 +16,8 @@ import {
   type Product,
 } from "@/lib/biofido-data";
 import { ComuneAutocomplete } from "@/components/ComuneAutocomplete";
+import { ProdottoEditor } from "@/components/ProdottoEditor";
+import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
 import { getMyPlan } from "@/lib/plan";
 import {
   PASSI,
@@ -440,6 +442,7 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
   const [phone, setPhone] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [coord, setCoord] = useState<{ lat: number; lon: number } | null>(null);
+  const [editProd, setEditProd] = useState<number | "new" | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -566,45 +569,83 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
           </div>
 
           {PLAN_MAP[plan].showProducts ? (
-            <div className="mt-5 rounded-2xl border-2 border-dashed border-[#cfe3b4] bg-leaf/40 p-5">
-              <h3 className="font-display text-xl text-green-800">
-                I tuoi prodotti <span className="text-sm font-normal text-green-900/60">(mostrati sulla mappa, piano Gold)</span>
-              </h3>
-              <div className="mt-3 space-y-2">
-                {products.map((p, i) => (
-                  <div key={i} className="grid gap-2 md:grid-cols-[1fr_140px_auto] md:items-center">
-                    <input
-                      className="field"
-                      value={p.name}
-                      onChange={(e) =>
-                        setProducts((prev) => prev.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)))
-                      }
-                      placeholder="Nome prodotto (es. Cassetta ortaggi misti)"
-                    />
-                    <input
-                      className="field"
-                      value={p.price ?? ""}
-                      onChange={(e) =>
-                        setProducts((prev) => prev.map((x, idx) => (idx === i ? { ...x, price: e.target.value } : x)))
-                      }
-                      placeholder="Prezzo (€ 15,00)"
-                    />
-                    <button
-                      className="text-xs font-bold text-traffic-red hover:underline"
-                      onClick={() => setProducts((prev) => prev.filter((_, idx) => idx !== i))}
-                    >
-                      ✕
-                    </button>
+            (() => {
+              const limite = Math.min(PLAN_MAP[plan].maxProducts, 100);
+              const pieno = products.length >= limite;
+              return (
+                <div className="mt-5 rounded-2xl border-2 border-dashed border-[#cfe3b4] bg-leaf/40 p-5">
+                  <h3 className="font-display text-xl text-green-800">
+                    I tuoi prodotti{" "}
+                    <span className="text-sm font-normal text-green-900/60">
+                      ({products.length}/{limite} · piano {PLAN_MAP[plan].label})
+                    </span>
+                  </h3>
+                  <div className="mt-3 space-y-2">
+                    {products.map((p, i) => {
+                      const sem = SEMAFORO[calcolaImpronta(coord, p.ingredients ?? []).level];
+                      return (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between gap-3 rounded-xl border border-[#e3eed7] bg-white px-4 py-2"
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span className="h-3 w-3 flex-none rounded-full" style={{ background: sem.colore }} title={sem.testo} />
+                            <div className="min-w-0">
+                              <div className="truncate font-semibold text-green-800">
+                                {p.name || "(senza nome)"}
+                              </div>
+                              <div className="truncate text-xs text-green-900/60">
+                                {p.price ? `${p.price} ${p.unit ?? ""}` : "—"}
+                                {p.ingredients?.length ? ` · ${p.ingredients.length} materie prime` : ""}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-none items-center gap-3">
+                            <button className="text-xs font-bold text-green-700 hover:underline" onClick={() => setEditProd(i)}>
+                              Modifica
+                            </button>
+                            <button
+                              className="text-xs font-bold text-traffic-red hover:underline"
+                              onClick={() => setProducts((prev) => prev.filter((_, idx) => idx !== i))}
+                            >
+                              Elimina
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-              <button
-                className="btn-ghost mt-2 text-sm"
-                onClick={() => setProducts((prev) => [...prev, { name: "", price: "" }])}
-              >
-                + Aggiungi prodotto
-              </button>
-            </div>
+                  <button
+                    className="btn-lime mt-3 text-sm"
+                    onClick={() => setEditProd("new")}
+                    disabled={pieno}
+                  >
+                    + Aggiungi prodotto
+                  </button>
+                  {pieno && (
+                    <span className="ml-3 text-xs font-semibold text-green-900/60">
+                      Limite del piano {PLAN_MAP[plan].label} raggiunto.
+                    </span>
+                  )}
+
+                  {editProd !== null && (
+                    <ProdottoEditor
+                      sede={coord}
+                      initial={editProd === "new" ? undefined : products[editProd]}
+                      onClose={() => setEditProd(null)}
+                      onSave={(prod) => {
+                        setProducts((prev) =>
+                          editProd === "new"
+                            ? [...prev, prod]
+                            : prev.map((x, idx) => (idx === editProd ? prod : x)),
+                        );
+                        setEditProd(null);
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })()
           ) : (
             <p className="mt-3 text-xs text-green-900/55">
               I prodotti con foto e prezzi sulla mappa sono una funzione del piano Gold.
