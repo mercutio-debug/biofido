@@ -5,6 +5,7 @@ const nav = [
   { href: "/#mappa", label: "Mappa" },
   { href: "/#come-funziona", label: "Come funziona" },
   { href: "/abbonamenti", label: "Abbonamenti" },
+  { href: "/prenotazioni", label: "Le mie prenotazioni" },
   { href: "/accedi", label: "Accedi" },
 ];
 

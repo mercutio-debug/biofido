@@ -174,9 +174,16 @@ export async function createBookingRequest(input: {
 }): Promise<{ error?: string; totaleCents: number }> {
   const totaleCents = input.esperienza.prezzoCents * input.persone;
   const commCents = commissionCents(input.ownerPlan, totaleCents);
+  // se il cliente è loggato, lego la prenotazione al suo account: così avrà la
+  // chat in-app con il produttore. Da ospite resta gestita via email.
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   const { error } = await supabase.from("prenotazioni").insert({
     esperienza_id: input.esperienza.id,
     owner: input.esperienza.owner,
+    cliente_user_id: session?.user.id ?? null,
     cliente_nome: input.clienteNome,
     cliente_email: input.clienteEmail,
     cliente_tel: input.clienteTel || null,
@@ -205,4 +212,68 @@ export async function setBookingStatus(
   stato: BookingStatus,
 ): Promise<void> {
   await supabase.from("prenotazioni").update({ stato }).eq("id", id);
+}
+
+/** Prenotazioni del cliente loggato (per la sua area "Le mie prenotazioni"). */
+export async function listBookingsForCustomer(userId: string): Promise<Booking[]> {
+  const { data } = await supabase
+    .from("prenotazioni")
+    .select("*, esperienze(titolo)")
+    .eq("cliente_user_id", userId)
+    .order("created_at", { ascending: false });
+  return ((data as BookRow[]) ?? []).map(fromBookRow);
+}
+
+/* ------------------------------ messaggi (chat) ------------------------------- */
+
+export type Mittente = "azienda" | "cliente";
+
+export type Message = {
+  id: string;
+  prenotazioneId: string;
+  mittente: Mittente;
+  testo: string;
+  createdAt?: string;
+};
+
+type MsgRow = {
+  id: number | string;
+  prenotazione_id: number | string;
+  mittente: Mittente;
+  testo: string;
+  created_at?: string;
+};
+
+const fromMsgRow = (r: MsgRow): Message => ({
+  id: String(r.id),
+  prenotazioneId: String(r.prenotazione_id),
+  mittente: r.mittente,
+  testo: r.testo,
+  createdAt: r.created_at,
+});
+
+export async function listMessages(prenotazioneId: string): Promise<Message[]> {
+  const { data } = await supabase
+    .from("messaggi")
+    .select("*")
+    .eq("prenotazione_id", prenotazioneId)
+    .order("created_at", { ascending: true });
+  return ((data as MsgRow[]) ?? []).map(fromMsgRow);
+}
+
+export async function sendMessage(
+  prenotazioneId: string,
+  mittente: Mittente,
+  testo: string,
+): Promise<{ error?: string }> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const { error } = await supabase.from("messaggi").insert({
+    prenotazione_id: prenotazioneId,
+    mittente,
+    sender_id: session?.user.id ?? null,
+    testo,
+  });
+  return { error: error?.message };
 }

@@ -16,12 +16,14 @@ import {
   deleteExperience,
   listMyBookings,
   setBookingStatus,
+  sendMessage,
   euroCents,
   STATO_LABEL,
   type Experience,
   type Booking,
   type BookingStatus,
 } from "@/lib/bookings";
+import { ChatPrenotazione } from "@/components/ChatPrenotazione";
 
 type Azienda = {
   id: string;
@@ -416,6 +418,7 @@ function StatoBadge({ stato }: { stato: BookingStatus }) {
 function PrenotazioniCard({ ownerId }: { ownerId: string }) {
   const [items, setItems] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chatOpen, setChatOpen] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -429,6 +432,14 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
 
   async function act(id: string, stato: BookingStatus) {
     await setBookingStatus(id, stato);
+    // notifica in-app al cliente collegato
+    await sendMessage(
+      id,
+      "azienda",
+      stato === "confermata"
+        ? "La tua prenotazione è stata confermata ✅. A presto!"
+        : "Spiacenti, non possiamo accettare questa richiesta. Scrivici pure per trovare un'alternativa.",
+    );
     load();
   }
 
@@ -471,7 +482,7 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
                   </div>
                 </div>
               </div>
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <StatoBadge stato={b.stato} />
                 {b.stato === "in_attesa" && (
                   <>
@@ -489,7 +500,16 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
                     </button>
                   </>
                 )}
+                <button
+                  className="rounded-full border border-green-600 px-3 py-1 text-xs font-bold text-green-700"
+                  onClick={() => setChatOpen(chatOpen === b.id ? null : b.id)}
+                >
+                  💬 Messaggi
+                </button>
               </div>
+              {chatOpen === b.id && (
+                <ChatPrenotazione prenotazioneId={b.id} mittente="azienda" />
+              )}
             </li>
           ))}
         </ul>
