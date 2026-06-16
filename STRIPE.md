@@ -76,8 +76,36 @@ NEXT_PUBLIC_BILLING_ENABLED=true
 Da qui il pulsante "Scegli" nella dashboard apre il Checkout Stripe; al
 pagamento il webhook imposta il piano sulle schede dell'azienda.
 
+## Commissioni sulle prenotazioni (Stripe Connect)
+
+Il cliente paga una prenotazione **confermata**; il denaro va al produttore
+(account Connect) e BioFido trattiene la commissione del piano (destination
+charge + application fee). Flusso: il produttore collega Stripe → il cliente
+paga dalla pagina "Le mie prenotazioni" → il webhook marca la prenotazione
+"pagata".
+
+### Setup
+
+1. **Migrazione**: esegui `supabase/migrations/20260620_stripe_connect.sql`.
+2. **Abilita Connect**: in Stripe → *Connect* attiva la piattaforma (tipo
+   **Express**). Imposta nome/branding della piattaforma.
+3. **Segreti** (oltre a quelli già impostati): serve solo `SITE_URL` (già usato
+   dalle notifiche) e la `STRIPE_SECRET_KEY` (già presente).
+4. **Deploy** delle funzioni:
+   ```bash
+   supabase functions deploy connect-onboard
+   supabase functions deploy booking-pay
+   supabase functions deploy stripe-webhook --no-verify-jwt
+   ```
+5. **Webhook**: aggiungi all'endpoint `stripe-webhook` gli eventi
+   `checkout.session.completed`, `account.updated` (oltre a quelli degli
+   abbonamenti).
+
+Con `NEXT_PUBLIC_BILLING_ENABLED=true` compaiono: in dashboard il pulsante
+**"Collega Stripe"** (onboarding del produttore) e, in *Le mie prenotazioni*,
+**"Paga ora"** sulle prenotazioni confermate.
+
 ## Passare in produzione
 
 Ripeti con le chiavi **live** (`sk_live_...`, prezzi live, nuovo webhook con il
-relativo `whsec_...`). Per le commissioni sulle vendite servirà **Stripe
-Connect**, da affrontare quando esisterà il motore prenotazioni.
+relativo `whsec_...`) e completa l'attivazione di Connect in modalità live.

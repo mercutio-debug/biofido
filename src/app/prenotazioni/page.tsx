@@ -13,6 +13,8 @@ import {
 } from "@/lib/bookings";
 import { ChatPrenotazione } from "@/components/ChatPrenotazione";
 import { NotificheToggle } from "@/components/NotificheToggle";
+import { billingEnabled } from "@/lib/billing";
+import { payBooking } from "@/lib/connect";
 
 export default function PrenotazioniPage() {
   const router = useRouter();
@@ -20,6 +22,16 @@ export default function PrenotazioniPage() {
   const [items, setItems] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [chatOpen, setChatOpen] = useState<string | null>(null);
+  const [payMsg, setPayMsg] = useState<string | null>(null);
+
+  async function paga(id: string) {
+    setPayMsg(null);
+    try {
+      await payBooking(id);
+    } catch (e) {
+      setPayMsg((e as Error).message);
+    }
+  }
 
   const load = useCallback(async (uid: string) => {
     setLoading(true);
@@ -53,6 +65,12 @@ export default function PrenotazioniPage() {
 
       <NotificheToggle />
 
+      {payMsg && (
+        <p className="mt-4 rounded-xl bg-leaf px-4 py-3 text-sm font-semibold text-traffic-red">
+          {payMsg}
+        </p>
+      )}
+
       {items.length === 0 ? (
         <p className="mt-6 text-green-900/70">
           Non hai ancora prenotazioni. Trova un&apos;esperienza sulla{" "}
@@ -81,12 +99,29 @@ export default function PrenotazioniPage() {
                   <StatoBadge stato={b.stato} />
                 </div>
               </div>
-              <button
-                className="mt-3 rounded-full border border-green-600 px-3 py-1 text-xs font-bold text-green-700"
-                onClick={() => setChatOpen(chatOpen === b.id ? null : b.id)}
-              >
-                💬 Messaggi con il produttore
-              </button>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  className="rounded-full border border-green-600 px-3 py-1 text-xs font-bold text-green-700"
+                  onClick={() => setChatOpen(chatOpen === b.id ? null : b.id)}
+                >
+                  💬 Messaggi con il produttore
+                </button>
+                {b.paymentStatus === "pagata" ? (
+                  <span className="rounded-full bg-traffic-green px-3 py-1 text-xs font-bold text-white">
+                    Pagata ✅
+                  </span>
+                ) : (
+                  billingEnabled &&
+                  b.stato === "confermata" && (
+                    <button
+                      className="rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
+                      onClick={() => paga(b.id)}
+                    >
+                      💳 Paga ora · {euroCents(b.totaleCents)}
+                    </button>
+                  )
+                )}
+              </div>
               {chatOpen === b.id && (
                 <ChatPrenotazione prenotazioneId={b.id} mittente="cliente" />
               )}

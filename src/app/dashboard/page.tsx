@@ -17,6 +17,7 @@ import {
 } from "@/lib/biofido-data";
 import { geocode } from "@/lib/geo";
 import { billingEnabled, startCheckout } from "@/lib/billing";
+import { startOnboarding } from "@/lib/connect";
 import {
   listMyExperiences,
   createExperience,
@@ -141,6 +142,7 @@ export default function DashboardPage() {
       {user && (
         <>
           <SchedaMappaCard ownerId={user.id} />
+          <PagamentiCard ownerId={user.id} />
           <EsperienzeCard ownerId={user.id} />
           <PrenotazioniCard ownerId={user.id} />
         </>
@@ -416,6 +418,58 @@ function SchedaMappaCard({ ownerId }: { ownerId: string }) {
   );
 }
 
+/* ------------------- PAGAMENTI / STRIPE CONNECT (produttore) ------------------- */
+function PagamentiCard({ ownerId }: { ownerId: string }) {
+  const [ready, setReady] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("stripe_accounts")
+      .select("charges_enabled")
+      .eq("user_id", ownerId)
+      .maybeSingle()
+      .then(({ data }) => setReady(Boolean((data as { charges_enabled?: boolean })?.charges_enabled)));
+  }, [ownerId]);
+
+  if (!billingEnabled) return null;
+
+  async function collega() {
+    setBusy(true);
+    setMsg(null);
+    try {
+      await startOnboarding();
+    } catch (e) {
+      setBusy(false);
+      setMsg((e as Error).message);
+    }
+  }
+
+  return (
+    <section className="card mt-6 p-6">
+      <h2 className="font-display text-2xl text-green-800">Pagamenti</h2>
+      <p className="mt-1 text-sm text-green-900/70">
+        Collega Stripe per ricevere online i pagamenti delle prenotazioni
+        confermate. BioFido trattiene solo la commissione del tuo piano; il resto
+        arriva sul tuo conto.
+      </p>
+      {ready ? (
+        <p className="mt-4 rounded-xl bg-leaf px-4 py-3 text-sm font-semibold text-green-800">
+          Account Stripe collegato ✅ — puoi ricevere pagamenti.
+        </p>
+      ) : (
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button className="btn-lime" onClick={collega} disabled={busy}>
+            {busy ? "Apro Stripe…" : "Collega Stripe"}
+          </button>
+          {msg && <span className="text-sm font-semibold text-traffic-red">{msg}</span>}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ------------------- ESPERIENZE (produttore) ------------------- */
 function EsperienzeCard({ ownerId }: { ownerId: string }) {
   const [plan, setPlan] = useState<Plan>("free");
@@ -683,6 +737,11 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <StatoBadge stato={b.stato} />
+                {b.paymentStatus === "pagata" && (
+                  <span className="rounded-full bg-traffic-green px-2 py-0.5 text-[11px] font-bold text-white">
+                    Pagata ✅
+                  </span>
+                )}
                 {b.stato === "in_attesa" && (
                   <>
                     <button

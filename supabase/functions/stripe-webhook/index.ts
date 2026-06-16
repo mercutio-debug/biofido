@@ -1,16 +1,16 @@
-// Edge Function: webhook Stripe. Stripe la chiama quando un pagamento va a buon
-// fine o un abbonamento cambia stato. Qui aggiorniamo la tabella subscriptions
-// e propaghiamo il piano alle schede mappa dell'utente (biofido_businesses).
+// Edge Function: webhook Stripe. Gestisce:
+//  - abbonamenti (subscriptions) → aggiorna il piano dell'utente
+//  - pagamenti delle prenotazioni (Connect) → marca la prenotazione "pagata"
+//  - account.updated (Connect) → aggiorna lo stato dell'account del produttore
 //
 // Scrive con la SERVICE-ROLE key (bypassa la RLS): è l'unico punto autorizzato
-// a cambiare il piano pagato, così nessun utente può falsificarlo dal client.
+// a cambiare piano/stato pagamento, così nessuno può falsificarli dal client.
 //
 // SEGRETI richiesti:
 //   STRIPE_SECRET_KEY        sk_...
 //   STRIPE_WEBHOOK_SECRET    whsec_...  (lo dà Stripe quando registri il webhook)
 //
-// Nota: registra questa funzione SENZA verifica JWT (è Stripe a chiamarla),
-//   supabase functions deploy stripe-webhook --no-verify-jwt
+// Deploy: supabase functions deploy stripe-webhook --no-verify-jwt
 
 import Stripe from "npm:stripe@16.12.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -34,7 +34,6 @@ async function setPlan(
   await admin
     .from("subscriptions")
     .upsert({ user_id: userId, plan, updated_at: new Date().toISOString(), ...fields });
-  // Propaga il piano a tutte le schede mappa possedute dall'utente.
   await admin.from("biofido_businesses").update({ plan }).eq("owner", userId);
 }
 
@@ -51,7 +50,19 @@ Deno.serve(async (req) => {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
-        const s = event.object as Stripe.Checkout.Session;
+        const s = event.data.object as Stripe.Checkout.Session;
+        // Pagamento di una prenotazione (Connect)
+        if (s.metadata?.kind === "booking") {
+          const prenotazioneId = s.metadata?.prenotazione_id;
+          if (prenotazioneId) {
+            await admin
+              .from("prenotazioni")
+              .update({ payment_status: "pagata", stripe_session_id: s.id })
+              .eq("id", prenotazioneId);
+          }
+          break;
+        }
+        // Altrimenti: attivazione abbonamento
         const userId = s.metadata?.user_id ?? s.client_reference_id ?? "";
         const plan = (s.metadata?.plan as "silver" | "gold") ?? "silver";
         if (userId) {
@@ -64,7 +75,7 @@ Deno.serve(async (req) => {
         break;
       }
       case "customer.subscription.updated": {
-        const sub = event.object as Stripe.Subscription;
+        const sub = event.data.object as Stripe.Subscription;
         const userId = sub.metadata?.user_id ?? "";
         const plan = (sub.metadata?.plan as "silver" | "gold") ?? "silver";
         const active = sub.status === "active" || sub.status === "trialing";
@@ -78,11 +89,23 @@ Deno.serve(async (req) => {
         break;
       }
       case "customer.subscription.deleted": {
-        const sub = event.object as Stripe.Subscription;
+        const sub = event.data.object as Stripe.Subscription;
         const userId = sub.metadata?.user_id ?? "";
+        if (userId) await setPlan(userId, "free", { status: "canceled" });
+        break;
+      }
+      case "account.updated": {
+        // stato dell'account Connect del produttore
+        const acc = event.data.object as Stripe.Account;
+        const userId = acc.metadata?.user_id ?? "";
         if (userId) {
-          // abbonamento finito: si torna al piano gratuito
-          await setPlan(userId, "free", { status: "canceled" });
+          await admin.from("stripe_accounts").upsert({
+            user_id: userId,
+            account_id: acc.id,
+            charges_enabled: acc.charges_enabled,
+            payouts_enabled: acc.payouts_enabled,
+            updated_at: new Date().toISOString(),
+          });
         }
         break;
       }

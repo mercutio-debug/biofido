@@ -33,6 +33,7 @@ export type Booking = {
   totaleCents: number;
   commissioneCents: number;
   stato: BookingStatus;
+  paymentStatus: "non_pagata" | "pagata" | "rimborsata";
   createdAt?: string;
 };
 
@@ -141,6 +142,7 @@ type BookRow = {
   totale_cents: number;
   commissione_cents: number;
   stato: BookingStatus;
+  payment_status?: "non_pagata" | "pagata" | "rimborsata" | null;
   created_at?: string;
   esperienze?: { titolo: string } | null;
 };
@@ -158,6 +160,7 @@ const fromBookRow = (r: BookRow): Booking => ({
   totaleCents: r.totale_cents,
   commissioneCents: r.commissione_cents,
   stato: r.stato,
+  paymentStatus: r.payment_status ?? "non_pagata",
   createdAt: r.created_at,
 });
 
