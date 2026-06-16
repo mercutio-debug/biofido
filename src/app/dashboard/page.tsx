@@ -426,11 +426,11 @@ function PagamentiCard({ ownerId }: { ownerId: string }) {
 
   useEffect(() => {
     supabase
-      .from("stripe_accounts")
-      .select("charges_enabled")
+      .from("mollie_accounts")
+      .select("connected")
       .eq("user_id", ownerId)
       .maybeSingle()
-      .then(({ data }) => setReady(Boolean((data as { charges_enabled?: boolean })?.charges_enabled)));
+      .then(({ data }) => setReady(Boolean((data as { connected?: boolean })?.connected)));
   }, [ownerId]);
 
   if (!billingEnabled) return null;
@@ -450,18 +450,18 @@ function PagamentiCard({ ownerId }: { ownerId: string }) {
     <section className="card mt-6 p-6">
       <h2 className="font-display text-2xl text-green-800">Pagamenti</h2>
       <p className="mt-1 text-sm text-green-900/70">
-        Collega Stripe per ricevere online i pagamenti delle prenotazioni
+        Collega Mollie per ricevere online i pagamenti delle prenotazioni
         confermate. BioFido trattiene solo la commissione del tuo piano; il resto
         arriva sul tuo conto.
       </p>
       {ready ? (
         <p className="mt-4 rounded-xl bg-leaf px-4 py-3 text-sm font-semibold text-green-800">
-          Account Stripe collegato ✅ — puoi ricevere pagamenti.
+          Account Mollie collegato ✅ — puoi ricevere pagamenti.
         </p>
       ) : (
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button className="btn-lime" onClick={collega} disabled={busy}>
-            {busy ? "Apro Stripe…" : "Collega Stripe"}
+            {busy ? "Apro Mollie…" : "Collega Mollie"}
           </button>
           {msg && <span className="text-sm font-semibold text-traffic-red">{msg}</span>}
         </div>
