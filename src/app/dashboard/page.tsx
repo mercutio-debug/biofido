@@ -9,6 +9,7 @@ import { computeFootprint } from "@/lib/footprint";
 import { Semaforo } from "@/components/Semaforo";
 import { PianiAbbonamento } from "@/components/Abbonamenti";
 import { PLAN_MAP, type Plan } from "@/lib/categories";
+import { billingEnabled, startCheckout } from "@/lib/billing";
 
 type Azienda = {
   id: string;
@@ -145,8 +146,22 @@ function AbbonamentoCard() {
     if (saved && saved in PLAN_MAP) setCurrent(saved);
   }, []);
 
-  function choose(plan: Plan, period: "monthly" | "annual") {
+  async function choose(plan: Plan, period: "monthly" | "annual") {
     setSelected(plan);
+
+    // Con Stripe attivo, i piani a pagamento aprono il Checkout; al ritorno il
+    // webhook avrà aggiornato il piano. Senza Stripe, salviamo la scelta in
+    // locale (l'app resta navigabile in attesa dell'attivazione pagamenti).
+    if (billingEnabled && plan !== "free") {
+      setMsg("Ti porto al pagamento sicuro…");
+      try {
+        await startCheckout(plan, period);
+      } catch (e) {
+        setMsg((e as Error).message);
+      }
+      return;
+    }
+
     window.localStorage.setItem("biofido_plan", plan);
     setCurrent(plan);
     setMsg(
