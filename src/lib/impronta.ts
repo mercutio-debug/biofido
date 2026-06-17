@@ -40,7 +40,8 @@ export function calcolaImpronta(
     n++;
   }
   const avg = n ? totalKm / n : 0;
-  const level = avg <= 50 ? "verde" : avg <= 200 ? "giallo" : "rosso";
+  // criterio condiviso con ECO-VISA: distanza media ≤200 km verde, ≤700 giallo, oltre rosso
+  const level = avg <= 200 ? "verde" : avg <= 700 ? "giallo" : "rosso";
   return {
     totalKm: Math.round(totalKm),
     co2Kg: Math.round(totalKm * CO2_KG_PER_KM),
