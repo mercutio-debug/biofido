@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Turnstile, turnstileAttivo } from "@/components/Turnstile";
 
 export default function RegistratiPage() {
   const router = useRouter();
@@ -13,6 +14,8 @@ export default function RegistratiPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,17 +25,24 @@ export default function RegistratiPage() {
       setError("La password deve avere almeno 6 caratteri.");
       return;
     }
+    if (turnstileAttivo && !captcha) {
+      setError("Conferma di non essere un robot.");
+      return;
+    }
     setLoading(true);
     // Crea l'account. Il nome azienda viene salvato nei metadati e poi usato
     // per precompilare la scheda anagrafica nella dashboard.
     const { data, error: signErr } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { nome } },
+      options: { data: { nome }, captchaToken: captcha ?? undefined },
     });
     setLoading(false);
     if (signErr) {
       setError(signErr.message);
+      // il token Turnstile è monouso: ne serve uno nuovo dopo un errore
+      setCaptcha(null);
+      setCaptchaKey((k) => k + 1);
       return;
     }
     if (data.session) {
@@ -102,7 +112,13 @@ export default function RegistratiPage() {
           </p>
         )}
 
-        <button type="submit" className="btn-lime w-full" disabled={loading}>
+        <Turnstile key={captchaKey} onToken={setCaptcha} />
+
+        <button
+          type="submit"
+          className="btn-lime w-full"
+          disabled={loading || (turnstileAttivo && !captcha)}
+        >
           {loading ? "Creazione in corso…" : "Crea account"}
         </button>
         <p className="text-center text-sm text-green-900/70">

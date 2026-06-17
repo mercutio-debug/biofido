@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
+import { Turnstile, turnstileAttivo } from "@/components/Turnstile";
 
 export default function AccediPage() {
   const router = useRouter();
@@ -11,18 +12,27 @@ export default function AccediPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (turnstileAttivo && !captcha) {
+      setError("Conferma di non essere un robot.");
+      return;
+    }
     setLoading(true);
     const { data, error: err } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: { captchaToken: captcha ?? undefined },
     });
     setLoading(false);
     if (err) {
       setError(err.message);
+      setCaptcha(null);
+      setCaptchaKey((k) => k + 1);
       return;
     }
     const isAdmin =
@@ -64,7 +74,13 @@ export default function AccediPage() {
 
         {error && <p className="text-sm font-semibold text-traffic-red">{error}</p>}
 
-        <button type="submit" className="btn-lime w-full" disabled={loading}>
+        <Turnstile key={captchaKey} onToken={setCaptcha} />
+
+        <button
+          type="submit"
+          className="btn-lime w-full"
+          disabled={loading || (turnstileAttivo && !captcha)}
+        >
           {loading ? "Accesso…" : "Accedi"}
         </button>
         <p className="text-center text-sm text-green-900/70">
