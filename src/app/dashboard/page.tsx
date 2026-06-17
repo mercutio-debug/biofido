@@ -115,7 +115,7 @@ export default function DashboardPage() {
       {user && (
         <>
           <SchedaMappaCard ownerId={user.id} plan={pianoScelto} activePlan={activePlan} />
-          <PagamentiCard ownerId={user.id} />
+          <PagamentiCard ownerId={user.id} plan={pianoScelto} />
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
           <PrenotazioniCard ownerId={user.id} />
         </>
@@ -633,7 +633,8 @@ function SchedaMappaCard({
             })()
           ) : (
             <p className="mt-3 text-xs text-green-900/55">
-              I prodotti con foto e prezzi sulla mappa sono una funzione del piano Gold.
+              I prodotti con foto e prezzi si sbloccano dai piani Silver (fino a
+              10) e Gold (fino a 100).
             </p>
           )}
 
@@ -650,7 +651,7 @@ function SchedaMappaCard({
 }
 
 /* ------------------- PAGAMENTI / STRIPE CONNECT (produttore) ------------------- */
-function PagamentiCard({ ownerId }: { ownerId: string }) {
+function PagamentiCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
   const [ready, setReady] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -668,7 +669,8 @@ function PagamentiCard({ ownerId }: { ownerId: string }) {
     });
   }, [ownerId]);
 
-  if (!billingEnabled) return null;
+  // i pagamenti delle prenotazioni servono solo ai piani che possono vendere
+  if (!billingEnabled || !PLAN_MAP[plan].canSell) return null;
 
   async function collega() {
     setBusy(true);
