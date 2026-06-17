@@ -231,7 +231,7 @@ export function PianiAbbonamento({
                     {isFree ? "Gratis" : euroMese(monthlyShown)}
                   </span>
                   {!isFree && (
-                    <span className="mb-1 text-sm text-green-900/60">/mese</span>
+                    <span className="mb-1 text-sm text-green-900/60">+ IVA /mese</span>
                   )}
                 </div>
                 {!isFree && (
@@ -288,9 +288,10 @@ export function PianiAbbonamento({
       </div>
 
       <p className="mt-4 text-center text-xs text-green-900/55">
-        Commissione applicata alle esperienze prenotate (visite, degustazioni,
-        corsi). Ordini di prodotto fisico senza commissione in fase di lancio.
-        Disdici quando vuoi.
+        Prezzi IVA esclusa (+ 22%): fatturiamo il servizio con fattura
+        elettronica. Commissione applicata alle esperienze prenotate (visite,
+        degustazioni, corsi). Ordini di prodotto fisico senza commissione in
+        fase di lancio. Disdici quando vuoi.
       </p>
     </div>
   );

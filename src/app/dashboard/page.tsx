@@ -25,6 +25,7 @@ import {
   type PassoKey,
 } from "@/lib/funzioni";
 import { billingEnabled, startCheckout } from "@/lib/billing";
+import { DatiFatturazioneForm } from "@/components/DatiFatturazioneForm";
 import { startOnboarding, refreshConnectStatus } from "@/lib/connect";
 import {
   listMyExperiences,
@@ -118,10 +119,9 @@ export default function DashboardPage() {
           <PagamentiCard ownerId={user.id} plan={pianoScelto} />
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
           <PrenotazioniCard ownerId={user.id} />
+          <PagamentoFinale ownerId={user.id} scelto={pianoScelto} attivo={activePlan} periodo={periodo} />
         </>
       )}
-
-      <PagamentoFinale scelto={pianoScelto} attivo={activePlan} periodo={periodo} />
     </div>
   );
 }
@@ -155,16 +155,19 @@ function PianoSelector({
 
 /* ------------------- PAGAMENTO FINALE ------------------- */
 function PagamentoFinale({
+  ownerId,
   scelto,
   attivo,
   periodo,
 }: {
+  ownerId: string;
   scelto: Plan;
   attivo: Plan;
   periodo: "monthly" | "annual";
 }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [fatturazioneOk, setFatturazioneOk] = useState(false);
 
   const giaAttivo = attivo === scelto && attivo !== "free";
 
@@ -205,23 +208,39 @@ function PagamentoFinale({
 
   const prezzo =
     periodo === "annual"
-      ? `${PLAN_MAP[scelto].annualPrice} €/anno`
-      : `${PLAN_MAP[scelto].monthlyPrice} €/mese`;
+      ? `${PLAN_MAP[scelto].annualPrice} € + IVA/anno`
+      : `${PLAN_MAP[scelto].monthlyPrice} € + IVA/mese`;
 
   return (
-    <section className="panel-dark mt-6 rounded-2xl p-6 text-center">
-      <h2 className="font-display text-2xl">Hai compilato la tua scheda?</h2>
-      <p className="mt-1 text-[#eaf7d8]">
-        Attiva il piano {PLAN_MAP[scelto].label} per pubblicare tutto e ricevere prenotazioni.
-      </p>
-      {billingEnabled ? (
-        <button className="btn-lime mt-4" onClick={paga} disabled={busy}>
-          {busy ? "Apro il pagamento…" : `Vai al pagamento — ${prezzo}`}
-        </button>
-      ) : (
-        <p className="mt-3 text-sm text-[#eaf7d8]">Pagamenti non ancora attivi.</p>
-      )}
-      {msg && <p className="mt-3 text-sm font-semibold text-badge-yellow">{msg}</p>}
+    <section className="mt-6 space-y-4">
+      {/* dati di fatturazione: obbligatori per i piani a pagamento */}
+      <DatiFatturazioneForm ownerId={ownerId} onValid={setFatturazioneOk} />
+
+      <div className="panel-dark rounded-2xl p-6 text-center">
+        <h2 className="font-display text-2xl">Hai compilato la tua scheda?</h2>
+        <p className="mt-1 text-[#eaf7d8]">
+          Attiva il piano {PLAN_MAP[scelto].label} per pubblicare tutto e ricevere prenotazioni.
+        </p>
+        {billingEnabled ? (
+          <>
+            <button
+              className="btn-lime mt-4"
+              onClick={paga}
+              disabled={busy || !fatturazioneOk}
+            >
+              {busy ? "Apro il pagamento…" : `Vai al pagamento — ${prezzo}`}
+            </button>
+            {!fatturazioneOk && (
+              <p className="mt-3 text-sm text-badge-yellow">
+                Salva prima i dati di fatturazione qui sopra.
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="mt-3 text-sm text-[#eaf7d8]">Pagamenti non ancora attivi.</p>
+        )}
+        {msg && <p className="mt-3 text-sm font-semibold text-badge-yellow">{msg}</p>}
+      </div>
     </section>
   );
 }
