@@ -98,7 +98,7 @@ export const PLAN_MAP: Record<Plan, PlanInfo> = {
   silver: {
     id: "silver", label: "Silver", monthlyPrice: 9, annualPrice: 90,
     markerSize: 38, showIcon: true, showDescription: true, showWebsite: true,
-    showProducts: false, maxProducts: 0, maxPhotos: 5, hasVideo: false,
+    showProducts: true, maxProducts: 10, maxPhotos: 3, hasVideo: false,
     maxEvents: 1, statsLevel: "base",
     canSell: true, commissionRate: 0.15,   // fee piena
     searchBoost: 10, featuredEligible: false, priority: 1,
@@ -106,7 +106,7 @@ export const PLAN_MAP: Record<Plan, PlanInfo> = {
   gold: {
     id: "gold", label: "Gold", monthlyPrice: 24, annualPrice: 240,
     markerSize: 50, showIcon: true, showDescription: true, showWebsite: true,
-    showProducts: true, maxProducts: Infinity, maxPhotos: 20, hasVideo: true,
+    showProducts: true, maxProducts: 100, maxPhotos: 3, hasVideo: true,
     maxEvents: Infinity, statsLevel: "advanced",
     canSell: true, commissionRate: 0.08,   // fee ridotta: incentivo a salire di piano
     searchBoost: 25, featuredEligible: true, priority: 2,

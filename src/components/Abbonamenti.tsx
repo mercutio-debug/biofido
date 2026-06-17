@@ -44,16 +44,16 @@ const FEATURES: Record<Plan, string[]> = {
   ],
   silver: [
     "Segnaposto più grande con icona",
-    "Descrizione, sito web e fino a 5 foto",
-    "1 evento o degustazione",
-    "Statistiche base sul traffico",
-    "Vendita online sul portale",
+    "Scheda con descrizione, sito web e 3 foto",
+    "Fino a 10 prodotti con foto e prezzi",
+    "1 esperienza prenotabile + vendita online (15%)",
+    "Statistiche base",
   ],
   gold: [
     "Massima visibilità + slot «in evidenza»",
-    "Prodotti illimitati con foto e prezzi",
-    "Fino a 20 foto e un video",
-    "Eventi e degustazioni illimitati",
+    "Fino a 100 prodotti + video di presentazione",
+    "Esperienze prenotabili illimitate",
+    "Commissione ridotta (8%)",
     "Statistiche avanzate",
   ],
 };

@@ -67,9 +67,9 @@ export const PASSI: Passo[] = [
   {
     key: "prodotti",
     titolo: "Aggiungi i tuoi prodotti",
-    descr: "Mostra prodotti con foto e prezzi direttamente sulla tua scheda mappa.",
+    descr: "Prodotti con foto e prezzi sulla scheda: 10 con Silver, 100 con Gold.",
     anchor: "scheda",
-    minPlan: "gold",
+    minPlan: "silver",
   },
 ];
 
@@ -92,8 +92,8 @@ export const FUNZIONI: Funzione[] = [
   { label: "Esperienze prenotabili", descr: "1 con Silver, illimitate con Gold.", minPlan: "silver" },
   { label: "Vendita e pagamenti online", descr: "Incassa le prenotazioni (commissione del piano).", minPlan: "silver" },
   { label: "Statistiche di traffico", descr: "Base (Silver) o avanzate (Gold).", minPlan: "silver" },
-  { label: "Prodotti con foto e prezzi", descr: "Mostra i tuoi prodotti sulla scheda.", minPlan: "gold" },
+  { label: "Prodotti con foto e prezzi", descr: "Fino a 10 (Silver) o 100 (Gold), con foto e prezzi.", minPlan: "silver" },
   { label: "Video di presentazione", descr: "Un video nella tua scheda.", minPlan: "gold" },
   { label: "In evidenza nella zona", descr: "Slot in cima alla mappa della zona.", minPlan: "gold" },
-  { label: "Prodotti ed esperienze illimitati", descr: "Nessun limite di numero.", minPlan: "gold" },
+  { label: "Esperienze illimitate", descr: "Con Gold; con Silver 1 esperienza.", minPlan: "gold" },
 ];
