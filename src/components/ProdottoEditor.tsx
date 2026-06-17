@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ComuneAutocomplete } from "./ComuneAutocomplete";
 import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
+import { caricaImmagineCatalogo } from "@/lib/catalogo";
 import type { Product, MateriaPrima } from "@/lib/biofido-data";
 
 const CATEGORIE = [
@@ -48,6 +49,7 @@ export function ProdottoEditor({
   const [unit, setUnit] = useState(initial?.unit ?? UNITA[0]);
   const [description, setDescription] = useState(initial?.description ?? "");
   const [image, setImage] = useState(initial?.image ?? "");
+  const [caricando, setCaricando] = useState(false);
   const [ingredients, setIngredients] = useState<MateriaPrima[]>(
     initial?.ingredients ?? [{ nome: "", origine: "" }],
   );
@@ -111,11 +113,32 @@ export function ProdottoEditor({
                 <span className="text-xs">Anteprima</span>
               )}
             </div>
+            <label className="btn-ghost mt-2 block cursor-pointer text-center text-xs">
+              {caricando ? "Carico…" : "📷 Carica foto"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  setCaricando(true);
+                  setErr(null);
+                  try {
+                    setImage(await caricaImmagineCatalogo("prodotti", f));
+                  } catch (er) {
+                    setErr((er as Error).message);
+                  } finally {
+                    setCaricando(false);
+                  }
+                }}
+              />
+            </label>
             <input
               className="field mt-2 text-xs"
               value={image}
               onChange={(e) => setImage(e.target.value)}
-              placeholder="Link immagine…"
+              placeholder="…oppure incolla un link"
             />
           </div>
 
