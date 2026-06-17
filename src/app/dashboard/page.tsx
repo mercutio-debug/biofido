@@ -27,6 +27,7 @@ import {
 import { billingEnabled, startCheckout } from "@/lib/billing";
 import { DatiFatturazioneForm } from "@/components/DatiFatturazioneForm";
 import { SezioneBio } from "@/components/SezioneBio";
+import { CatalogoCard } from "@/components/CatalogoCard";
 import { startOnboarding, refreshConnectStatus } from "@/lib/connect";
 import {
   listMyExperiences,
@@ -120,6 +121,7 @@ export default function DashboardPage() {
         <>
           <SezioneBio ownerId={user.id} onValid={setBioOk} />
           <SchedaMappaCard ownerId={user.id} plan={pianoScelto} activePlan={activePlan} />
+          <CatalogoCard ownerId={user.id} gold={pianoScelto === "gold"} />
           <PagamentiCard ownerId={user.id} plan={pianoScelto} />
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
           <PrenotazioniCard ownerId={user.id} />
