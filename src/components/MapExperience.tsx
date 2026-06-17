@@ -195,15 +195,27 @@ export function MapExperience() {
             <ul className="mt-3 space-y-2">
               {results.map((r) => {
                 const c = CATEGORY_MAP[r.category];
+                const fotos = (PLAN_MAP[r.plan].showProducts ? r.products ?? [] : [])
+                  .map((p) => p.image)
+                  .filter((u): u is string => Boolean(u))
+                  .slice(0, 3);
                 return (
                   <li
                     key={r.id}
-                    className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
+                    className={`group relative flex items-center justify-between rounded-xl border px-4 py-3 ${
                       PLAN_MAP[r.plan].featuredEligible
                         ? "border-badge-yellow bg-[#fffbe9]"
                         : "border-[#e3eed7] bg-white"
                     }`}
                   >
+                    {fotos.length > 0 && (
+                      <div className="pointer-events-none absolute left-2 top-full z-30 mt-1 hidden gap-1 rounded-xl border border-[#e3eed7] bg-white p-1 shadow-lg group-hover:flex">
+                        {fotos.map((src, i) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img key={i} src={src} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                        ))}
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 font-semibold text-green-800">
                         <span>{c.emoji}</span>
