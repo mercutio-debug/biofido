@@ -90,7 +90,7 @@ export const PLAN_MAP: Record<Plan, PlanInfo> = {
   free: {
     id: "free", label: "Gratuito", monthlyPrice: 0, annualPrice: 0,
     markerSize: 26, showIcon: false, showDescription: false, showWebsite: false,
-    showProducts: false, maxProducts: 0, maxPhotos: 0, hasVideo: false,
+    showProducts: true, maxProducts: 1, maxPhotos: 0, hasVideo: false,
     maxEvents: 0, statsLevel: "none",
     canSell: false, commissionRate: 0,
     searchBoost: 0, featuredEligible: false, priority: 0,

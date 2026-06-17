@@ -41,6 +41,7 @@ const FEATURES: Record<Plan, string[]> = {
     "Segnaposto sulla mappa",
     "Telefono visibile a chi ti cerca",
     "Categoria e città",
+    "1 prodotto con foto e prezzo",
   ],
   silver: [
     "Segnaposto più grande con icona",
