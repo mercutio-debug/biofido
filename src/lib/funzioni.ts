@@ -86,7 +86,7 @@ export const FUNZIONI: Funzione[] = [
   { label: "Categoria e città", descr: "La tua attività ben classificata.", minPlan: "free" },
   { label: "Descrizione e storia", descr: "Racconta chi sei e cosa fai.", minPlan: "silver" },
   { label: "Sito web e contatti estesi", descr: "Link al tuo sito sulla scheda.", minPlan: "silver" },
-  { label: "Galleria foto", descr: "Fino a 5 foto (Silver), 20 (Gold).", minPlan: "silver" },
+  { label: "Galleria foto", descr: "Fino a 3 foto della tua attività.", minPlan: "silver" },
   { label: "Segnaposto più grande con icona", descr: "Più visibile sulla mappa.", minPlan: "silver" },
   { label: "Priorità nei risultati", descr: "Sali nelle ricerche della tua zona.", minPlan: "silver" },
   { label: "Esperienze prenotabili", descr: "1 con Silver, illimitate con Gold.", minPlan: "silver" },
