@@ -21,6 +21,9 @@ const nextConfig: NextConfig = {
   // Vuoto su Hostinger (sito a root), "/eco-visa" sul build GitHub Pages.
   env: {
     NEXT_PUBLIC_BASE_PATH: isGitHubPages ? `/${repoName}` : "",
+    // id di questa build: l'app lo confronta con public/version.json per
+    // accorgersi di una versione nuova e auto-aggiornarsi (vedi UpdateChecker).
+    NEXT_PUBLIC_BUILD_ID: process.env.GITHUB_SHA ?? "dev",
   },
 };
 

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BarkOnStart } from "@/components/BarkOnStart";
+import { UpdateChecker } from "@/components/UpdateChecker";
 import { AccessibilityWidget } from "@/components/AccessibilityWidget";
 
 const anton = Anton({
@@ -48,6 +49,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <BarkOnStart />
+        <UpdateChecker />
         <AccessibilityWidget />
       </body>
     </html>
