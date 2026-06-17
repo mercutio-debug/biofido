@@ -26,6 +26,7 @@ import {
 } from "@/lib/funzioni";
 import { billingEnabled, startCheckout } from "@/lib/billing";
 import { DatiFatturazioneForm } from "@/components/DatiFatturazioneForm";
+import { SezioneBio } from "@/components/SezioneBio";
 import { startOnboarding, refreshConnectStatus } from "@/lib/connect";
 import {
   listMyExperiences,
@@ -53,6 +54,8 @@ export default function DashboardPage() {
   const [activePlan, setActivePlan] = useState<Plan>("free");
   const [pianoScelto, setPianoScelto] = useState<Plan>("free");
   const [periodo, setPeriodo] = useState<"monthly" | "annual">("annual");
+  // BioFido è riservato alle aziende bio: la certificazione è obbligatoria
+  const [bioOk, setBioOk] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -115,11 +118,12 @@ export default function DashboardPage() {
 
       {user && (
         <>
+          <SezioneBio ownerId={user.id} onValid={setBioOk} />
           <SchedaMappaCard ownerId={user.id} plan={pianoScelto} activePlan={activePlan} />
           <PagamentiCard ownerId={user.id} plan={pianoScelto} />
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
           <PrenotazioniCard ownerId={user.id} />
-          <PagamentoFinale ownerId={user.id} scelto={pianoScelto} attivo={activePlan} periodo={periodo} />
+          <PagamentoFinale ownerId={user.id} scelto={pianoScelto} attivo={activePlan} periodo={periodo} bioOk={bioOk} />
         </>
       )}
     </div>
@@ -159,11 +163,13 @@ function PagamentoFinale({
   scelto,
   attivo,
   periodo,
+  bioOk,
 }: {
   ownerId: string;
   scelto: Plan;
   attivo: Plan;
   periodo: "monthly" | "annual";
+  bioOk: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -226,11 +232,16 @@ function PagamentoFinale({
             <button
               className="btn-lime mt-4"
               onClick={paga}
-              disabled={busy || !fatturazioneOk}
+              disabled={busy || !fatturazioneOk || !bioOk}
             >
               {busy ? "Apro il pagamento…" : `Vai al pagamento — ${prezzo}`}
             </button>
-            {!fatturazioneOk && (
+            {!bioOk && (
+              <p className="mt-3 text-sm text-badge-yellow">
+                Salva prima la tua certificazione biologica qui sopra.
+              </p>
+            )}
+            {bioOk && !fatturazioneOk && (
               <p className="mt-3 text-sm text-badge-yellow">
                 Salva prima i dati di fatturazione qui sopra.
               </p>
