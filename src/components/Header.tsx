@@ -34,13 +34,6 @@ export function Header() {
           <Link href="/registrati" className="btn-lime text-xs lg:hidden">
             Iscrivi attività
           </Link>
-          <Link
-            href="/accedi"
-            title="Accesso amministratore"
-            className="rounded-full border border-green-700 px-3 py-1 text-xs font-bold text-green-700 hover:bg-leaf"
-          >
-            🔐 Admin
-          </Link>
         </div>
       </div>
     </header>

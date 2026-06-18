@@ -19,6 +19,7 @@ export function Footer() {
             <li><Link href="/#mappa" className="hover:text-lime-500">Mappa attività bio</Link></li>
             <li><Link href="/registrati" className="hover:text-lime-500">Iscrivi la tua attività</Link></li>
             <li><Link href="/accedi" className="hover:text-lime-500">Area aziende</Link></li>
+            <li><Link href="/accedi" className="hover:text-lime-500">Admin</Link></li>
           </ul>
         </div>
         <div>
