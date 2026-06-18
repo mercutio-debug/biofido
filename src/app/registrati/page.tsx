@@ -8,7 +8,6 @@ import { Turnstile, turnstileAttivo } from "@/components/Turnstile";
 
 export default function RegistratiPage() {
   const router = useRouter();
-  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -30,12 +29,12 @@ export default function RegistratiPage() {
       return;
     }
     setLoading(true);
-    // Crea l'account. Il nome azienda viene salvato nei metadati e poi usato
-    // per precompilare la scheda anagrafica nella dashboard.
+    // Crea l'account con sole email + password. Il nome dell'azienda si
+    // inserisce dopo il login, nella scheda della dashboard.
     const { data, error: signErr } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { nome }, captchaToken: captcha ?? undefined },
+      options: { captchaToken: captcha ?? undefined },
     });
     setLoading(false);
     if (signErr) {
@@ -81,21 +80,11 @@ export default function RegistratiPage() {
         Iscrivi la tua azienda
       </h1>
       <p className="mt-3 text-green-900/80">
-        Crea un account per caricare i tuoi prodotti e vedere la loro impronta
-        ecologica.
+        Ti bastano email e password. Il nome dell&apos;azienda e gli altri dati
+        li inserisci dopo, dalla tua dashboard.
       </p>
 
       <form onSubmit={handleSubmit} className="card mt-8 space-y-4 p-6">
-        <label className="block">
-          <span className="label">Nome azienda</span>
-          <input
-            className="field mt-1"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            placeholder="Es. Dolciaria Zia Pina S.r.l."
-            required
-          />
-        </label>
         <label className="block">
           <span className="label">Email (sarà il tuo username)</span>
           <input
