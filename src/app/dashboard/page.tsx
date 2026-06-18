@@ -27,6 +27,7 @@ import {
 import { billingEnabled, startCheckout } from "@/lib/billing";
 import { DatiFatturazioneForm } from "@/components/DatiFatturazioneForm";
 import { SezioneBio } from "@/components/SezioneBio";
+import { SchedaServizi } from "@/components/SchedaServizi";
 import { CatalogoCard } from "@/components/CatalogoCard";
 import { startOnboarding, refreshConnectStatus } from "@/lib/connect";
 import {
@@ -110,6 +111,8 @@ export default function DashboardPage() {
       </div>
 
       <PianoSelector scelto={pianoScelto} attivo={activePlan} onScegli={scegliPiano} />
+
+      <SchedaServizi piano={pianoScelto} attivo={activePlan} />
 
       {user && <GuidaCard ownerId={user.id} plan={pianoScelto} />}
 
