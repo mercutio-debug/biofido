@@ -31,7 +31,7 @@ export function CatalogoCard({ ownerId, gold }: { ownerId: string; gold: boolean
 
   if (!gold) {
     return (
-      <section className="card mt-6 p-6">
+      <section id="catalogo" className="card mt-6 p-6 scroll-mt-20">
         <h2 className="font-display text-2xl text-green-800">
           Catalogo prodotti e servizi
         </h2>
@@ -59,7 +59,7 @@ export function CatalogoCard({ ownerId, gold }: { ownerId: string; gold: boolean
   }
 
   return (
-    <section className="card mt-6 p-6">
+    <section id="catalogo" className="card mt-6 p-6 scroll-mt-20">
       <h2 className="font-display text-2xl text-green-800">
         Catalogo prodotti e servizi{" "}
         <span className="text-sm font-normal text-green-900/60">(Gold)</span>

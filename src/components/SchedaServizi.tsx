@@ -14,11 +14,18 @@ const NOME: Record<Plan, string> = { free: "Free", silver: "Silver", gold: "Gold
 
 const ECOVISA_REGISTRATI = "https://ecovisa.it/registrati";
 
-type Servizio = { icona: string; nome: string; descr: string; min: Plan; ecovisa?: boolean };
+type Servizio = {
+  icona: string;
+  nome: string;
+  descr: string;
+  min: Plan;
+  ancora?: string; // sezione operativa a cui scorrere al click
+  ecovisa?: boolean; // funzione di ECO-VISA: link esterno invece dello scroll
+};
 
 const SERVIZI: Servizio[] = [
-  { icona: "📍", nome: "Segnaposto sulla mappa", descr: "Ti trovano i consumatori vicino a te (km0).", min: "free" },
-  { icona: "📞", nome: "Telefono e categoria visibili", descr: "Chi ti cerca può contattarti.", min: "free" },
+  { icona: "📍", nome: "Segnaposto sulla mappa", descr: "Ti trovano i consumatori vicino a te (km0).", min: "free", ancora: "scheda" },
+  { icona: "📞", nome: "Telefono e categoria visibili", descr: "Chi ti cerca può contattarti.", min: "free", ancora: "scheda" },
   {
     icona: "🚦",
     nome: "1° prodotto col semaforo",
@@ -26,17 +33,22 @@ const SERVIZI: Servizio[] = [
     min: "free",
     ecovisa: true,
   },
-  { icona: "📷", nome: "Foto dei prodotti", descr: "Immagini caricate e alleggerite in automatico.", min: "silver" },
-  { icona: "🗂️", nome: "Fino a 10 prodotti", descr: "Pubblica più prodotti sulla tua scheda.", min: "silver" },
-  { icona: "📝", nome: "Descrizione, sito web, contatti", descr: "Scheda più ricca e segnaposto più grande.", min: "silver" },
-  { icona: "🔍", nome: "Priorità nei risultati della zona", descr: "Sali nelle ricerche vicino a te.", min: "silver" },
-  { icona: "📊", nome: "Statistiche base", descr: "Quante visite riceve la tua scheda.", min: "silver" },
-  { icona: "➕", nome: "Fino a 100 prodotti", descr: "Sblocca il «+» per caricarne fino a 100.", min: "gold" },
-  { icona: "💶", nome: "Prezzi e prodotti/servizi in vendita", descr: "Mostra prezzi e vendi (anche visite e laboratori).", min: "gold" },
-  { icona: "🗓️", nome: "Prenotazioni via widget", descr: "I clienti richiedono visite ed esperienze dalla mappa.", min: "gold" },
-  { icona: "📈", nome: "Statistiche avanzate", descr: "Andamento nel tempo e area geografica.", min: "gold" },
-  { icona: "⭐", nome: "In evidenza sulla mappa", descr: "La tua attività risalta in cima nella zona.", min: "gold" },
+  { icona: "📷", nome: "Foto dei prodotti", descr: "Immagini caricate e alleggerite in automatico.", min: "silver", ancora: "scheda" },
+  { icona: "🗂️", nome: "Fino a 10 prodotti", descr: "Pubblica più prodotti sulla tua scheda.", min: "silver", ancora: "scheda" },
+  { icona: "📝", nome: "Descrizione, sito web, contatti", descr: "Scheda più ricca e segnaposto più grande.", min: "silver", ancora: "scheda" },
+  { icona: "🔍", nome: "Priorità nei risultati della zona", descr: "Sali nelle ricerche vicino a te.", min: "silver", ancora: "scheda" },
+  { icona: "📊", nome: "Statistiche base", descr: "Quante visite riceve la tua scheda.", min: "silver", ancora: "scheda" },
+  { icona: "➕", nome: "Fino a 100 prodotti", descr: "Sblocca il «+» per caricarne fino a 100.", min: "gold", ancora: "scheda" },
+  { icona: "💶", nome: "Prezzi e prodotti/servizi in vendita", descr: "Mostra prezzi e vendi (anche visite e laboratori).", min: "gold", ancora: "catalogo" },
+  { icona: "🗓️", nome: "Prenotazioni via widget", descr: "I clienti richiedono visite ed esperienze dalla mappa.", min: "gold", ancora: "esperienze" },
+  { icona: "📈", nome: "Statistiche avanzate", descr: "Andamento nel tempo e area geografica.", min: "gold", ancora: "scheda" },
+  { icona: "⭐", nome: "In evidenza sulla mappa", descr: "La tua attività risalta in cima nella zona.", min: "gold", ancora: "scheda" },
 ];
+
+function vai(ancora?: string) {
+  if (!ancora) return;
+  document.getElementById(ancora)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 export function SchedaServizi({ piano }: { piano: Plan; attivo?: Plan }) {
   const [guida, setGuida] = useState(false);
@@ -48,8 +60,8 @@ export function SchedaServizi({ piano }: { piano: Plan; attivo?: Plan }) {
       <h2 className="font-display text-2xl text-green-800">Tutti i servizi</h2>
       <p className="mt-1 text-sm text-green-900/70">
         Stai vedendo il piano <strong>{NOME[piano]}</strong>: i servizi accesi sono
-        inclusi, quelli grigi si sbloccano con Silver o Gold. Cambia piano qui sopra
-        per vedere cosa ottieni.
+        inclusi, quelli grigi si sbloccano con Silver o Gold. <strong>Tocca un
+        servizio</strong> per andare al punto della scheda dove si configura.
       </p>
 
       <div className="mt-5 rounded-2xl border border-[#e3eed7] bg-leaf/30 p-4">
@@ -86,44 +98,58 @@ export function SchedaServizi({ piano }: { piano: Plan; attivo?: Plan }) {
         {SERVIZI.map((s) => {
           const on = incluso(s.min);
           return (
-            <li
-              key={s.nome}
-              className={`flex items-start gap-3 rounded-xl border p-3 ${
-                on ? "border-green-600/40 bg-white" : "border-[#e3eed7] bg-[#f4f6ef] opacity-70"
-              }`}
-            >
-              <span className={`text-xl ${on ? "" : "grayscale"}`}>{s.icona}</span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className={`font-semibold ${on ? "text-green-800" : "text-green-900/45"}`}>
-                    {s.nome}
-                  </span>
-                  {on ? (
-                    <span className="text-sm text-green-600">✓</span>
-                  ) : (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        s.min === "gold" ? "bg-badge-yellow text-green-900" : "bg-[#c9d3da] text-[#33414a]"
-                      }`}
-                    >
-                      {NOME[s.min]}
-                    </span>
-                  )}
-                </div>
-                <div className={`text-xs ${on ? "text-green-900/65" : "text-green-900/40"}`}>
-                  {s.descr}
-                </div>
-              </div>
-              {s.ecovisa && (
-                <a
-                  href={ECOVISA_REGISTRATI}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-lime shrink-0 self-center whitespace-nowrap px-3 py-1.5 text-xs"
-                >
-                  Iscrivimi su ECO-VISA →
-                </a>
-              )}
+            <li key={s.nome}>
+              {(() => {
+                const inner = (
+                  <>
+                    <span className={`text-xl ${on ? "" : "grayscale"}`}>{s.icona}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-semibold ${on ? "text-green-800" : "text-green-900/45"}`}>
+                          {s.nome}
+                        </span>
+                        {on ? (
+                          <span className="text-sm text-green-600">✓</span>
+                        ) : (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              s.min === "gold" ? "bg-badge-yellow text-green-900" : "bg-[#c9d3da] text-[#33414a]"
+                            }`}
+                          >
+                            {NOME[s.min]}
+                          </span>
+                        )}
+                      </div>
+                      <div className={`text-xs ${on ? "text-green-900/65" : "text-green-900/40"}`}>
+                        {s.descr}
+                      </div>
+                    </div>
+                    {s.ecovisa ? (
+                      <span className="btn-lime shrink-0 self-center whitespace-nowrap px-3 py-1.5 text-xs">
+                        Iscrivimi su ECO-VISA →
+                      </span>
+                    ) : (
+                      <span className="shrink-0 self-center text-lg text-green-700/60 transition group-hover:translate-x-0.5 group-hover:text-green-700">
+                        →
+                      </span>
+                    )}
+                  </>
+                );
+                const cls = `group flex w-full items-start gap-3 rounded-xl border p-3 text-left transition hover:shadow-sm ${
+                  on
+                    ? "border-green-600/40 bg-white hover:border-green-600"
+                    : "border-[#e3eed7] bg-[#f4f6ef] opacity-70 hover:opacity-100"
+                }`;
+                return s.ecovisa ? (
+                  <a href={ECOVISA_REGISTRATI} target="_blank" rel="noopener noreferrer" className={cls}>
+                    {inner}
+                  </a>
+                ) : (
+                  <button type="button" onClick={() => vai(s.ancora)} className={cls}>
+                    {inner}
+                  </button>
+                );
+              })()}
             </li>
           );
         })}
