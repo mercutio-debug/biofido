@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 /** Evento Chrome non ancora tipizzato in TS standard. */
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -9,10 +11,10 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 /**
- * Pulsante «Installa l'app». Su Android/Chrome usa l'evento nativo
- * beforeinstallprompt per mostrare il dialogo di installazione; su iOS (Safari
- * non espone quell'evento) mostra le istruzioni «Condividi → Aggiungi a Home».
- * Si nasconde se l'app è già installata (avviata in modalità standalone).
+ * Cornice «Scarica l'app» con l'icona di BioFido. Su Android/Chrome, toccandola
+ * parte il dialogo nativo di installazione (l'app finisce sulla schermata Home
+ * con la sua icona). Su iPhone (Safari non espone l'evento) mostra le istruzioni
+ * «Condividi → Aggiungi a Home». Si nasconde se l'app è già installata.
  */
 export function InstallApp({ className = "" }: { className?: string }) {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
@@ -21,14 +23,12 @@ export function InstallApp({ className = "" }: { className?: string }) {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // già installata? (PWA avviata a schermo intero)
     const standalone =
       window.matchMedia?.("(display-mode: standalone)").matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     if (standalone) setInstalled(true);
 
-    const ua = window.navigator.userAgent.toLowerCase();
-    setIsIOS(/iphone|ipad|ipod/.test(ua));
+    setIsIOS(/iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()));
 
     const onPrompt = (e: Event) => {
       e.preventDefault();
@@ -61,8 +61,29 @@ export function InstallApp({ className = "" }: { className?: string }) {
 
   return (
     <div className={className}>
-      <button type="button" onClick={installa} className="btn-lime">
-        📲 Installa l&apos;app
+      <button
+        type="button"
+        onClick={installa}
+        aria-label="Scarica l'app BioFido"
+        className="group flex w-full max-w-sm items-center gap-4 rounded-2xl border-2 border-[var(--lime-500)] bg-leaf/40 p-3 text-left transition hover:bg-leaf/70 active:scale-[0.99]"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${BASE}/brand/icon-192.png`}
+          alt="Icona BioFido"
+          width={64}
+          height={64}
+          className="h-16 w-16 flex-none rounded-2xl shadow-sm"
+        />
+        <div className="min-w-0">
+          <div className="font-display text-xl leading-tight text-green-800">Scarica l&apos;app</div>
+          <div className="text-sm text-green-900/70">
+            Installa BioFido sul telefono — gratis, si apre come un&apos;app.
+          </div>
+        </div>
+        <span className="ml-auto flex-none text-2xl text-green-700/70 transition group-hover:translate-x-0.5">
+          ⤓
+        </span>
       </button>
 
       {aiuto && (
@@ -72,8 +93,8 @@ export function InstallApp({ className = "" }: { className?: string }) {
               <p className="font-semibold text-green-800">Su iPhone/iPad (Safari):</p>
               <ol className="mt-1 list-decimal space-y-1 pl-5">
                 <li>
-                  Tocca il pulsante <strong>Condividi</strong> in basso (il quadrato
-                  con la freccia ⬆️).
+                  Tocca il pulsante <strong>Condividi</strong> in basso (il quadrato con
+                  la freccia ⬆️).
                 </li>
                 <li>
                   Scorri e tocca <strong>«Aggiungi a Home»</strong>.

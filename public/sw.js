@@ -1,7 +1,7 @@
 /* Service worker BioFido — installabilità PWA, cache offline e notifiche Push. */
 
 // Nome cache: cambiare la versione invalida la vecchia cache al prossimo deploy.
-const CACHE = "biofido-cache-v1";
+const CACHE = "biofido-cache-v2";
 // Cartella base dell'app (gestisce il basePath /biofido/ di GitHub Pages).
 const BASE = new URL("./", self.location).pathname;
 // Risorse minime dell'"app shell" da avere subito disponibili offline.
@@ -37,10 +37,14 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return; // POST/PUT ecc.: gestiti dal browser
+  // I media (audio/video) usano richieste "Range": vanno serviti dalla rete,
+  // altrimenti una risposta intera dalla cache rompe la riproduzione (il bau!).
+  if (req.headers.has("range")) return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // Supabase e altri host: niente cache
   if (url.pathname.endsWith("/version.json")) return; // serve sempre fresco
   if (url.pathname.endsWith("/sw.js")) return;
+  if (/\.(mp3|wav|ogg|m4a|mp4|webm)$/i.test(url.pathname)) return; // media: sempre rete
 
   if (req.mode === "navigate") {
     event.respondWith(networkFirst(req));
