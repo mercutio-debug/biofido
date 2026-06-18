@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
 import { Turnstile, turnstileAttivo } from "@/components/Turnstile";
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export default function AccediPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -14,6 +16,13 @@ export default function AccediPage() {
   const [loading, setLoading] = useState(false);
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [captchaKey, setCaptchaKey] = useState(0);
+  const [falliti, setFalliti] = useState(0);
+
+  // recupero password
+  const [recupero, setRecupero] = useState(false);
+  const [recMail, setRecMail] = useState("");
+  const [recMsg, setRecMsg] = useState<string | null>(null);
+  const [recBusy, setRecBusy] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,14 +39,33 @@ export default function AccediPage() {
     });
     setLoading(false);
     if (err) {
-      setError(err.message);
+      const msg = /invalid login credentials/i.test(err.message)
+        ? "Email o password non corretti."
+        : err.message;
+      setError(msg);
+      setFalliti((n) => n + 1);
       setCaptcha(null);
       setCaptchaKey((k) => k + 1);
       return;
     }
-    const isAdmin =
-      data.user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    const isAdmin = data.user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
     router.push(isAdmin ? "/admin" : "/dashboard");
+  }
+
+  async function inviaRecupero(e: React.FormEvent) {
+    e.preventDefault();
+    setRecMsg(null);
+    if (!recMail.trim()) return;
+    setRecBusy(true);
+    const { error: err } = await supabase.auth.resetPasswordForEmail(recMail, {
+      redirectTo: `${window.location.origin}${BASE}/reset/`,
+    });
+    setRecBusy(false);
+    setRecMsg(
+      err
+        ? err.message
+        : "Se l'indirizzo è registrato, ti è arrivata un'email con le istruzioni per accedere e impostare una nuova password.",
+    );
   }
 
   return (
@@ -47,7 +75,7 @@ export default function AccediPage() {
       </div>
       <h1 className="title-pangea mt-2 text-4xl text-green-700">Accedi</h1>
       <p className="mt-3 text-green-900/80">
-        Entra nella tua area per gestire azienda e prodotti.
+        Stesse credenziali su BioFido ed ECO-VISA: un solo account per entrambi.
       </p>
 
       <form onSubmit={handleSubmit} className="card mt-8 space-y-4 p-6">
@@ -83,6 +111,21 @@ export default function AccediPage() {
         >
           {loading ? "Accesso…" : "Accedi"}
         </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setRecupero((v) => !v);
+            setRecMail(email);
+            setRecMsg(null);
+          }}
+          className={`block w-full text-center text-sm font-semibold ${
+            falliti > 0 ? "text-traffic-red" : "text-green-700"
+          } hover:underline`}
+        >
+          Password o user dimenticati? — Recupera dati
+        </button>
+
         <p className="text-center text-sm text-green-900/70">
           Non hai un account?{" "}
           <Link href="/registrati" className="font-bold text-green-700 hover:text-lime-500">
@@ -90,6 +133,34 @@ export default function AccediPage() {
           </Link>
         </p>
       </form>
+
+      {recupero && (
+        <div className="card mt-4 space-y-3 p-6">
+          <h2 className="font-display text-xl text-green-800">Recupera l&apos;accesso</h2>
+          <p className="text-sm text-green-900/70">
+            Inserisci la mail con cui ti sei iscritto: ti invieremo un&apos;email con un
+            link per accedere e impostare una nuova password.
+          </p>
+          <form onSubmit={inviaRecupero} className="flex gap-2">
+            <input
+              type="email"
+              className="field flex-1"
+              value={recMail}
+              onChange={(e) => setRecMail(e.target.value)}
+              placeholder="latua@email.it"
+              required
+            />
+            <button className="btn-lime whitespace-nowrap" disabled={recBusy}>
+              {recBusy ? "Invio…" : "Invia"}
+            </button>
+          </form>
+          {recMsg && (
+            <p className="rounded-lg bg-leaf p-3 text-sm font-semibold text-green-700">
+              {recMsg}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

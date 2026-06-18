@@ -39,8 +39,22 @@ export default function RegistratiPage() {
     });
     setLoading(false);
     if (signErr) {
-      setError(signErr.message);
+      setError(
+        /already registered/i.test(signErr.message)
+          ? "Utente già registrato. Accedi con le tue credenziali."
+          : signErr.message,
+      );
       // il token Turnstile è monouso: ne serve uno nuovo dopo un errore
+      setCaptcha(null);
+      setCaptchaKey((k) => k + 1);
+      return;
+    }
+    // email già presente: Supabase risponde con un utente SENZA identità (anti-enumerazione)
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      setInfo(null);
+      setError(
+        "Utente già registrato. Lo stesso account vale su BioFido ed ECO-VISA: accedi con le tue credenziali.",
+      );
       setCaptcha(null);
       setCaptchaKey((k) => k + 1);
       return;
