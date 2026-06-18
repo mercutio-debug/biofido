@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BarkOnStart } from "@/components/BarkOnStart";
+import { RegisterSW } from "@/components/RegisterSW";
 import { UpdateChecker } from "@/components/UpdateChecker";
 import { CookieBanner } from "@/components/CookieBanner";
 import { AccessibilityWidget } from "@/components/AccessibilityWidget";
@@ -50,6 +51,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <BarkOnStart />
+        <RegisterSW />
         <UpdateChecker />
         <CookieBanner />
         <AccessibilityWidget />

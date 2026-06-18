@@ -1,4 +1,14 @@
-/* Service worker BioFido — gestione notifiche Web Push. */
+/* Service worker BioFido — installabilità PWA + notifiche Web Push. */
+
+// Attiva subito il nuovo service worker senza attendere la chiusura delle schede.
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+// Handler fetch "passthrough": non intercetta nulla (lascia gestire al browser),
+// ma la sua sola presenza soddisfa il requisito di installabilità della PWA su
+// Android/Chrome, così compare "Installa app" / "Aggiungi a schermata Home".
+self.addEventListener("fetch", () => {});
+
 self.addEventListener("push", (event) => {
   let data = {};
   try {
