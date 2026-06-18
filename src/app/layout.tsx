@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BarkOnStart } from "@/components/BarkOnStart";
 import { UpdateChecker } from "@/components/UpdateChecker";
+import { CookieBanner } from "@/components/CookieBanner";
 import { AccessibilityWidget } from "@/components/AccessibilityWidget";
 
 const anton = Anton({
@@ -50,6 +51,7 @@ export default function RootLayout({
         <Footer />
         <BarkOnStart />
         <UpdateChecker />
+        <CookieBanner />
         <AccessibilityWidget />
       </body>
     </html>
