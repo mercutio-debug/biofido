@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { MapExperience } from "@/components/MapExperience";
 import { BioFidoLogo } from "@/components/Logo";
-import { InstallApp } from "@/components/InstallApp";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -23,7 +22,6 @@ export default function Home() {
               <a href="#mappa" className="btn-lime">🐾 Cerca bio vicino a me</a>
               <Link href="/registrati" className="btn-ghost">Sei un&apos;attività? Iscriviti</Link>
             </div>
-            <InstallApp className="mt-4" />
           </div>
           <div className="relative mx-auto w-full max-w-sm overflow-hidden rounded-3xl border-4 border-cape-red shadow-lg">
             <Image
