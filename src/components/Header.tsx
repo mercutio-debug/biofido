@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { BioFidoLogo } from "./Logo";
+import { UserMenu } from "./UserMenu";
 
 const nav = [
   { href: "/#mappa", label: "Mappa" },
   { href: "/#come-funziona", label: "Come funziona" },
   { href: "/abbonamenti", label: "Abbonamenti" },
-  { href: "/prenotazioni", label: "Le mie prenotazioni" },
-  { href: "/accedi", label: "Accedi" },
 ];
 
 export function Header() {
@@ -50,13 +49,8 @@ export function Header() {
                 {n.label}
               </Link>
             ))}
-            <Link href="/registrati" className="btn-lime text-sm">
-              Iscrivi la tua attività bio
-            </Link>
           </nav>
-          <Link href="/registrati" className="btn-lime text-xs lg:hidden">
-            Iscrivi attività
-          </Link>
+          <UserMenu />
         </div>
       </div>
     </header>
