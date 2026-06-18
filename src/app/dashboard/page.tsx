@@ -463,6 +463,8 @@ function GuidaCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
 }
 
 /* ------------------- SCHEDA SULLA MAPPA (produttore) ------------------- */
+const BOZZA_SCHEDA = "biofido_scheda_bozza";
+
 function SchedaMappaCard({
   ownerId,
   plan,
@@ -500,6 +502,23 @@ function SchedaMappaCard({
       setPhone(b.phone ?? "");
       setProducts(b.products ?? []);
       setCoord({ lat: b.lat, lon: b.lon });
+    } else {
+      // Nessuna scheda salvata: ripristina l'eventuale bozza locale (anti perdita-dati)
+      try {
+        const raw = window.localStorage.getItem(BOZZA_SCHEDA);
+        if (raw) {
+          const d = JSON.parse(raw);
+          if (d.name) setName(d.name);
+          if (d.category) setCategory(d.category);
+          if (d.city) setCity(d.city);
+          if (d.address) setAddress(d.address);
+          if (d.description) setDescription(d.description);
+          if (d.website) setWebsite(d.website);
+          if (d.phone) setPhone(d.phone);
+          if (Array.isArray(d.products)) setProducts(d.products);
+          if (d.coord) setCoord(d.coord);
+        }
+      } catch {}
     }
     setLoading(false);
   }, [ownerId]);
@@ -507,6 +526,17 @@ function SchedaMappaCard({
   useEffect(() => {
     load();
   }, [load]);
+
+  // Salva una bozza locale finché la scheda non è registrata sul DB
+  useEffect(() => {
+    if (loading || existing) return;
+    try {
+      window.localStorage.setItem(
+        BOZZA_SCHEDA,
+        JSON.stringify({ name, category, city, address, description, website, phone, products, coord }),
+      );
+    } catch {}
+  }, [loading, existing, name, category, city, address, description, website, phone, products, coord]);
 
   async function save() {
     if (!name.trim()) {
@@ -541,6 +571,9 @@ function SchedaMappaCard({
       setMsg("Errore: " + error);
       return;
     }
+    try {
+      window.localStorage.removeItem(BOZZA_SCHEDA);
+    } catch {}
     setMsg("Scheda salvata ✓ — la tua attività è sulla mappa.");
     load();
   }

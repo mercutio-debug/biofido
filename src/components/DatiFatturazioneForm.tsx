@@ -30,11 +30,13 @@ export function DatiFatturazioneForm({
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [salvato, setSalvato] = useState(false);
+  const [cfUguale, setCfUguale] = useState(false);
 
   useEffect(() => {
     caricaDatiFatturazione().then((dati) => {
       if (dati) {
         setD({ ...DATI_VUOTI, ...dati });
+        setCfUguale(!!dati.codice_fiscale && dati.codice_fiscale === dati.partita_iva);
         setSalvato(true);
       }
       setLoading(false);
@@ -72,7 +74,10 @@ export function DatiFatturazioneForm({
     setSaving(true);
     setMsg(null);
     try {
-      await salvaDatiFatturazione(ownerId, d);
+      await salvaDatiFatturazione(ownerId, {
+        ...d,
+        codice_fiscale: cfUguale ? d.partita_iva : d.codice_fiscale,
+      });
       setSalvato(true);
       setMsg("Dati di fatturazione salvati ✅");
     } catch (e) {
@@ -139,8 +144,25 @@ export function DatiFatturazioneForm({
           <input className="field mt-1" value={d.indirizzo ?? ""} onChange={(e) => set("indirizzo", e.target.value)} />
         </div>
         <div>
-          <span className="label">Codice fiscale (se diverso)</span>
-          <input className="field mt-1" value={d.codice_fiscale ?? ""} onChange={(e) => set("codice_fiscale", e.target.value)} />
+          <span className="label">Codice fiscale</span>
+          <input
+            className="field mt-1 disabled:opacity-60"
+            value={cfUguale ? d.partita_iva : (d.codice_fiscale ?? "")}
+            disabled={cfUguale}
+            onChange={(e) => set("codice_fiscale", e.target.value)}
+          />
+          <label className="mt-1.5 flex items-center gap-2 text-xs font-semibold text-green-900/75">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[var(--lime-500)]"
+              checked={cfUguale}
+              onChange={(e) => {
+                setCfUguale(e.target.checked);
+                setSalvato(false);
+              }}
+            />
+            Codice fiscale uguale alla Partita IVA
+          </label>
         </div>
       </div>
 
