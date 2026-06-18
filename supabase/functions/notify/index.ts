@@ -101,6 +101,17 @@ Deno.serve(async (req) => {
     const table: string = payload.table;
     const rec = payload.record ?? {};
 
+    if (table === "users") {
+      // nuova iscrizione (auth.users): avviso l'amministratore via email
+      await dispatch({
+        email: "mauriziocapitelli@yahoo.it",
+        title: "Nuova iscrizione su BioFido / ECO-VISA",
+        body: `Si è iscritta una nuova azienda: ${rec.email ?? "(email non disponibile)"}.`,
+        url: `${SITE_URL}/admin/`,
+      });
+      return ok();
+    }
+
     if (table === "messaggi") {
       const { data: p } = await admin
         .from("prenotazioni")
