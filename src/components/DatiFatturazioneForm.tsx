@@ -43,6 +43,17 @@ export function DatiFatturazioneForm({
     });
   }, []);
 
+  // Quando "CF uguale alla P.IVA" è spuntato, copia (e mantiene aggiornato) il
+  // codice fiscale con il numero di partita IVA.
+  useEffect(() => {
+    if (!cfUguale) return;
+    setD((prev) =>
+      prev.codice_fiscale === prev.partita_iva
+        ? prev
+        : { ...prev, codice_fiscale: prev.partita_iva },
+    );
+  }, [cfUguale, d.partita_iva]);
+
   useEffect(() => {
     onValid?.(salvato && datiCompleti(d));
   }, [salvato, d, onValid]);
@@ -147,7 +158,7 @@ export function DatiFatturazioneForm({
           <span className="label">Codice fiscale</span>
           <input
             className="field mt-1 disabled:opacity-60"
-            value={cfUguale ? d.partita_iva : (d.codice_fiscale ?? "")}
+            value={d.codice_fiscale ?? ""}
             disabled={cfUguale}
             onChange={(e) => set("codice_fiscale", e.target.value)}
           />
