@@ -12,12 +12,20 @@ import type { Plan } from "@/lib/categories";
 const PRIO: Record<Plan, number> = { free: 0, silver: 1, gold: 2 };
 const NOME: Record<Plan, string> = { free: "Free", silver: "Silver", gold: "Gold" };
 
-type Servizio = { icona: string; nome: string; descr: string; min: Plan };
+const ECOVISA_REGISTRATI = "https://ecovisa.it/registrati";
+
+type Servizio = { icona: string; nome: string; descr: string; min: Plan; ecovisa?: boolean };
 
 const SERVIZI: Servizio[] = [
   { icona: "📍", nome: "Segnaposto sulla mappa", descr: "Ti trovano i consumatori vicino a te (km0).", min: "free" },
   { icona: "📞", nome: "Telefono e categoria visibili", descr: "Chi ti cerca può contattarti.", min: "free" },
-  { icona: "📦", nome: "1° prodotto sulla scheda", descr: "Carica il tuo primo prodotto con il semaforo.", min: "free" },
+  {
+    icona: "🚦",
+    nome: "1° prodotto col semaforo",
+    descr: "Per caricarlo devi iscriverti su ECO-VISA — stesse credenziali del tuo account.",
+    min: "free",
+    ecovisa: true,
+  },
   { icona: "📷", nome: "Foto dei prodotti", descr: "Immagini caricate e alleggerite in automatico.", min: "silver" },
   { icona: "🗂️", nome: "Fino a 10 prodotti", descr: "Pubblica più prodotti sulla tua scheda.", min: "silver" },
   { icona: "📝", nome: "Descrizione, sito web, contatti", descr: "Scheda più ricca e segnaposto più grande.", min: "silver" },
@@ -106,6 +114,16 @@ export function SchedaServizi({ piano }: { piano: Plan; attivo?: Plan }) {
                   {s.descr}
                 </div>
               </div>
+              {s.ecovisa && (
+                <a
+                  href={ECOVISA_REGISTRATI}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-lime shrink-0 self-center whitespace-nowrap px-3 py-1.5 text-xs"
+                >
+                  Iscrivimi su ECO-VISA →
+                </a>
+              )}
             </li>
           );
         })}
