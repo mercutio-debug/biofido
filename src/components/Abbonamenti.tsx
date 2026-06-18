@@ -223,6 +223,12 @@ export function PianiAbbonamento({
                 </span>
               )}
 
+              {isCurrent && (
+                <span className="absolute right-4 top-4 rounded-full border border-green-600 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                  Piano attuale
+                </span>
+              )}
+
               <div className="font-display text-2xl text-green-800">{p.label}</div>
 
               <div className="mt-2">
@@ -259,26 +265,29 @@ export function PianiAbbonamento({
                 ))}
               </ul>
 
-              {/* CTA — semplice, un clic */}
+              {/* CTA — selezione singola: clicca per scegliere, sempre attiva su
+                  tutte e tre le card. Free è il default; tornando su Free si
+                  disattivano Silver e Gold. */}
               <div className="mt-6">
-                {isCurrent ? (
-                  <div className="rounded-full border-2 border-green-600 px-4 py-2 text-center text-sm font-bold text-green-700">
-                    Piano attuale
-                  </div>
-                ) : onSelect ? (
+                {onSelect ? (
                   <button
                     type="button"
                     onClick={() => onSelect(id, period)}
-                    className={isGold ? "btn-lime w-full justify-center" : "btn-ghost w-full justify-center"}
+                    aria-pressed={isSelected}
+                    className={`w-full justify-center ${isSelected ? "btn-lime" : "btn-ghost"}`}
                   >
-                    {isSelected ? "Selezionato ✓" : id === "free" ? "Resta su Free" : `Scegli ${p.label}`}
+                    {isSelected
+                      ? "Selezionato ✓"
+                      : isFree
+                        ? "Torna al piano Free"
+                        : `Scegli ${p.label}`}
                   </button>
                 ) : (
                   <Link
                     href="/registrati"
                     className={isGold ? "btn-lime w-full justify-center" : "btn-ghost w-full justify-center"}
                   >
-                    {id === "free" ? "Inizia gratis" : `Scegli ${p.label}`}
+                    {isFree ? "Inizia gratis" : `Scegli ${p.label}`}
                   </Link>
                 )}
               </div>
