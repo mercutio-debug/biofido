@@ -110,6 +110,24 @@ export default function DashboardPage() {
         </button>
       </div>
 
+      {/* Semaforo: funzione di ECO-VISA, qui disattivata con invito a iscriversi */}
+      <section className="card mt-6 border-2 border-dashed border-[#cfe3b4] bg-leaf/30 p-6 text-center">
+        <h2 className="font-display text-2xl text-green-700">🚦 Semaforo di sostenibilità</h2>
+        <p className="mx-auto mt-1 max-w-xl text-sm text-green-900/70">
+          Misura l&apos;impronta ecologica dei tuoi prodotti e genera un codice da
+          incollare sul tuo sito. È una funzione di <strong>ECO-VISA</strong> — stesso
+          account, stesse credenziali.
+        </p>
+        <a
+          href="https://ecovisa.it/registrati"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-lime mt-4 inline-block"
+        >
+          Iscrivimi su ECO-VISA e genera il mio primo semaforo di sostenibilità!
+        </a>
+      </section>
+
       <PianoSelector scelto={pianoScelto} attivo={activePlan} onScegli={scegliPiano} />
 
       <SchedaServizi piano={pianoScelto} attivo={activePlan} />
