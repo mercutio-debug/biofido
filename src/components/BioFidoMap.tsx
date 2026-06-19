@@ -99,6 +99,8 @@ export default function BioFidoMap({ center, radiusKm, businesses, userLabel, on
     // inquadra l'area del raggio (bounds del diametro, senza dover aggiungere
     // il cerchio alla mappa)
     const bounds = L.latLng(center.lat, center.lon).toBounds(radiusKm * 2000);
+    // includi anche eventuali attività mostrate oltre il raggio (alternative vicine)
+    for (const b of businesses) bounds.extend([b.lat, b.lon]);
     map.fitBounds(bounds, { padding: [20, 20], maxZoom: 13 });
   }, [center.lat, center.lon, radiusKm, businesses, userLabel, onSelect]);
 

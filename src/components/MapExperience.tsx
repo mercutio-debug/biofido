@@ -63,6 +63,25 @@ export function MapExperience() {
     });
   }, []);
 
+  // All'apertura provo a rilevare la posizione dell'utente (se la concede): così
+  // la mappa parte già centrata su di lui invece che su Genova.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    setGeoMsg("Individuo la tua posizione…");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setCenter({ lat: latitude, lon: longitude });
+        const near = nearestPlace(latitude, longitude);
+        setLabel(near?.name ? `Vicino a ${near.name}` : "La tua posizione");
+        setGeoMsg(null);
+      },
+      // permesso negato o non disponibile: resto sul default, senza insistere
+      () => setGeoMsg(null),
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  }, []);
+
   function useMyPosition() {
     if (!navigator.geolocation) {
       setGeoMsg("Il tuo browser non supporta la geolocalizzazione.");
@@ -92,6 +111,16 @@ export function MapExperience() {
       // Gold sale sopra un Free; non può però scavalcare chi è molto più vicino.
       .sort((a, b) => rankScore(b.plan, b.dist) - rankScore(a.plan, a.dist));
   }, [all, cat, center, radius]);
+
+  // Se nel raggio scelto non c'è nulla, propongo comunque le attività PIÙ VICINE
+  // (anche oltre il raggio), ordinate per distanza, con i km indicati.
+  const vicine = useMemo(() => {
+    return all
+      .filter((b) => cat === "all" || b.category === cat)
+      .map((b) => ({ ...b, dist: distKm(center.lat, center.lon, b.lat, b.lon) }))
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 5);
+  }, [all, cat, center]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -173,7 +202,7 @@ export function MapExperience() {
       {/* MAPPA + RISULTATI */}
       <div className="mt-5 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="card overflow-hidden p-0">
-          <BioFidoMap center={center} radiusKm={radius} businesses={results} userLabel={label} onSelect={setScheda} />
+          <BioFidoMap center={center} radiusKm={radius} businesses={results.length ? results : vicine} userLabel={label} onSelect={setScheda} />
         </div>
         <div>
           <h2 className="font-display text-2xl text-green-800">
@@ -183,9 +212,44 @@ export function MapExperience() {
             Dati: {source === "supabase" ? "database BioFido (live)" : "demo offline"}
           </p>
           {results.length === 0 ? (
-            <p className="mt-3 text-green-900/70">
-              Nessuna attività bio in quest&apos;area. Allarga il raggio o cambia città.
-            </p>
+            vicine.length === 0 ? (
+              <p className="mt-3 text-green-900/70">
+                Nessuna attività bio disponibile al momento.
+              </p>
+            ) : (
+              <div className="mt-3">
+                <p className="text-green-900/70">
+                  Nessuna attività entro {radius} km. Ecco le <strong>più vicine</strong>:
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {vicine.map((r) => {
+                    const c = CATEGORY_MAP[r.category];
+                    return (
+                      <li
+                        key={r.id}
+                        onClick={() => setScheda(r)}
+                        title="Apri la scheda dell'impresa"
+                        className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#e3eed7] bg-white px-4 py-3 hover:border-lime-500"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 font-semibold text-green-800">
+                            <span>{c.emoji}</span>
+                            <span className="truncate">{r.name}</span>
+                          </div>
+                          <div className="truncate text-xs text-green-900/60">
+                            {c.label} · {r.city}
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="font-display text-lg text-lime-500">{r.dist} km</div>
+                          <div className="text-[11px] font-semibold text-green-700">più vicina</div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )
           ) : (
             <ul className="mt-3 space-y-2">
               {results.map((r) => {
