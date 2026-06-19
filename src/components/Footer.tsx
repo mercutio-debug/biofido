@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { BioFidoLogo } from "./Logo";
+import { InstallApp } from "./InstallApp";
+
+// ECO-VISA è il portale "madre" di BioFido: le legende rimandano alle sue pagine.
+const ECOVISA = "https://mercutio-debug.github.io/eco-visa";
 
 export function Footer() {
   return (
@@ -12,6 +16,8 @@ export function Footer() {
             e attività bio vicino alla tua posizione, fino a 70 km, e ti guida
             fin lì. Spesa a chilometro zero, filiera corta.
           </p>
+          {/* installazione disponibile in qualsiasi momento, anche dopo il popup */}
+          <InstallApp />
         </div>
         <div>
           <h4 className="label mb-2">App</h4>
@@ -19,15 +25,26 @@ export function Footer() {
             <li><Link href="/#mappa" className="hover:text-lime-500">Mappa attività bio</Link></li>
             <li><Link href="/registrati" className="hover:text-lime-500">Iscrivi la tua attività</Link></li>
             <li><Link href="/accedi" className="hover:text-lime-500">Area aziende</Link></li>
-            <li><Link href="/accedi" className="hover:text-lime-500">Admin</Link></li>
           </ul>
         </div>
         <div>
           <h4 className="label mb-2">Progetto</h4>
-          <ul className="space-y-1 text-sm text-green-900/80">
-            <li>Chilometro zero</li>
-            <li>Filiera corta</li>
-            <li>Biologico certificato</li>
+          <ul className="space-y-1 text-sm">
+            <li>
+              <a href={ECOVISA} className="hover:text-lime-500" target="_blank" rel="noopener noreferrer">
+                Spesa a chilometro zero
+              </a>
+            </li>
+            <li>
+              <a href={`${ECOVISA}/calcola/`} className="hover:text-lime-500" target="_blank" rel="noopener noreferrer">
+                Come si calcola l&apos;impronta ecologica
+              </a>
+            </li>
+            <li>
+              <a href={`${ECOVISA}/abbonamenti/`} className="hover:text-lime-500" target="_blank" rel="noopener noreferrer">
+                Il progetto Pangea Etico
+              </a>
+            </li>
           </ul>
         </div>
       </div>
@@ -36,6 +53,15 @@ export function Footer() {
         <Link href="/privacy" className="hover:text-lime-500 hover:underline">
           Privacy e cookie
         </Link>{" "}
+        ·{" "}
+        <a
+          href="https://mercutio-debug.github.io/elimina-account.html"
+          className="hover:text-lime-500 hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Diritto di recesso e cancellazione account
+        </a>{" "}
         · Mappe © OpenStreetMap
       </div>
     </footer>
