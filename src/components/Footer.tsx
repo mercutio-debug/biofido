@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BioFidoLogo } from "./Logo";
 import { InstallApp } from "./InstallApp";
+import { LEGALE } from "@/lib/legale";
 
 // ECO-VISA è il portale "madre" di BioFido: le legende rimandano alle sue pagine.
 const ECOVISA = "https://mercutio-debug.github.io/eco-visa";
@@ -50,16 +51,11 @@ export function Footer() {
       </div>
       <div className="border-t border-[#dceac9] py-4 text-center text-xs text-green-900/60">
         Tutti i diritti sono riservati - Ligusto Srl 2026 ·{" "}
-        <Link href="/privacy" className="hover:text-lime-500 hover:underline">
+        <a href={LEGALE.privacy} className="hover:text-lime-500 hover:underline" target="_blank" rel="noopener noreferrer">
           Privacy e cookie
-        </Link>{" "}
+        </a>{" "}
         ·{" "}
-        <a
-          href="https://mercutio-debug.github.io/elimina-account.html"
-          className="hover:text-lime-500 hover:underline"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={LEGALE.recesso} className="hover:text-lime-500 hover:underline" target="_blank" rel="noopener noreferrer">
           Diritto di recesso e cancellazione account
         </a>{" "}
         · Mappe © OpenStreetMap
