@@ -34,11 +34,11 @@ const SERVIZI: Servizio[] = [
     ecovisa: true,
   },
   { icona: "📷", nome: "Foto dei prodotti", descr: "Immagini caricate e alleggerite in automatico.", min: "silver", ancora: "scheda" },
-  { icona: "🗂️", nome: "Fino a 10 prodotti", descr: "Pubblica più prodotti sulla tua scheda.", min: "silver", ancora: "scheda" },
+  { icona: "🗂️", nome: "Fino a 10 prodotti/semafori", descr: "Pubblica più prodotti (con semaforo di sostenibilità) sulla tua scheda.", min: "silver", ancora: "scheda" },
   { icona: "📝", nome: "Descrizione, sito web, contatti", descr: "Scheda più ricca e segnaposto più grande.", min: "silver", ancora: "scheda" },
   { icona: "🔍", nome: "Priorità nei risultati della zona", descr: "Sali nelle ricerche vicino a te.", min: "silver", ancora: "scheda" },
   { icona: "📊", nome: "Statistiche base", descr: "Quante visite riceve la tua scheda.", min: "silver", ancora: "scheda" },
-  { icona: "➕", nome: "Fino a 100 prodotti", descr: "Sblocca il «+» per caricarne fino a 100.", min: "gold", ancora: "scheda" },
+  { icona: "➕", nome: "Fino a 100 prodotti/semafori", descr: "Sblocca il «+» per caricarne fino a 100.", min: "gold", ancora: "scheda" },
   { icona: "💶", nome: "Prezzi e prodotti/servizi in vendita", descr: "Mostra prezzi e vendi (anche visite e laboratori).", min: "gold", ancora: "catalogo" },
   { icona: "🗓️", nome: "Prenotazioni via widget", descr: "I clienti richiedono visite ed esperienze dalla mappa.", min: "gold", ancora: "esperienze" },
   { icona: "📈", nome: "Statistiche avanzate", descr: "Andamento nel tempo e area geografica.", min: "gold", ancora: "scheda" },
@@ -54,6 +54,7 @@ export function SchedaServizi({ piano }: { piano: Plan; attivo?: Plan }) {
   const [guida, setGuida] = useState(false);
   const incluso = (min: Plan) => PRIO[piano] >= PRIO[min];
   const maxSlot = piano === "free" ? 1 : 10;
+  const limiteAttuale = piano === "free" ? 1 : piano === "silver" ? 10 : 100;
 
   return (
     <section className="card mt-4 p-6">
@@ -65,7 +66,12 @@ export function SchedaServizi({ piano }: { piano: Plan; attivo?: Plan }) {
       </p>
 
       <div className="mt-5 rounded-2xl border border-[#e3eed7] bg-leaf/30 p-4">
-        <div className="text-sm font-bold text-green-800">Prodotti pubblicabili</div>
+        <div className="text-sm font-bold text-green-800">
+          Prodotti / semafori di sostenibilità pubblicabili
+        </div>
+        <div className="mt-0.5 text-sm font-semibold text-green-700">
+          Col piano {NOME[piano]} puoi pubblicarne fino a {limiteAttuale}.
+        </div>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {Array.from({ length: 10 }).map((_, i) => {
             const on = i < maxSlot;
@@ -90,7 +96,7 @@ export function SchedaServizi({ piano }: { piano: Plan; attivo?: Plan }) {
           </span>
         </div>
         <p className="mt-2 text-[11px] text-green-900/55">
-          Free: 1 prodotto · Silver: 10 · Gold: il «+» per arrivare fino a 100.
+          Free: 1 · Silver: 10 · Gold: fino a 100 prodotti/semafori di sostenibilità.
         </p>
       </div>
 
@@ -178,7 +184,7 @@ export function SchedaServizi({ piano }: { piano: Plan; attivo?: Plan }) {
             <p className="mt-1 text-xs text-green-900/70">Per una scheda completa e visibile.</p>
             <ul className="mt-2 space-y-1 text-sm text-green-900/85">
               <li>✓ Tutto il Free, più:</li>
-              <li>✓ Fino a 10 prodotti, con foto</li>
+              <li>✓ Fino a 10 prodotti/semafori, con foto</li>
               <li>✓ Descrizione, sito web, contatti</li>
               <li>✓ Priorità nella zona + statistiche base</li>
             </ul>

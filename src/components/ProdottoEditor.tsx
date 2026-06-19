@@ -160,7 +160,17 @@ export function ProdottoEditor({
               <label className="block">
                 <span className="label">Prezzo</span>
                 <div className="mt-1 flex gap-2">
-                  <input className="field" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="€ 15,00" />
+                  <input
+                    className="field"
+                    value={price}
+                    inputMode="decimal"
+                    placeholder="€ 15,00"
+                    onChange={(e) => {
+                      // autocompleta il simbolo €: tiene solo cifre/virgola/punto e antepone "€ "
+                      const num = e.target.value.replace(/[^\d.,]/g, "");
+                      setPrice(num ? `€ ${num}` : "");
+                    }}
+                  />
                   <select className="field w-32" value={unit} onChange={(e) => setUnit(e.target.value)}>
                     {UNITA.map((u) => (
                       <option key={u}>{u}</option>

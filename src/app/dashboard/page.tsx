@@ -674,7 +674,7 @@ function SchedaMappaCard({
               return (
                 <div className="mt-5 rounded-2xl border-2 border-dashed border-[#cfe3b4] bg-leaf/40 p-5">
                   <h3 className="font-display text-xl text-green-800">
-                    I tuoi prodotti{" "}
+                    I tuoi prodotti / semafori di sostenibilità{" "}
                     <span className="text-sm font-normal text-green-900/60">
                       ({products.length}/{limite} · piano {PLAN_MAP[plan].label})
                     </span>
