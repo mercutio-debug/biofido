@@ -16,7 +16,13 @@
 
 import Stripe from "npm:stripe@16.12.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+
+// CORS inline (file unico, deployabile dall'editor del dashboard)
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2024-06-20",
