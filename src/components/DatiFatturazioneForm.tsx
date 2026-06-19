@@ -12,6 +12,28 @@ import {
 } from "@/lib/fatturazione";
 
 /**
+ * Controllo LOCALE del formato P.IVA italiana (11 cifre + cifra di controllo).
+ * Serve a distinguere una P.IVA scritta male da una valida ma non presente nel
+ * registro VIES (caso comune per piccole imprese e aziende agricole).
+ */
+function pivaFormaleOk(input: string): boolean {
+  const s = (input || "").replace(/\D/g, "");
+  if (s.length !== 11) return false;
+  let x = 0;
+  let y = 0;
+  for (let i = 0; i < 10; i++) {
+    const n = s.charCodeAt(i) - 48;
+    if (i % 2 === 0) x += n;
+    else {
+      const dpl = n * 2;
+      y += dpl > 9 ? dpl - 9 : dpl;
+    }
+  }
+  const ctrl = (10 - ((x + y) % 10)) % 10;
+  return ctrl === s.charCodeAt(10) - 48;
+}
+
+/**
  * Form dei dati di fatturazione, mostrato prima del pagamento per i piani
  * Silver/Gold (il Free non fattura). Autocompila da Partita IVA via VIES e
  * gestisce il recapito della fattura elettronica: codice SDI, oppure PEC,
@@ -69,7 +91,11 @@ export function DatiFatturazioneForm({
     try {
       const dati = await lookupPiva(d.partita_iva);
       if (!dati) {
-        setMsg("Partita IVA non trovata: inserisci i dati a mano.");
+        setMsg(
+          pivaFormaleOk(d.partita_iva)
+            ? "Partita IVA non presente nel registro VIES — è normale per molte piccole imprese e aziende agricole. Il formato è corretto: compila i dati qui sotto a mano e prosegui pure, sei iscritto regolarmente."
+            : "La Partita IVA non sembra corretta: controlla che siano 11 cifre.",
+        );
       } else {
         setD((prev) => ({ ...prev, ...dati }));
         setMsg("Dati recuperati dal registro VIES. Controlla e completa il recapito SDI/PEC.");

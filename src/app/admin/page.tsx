@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/useAuth";
 import { computeFootprint } from "@/lib/footprint";
 import { Semaforo } from "@/components/Semaforo";
 import { adminSetPlan } from "@/lib/admin";
+import { AziendeAdmin } from "@/components/AziendeAdmin";
 import { PLAN_MAP, type Plan } from "@/lib/categories";
 
 type Azienda = {
@@ -106,7 +107,13 @@ export default function AdminPage() {
         <span>{stab.length} stabilimenti</span>
       </div>
 
+      {/* Elenco completo aziende iscritte + assegnazione/regalo piani */}
+      <AziendeAdmin />
+
+      {/* Assegna rapida per email (utile anche per chi non è ancora in elenco) */}
       <AssegnaAbbonamento />
+
+      <h2 className="title-pangea mt-12 text-2xl text-green-700">Prodotti e schede</h2>
 
       {aziende.length === 0 && (
         <p className="mt-8 text-green-900/70">Nessuna azienda registrata finora.</p>
