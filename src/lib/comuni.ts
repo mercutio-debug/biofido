@@ -15,6 +15,39 @@ export type Comune = {
 
 type Row = [string, string, string, number, number];
 
+/**
+ * Origini ESTERE selezionabili oltre ai comuni italiani: così una materia prima
+ * che arriva da fuori Italia prende comunque le coordinate e rientra nel calcolo
+ * dell'impronta (prima, non essendo selezionabile, veniva ignorata).
+ * Coordinate = città principale del Paese; la regione indica UE / extra-UE.
+ */
+export const ESTERI: Comune[] = [
+  // --- Unione Europea (trasporto su gomma) ---
+  { nome: "Romania", prov: "RO", regione: "Estero · UE", lat: 44.43, lon: 26.1 },
+  { nome: "Francia", prov: "FR", regione: "Estero · UE", lat: 48.85, lon: 2.35 },
+  { nome: "Spagna", prov: "ES", regione: "Estero · UE", lat: 40.42, lon: -3.7 },
+  { nome: "Germania", prov: "DE", regione: "Estero · UE", lat: 52.52, lon: 13.4 },
+  { nome: "Grecia", prov: "GR", regione: "Estero · UE", lat: 37.98, lon: 23.73 },
+  { nome: "Portogallo", prov: "PT", regione: "Estero · UE", lat: 38.72, lon: -9.14 },
+  { nome: "Austria", prov: "AT", regione: "Estero · UE", lat: 48.21, lon: 16.37 },
+  { nome: "Polonia", prov: "PL", regione: "Estero · UE", lat: 52.23, lon: 21.01 },
+  { nome: "Paesi Bassi", prov: "NL", regione: "Estero · UE", lat: 52.37, lon: 4.9 },
+  { nome: "Belgio", prov: "BE", regione: "Estero · UE", lat: 50.85, lon: 4.35 },
+  // --- Extra-UE (trasporto via nave + camion dal porto) ---
+  { nome: "Brasile", prov: "BR", regione: "Estero · extra-UE", lat: -23.55, lon: -46.63 },
+  { nome: "Argentina", prov: "AR", regione: "Estero · extra-UE", lat: -34.6, lon: -58.38 },
+  { nome: "Marocco", prov: "MA", regione: "Estero · extra-UE", lat: 33.57, lon: -7.59 },
+  { nome: "Egitto", prov: "EG", regione: "Estero · extra-UE", lat: 30.04, lon: 31.24 },
+  { nome: "Turchia", prov: "TR", regione: "Estero · extra-UE", lat: 41.01, lon: 28.98 },
+  { nome: "India", prov: "IN", regione: "Estero · extra-UE", lat: 19.08, lon: 72.88 },
+  { nome: "Cina", prov: "CN", regione: "Estero · extra-UE", lat: 31.23, lon: 121.47 },
+  { nome: "Thailandia", prov: "TH", regione: "Estero · extra-UE", lat: 13.76, lon: 100.5 },
+  { nome: "Messico", prov: "MX", regione: "Estero · extra-UE", lat: 19.43, lon: -99.13 },
+  { nome: "Stati Uniti", prov: "US", regione: "Estero · extra-UE", lat: 40.71, lon: -74.0 },
+  { nome: "Kenya", prov: "KE", regione: "Estero · extra-UE", lat: -1.29, lon: 36.82 },
+  { nome: "Regno Unito", prov: "GB", regione: "Estero · extra-UE", lat: 51.51, lon: -0.13 },
+];
+
 let cache: Comune[] | null = null;
 let loading: Promise<Comune[]> | null = null;
 
@@ -24,17 +57,19 @@ export async function loadComuni(): Promise<Comune[]> {
   loading = fetch(`${BASE}/comuni.json`)
     .then((r) => r.json())
     .then((rows: Row[]) => {
-      cache = rows.map(([nome, prov, regione, lat, lon]) => ({
+      const italiani = rows.map(([nome, prov, regione, lat, lon]) => ({
         nome,
         prov,
         regione,
         lat,
         lon,
       }));
+      cache = [...italiani, ...ESTERI];
       return cache;
     })
     .catch(() => {
-      cache = [];
+      // anche se i comuni non si caricano, le origini estere restano disponibili
+      cache = [...ESTERI];
       return cache;
     });
   return loading;

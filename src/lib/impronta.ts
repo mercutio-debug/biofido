@@ -9,6 +9,14 @@ import type { MateriaPrima } from "./biofido-data";
 const R = 6371; // raggio terrestre (km)
 const ROAD_FACTOR = 1.3; // la strada è più lunga della linea d'aria
 const CO2_KG_PER_KM = 0.8; // camion in Europa, ~800 g CO₂/km (come ECO-VISA)
+const SHIP_KG_PER_KM = 0.03; // nave per l'extra-UE, ~30 g CO₂/km (come ECO-VISA)
+// porto italiano di sbarco di riferimento per le merci extra-UE
+const PORTO_RIF = { lat: 44.41, lon: 8.93 }; // Genova
+
+/** vero se le coordinate ricadono grosso modo in Europa (→ trasporto su gomma) */
+function inEuropa(lat: number, lon: number): boolean {
+  return lat >= 34 && lat <= 72 && lon >= -25 && lon <= 45;
+}
 
 function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number) {
   const dLat = ((bLat - aLat) * Math.PI) / 180;
@@ -85,19 +93,34 @@ export function calcolaImpronta(
 ): Impronta {
   if (!sede) return { totalKm: 0, co2Kg: 0, level: "verde", conteggio: 0, tiers: [] };
   let totalKm = 0;
+  let co2Kg = 0;
   const tiers: TierIng[] = [];
   const cats: Categoria[] = [];
   for (const i of ingredienti) {
     if (typeof i.lat !== "number" || typeof i.lon !== "number") continue;
-    const km = haversineKm(sede.lat, sede.lon, i.lat, i.lon) * ROAD_FACTOR;
+    let km: number;
+    let co2: number;
+    if (inEuropa(i.lat, i.lon)) {
+      // UE / Europa: tutta la tratta su camion
+      km = haversineKm(sede.lat, sede.lon, i.lat, i.lon) * ROAD_FACTOR;
+      co2 = km * CO2_KG_PER_KM;
+    } else {
+      // extra-UE: nave fino al porto italiano + camion fino alla sede
+      const mare = haversineKm(i.lat, i.lon, PORTO_RIF.lat, PORTO_RIF.lon);
+      const gomma =
+        haversineKm(PORTO_RIF.lat, PORTO_RIF.lon, sede.lat, sede.lon) * ROAD_FACTOR;
+      km = mare + gomma;
+      co2 = mare * SHIP_KG_PER_KM + gomma * CO2_KG_PER_KM;
+    }
     totalKm += km;
+    co2Kg += co2;
     const t = tierIngrediente(km);
     tiers.push(t);
     cats.push(categoriaDi(t));
   }
   return {
     totalKm: Math.round(totalKm),
-    co2Kg: Math.round(totalKm * CO2_KG_PER_KM),
+    co2Kg: Math.round(co2Kg),
     level: giudizioDaCategorie(cats),
     conteggio: cats.length,
     tiers,
