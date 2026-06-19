@@ -44,7 +44,10 @@ type Notice = {
 };
 
 async function sendEmail(to: string, subject: string, html: string) {
-  if (!RESEND_API_KEY) return { skipped: "RESEND_API_KEY mancante a runtime" };
+  if (!RESEND_API_KEY) {
+    console.error("notify: RESEND_API_KEY mancante a runtime — email saltata");
+    return;
+  }
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -53,8 +56,10 @@ async function sendEmail(to: string, subject: string, html: string) {
     },
     body: JSON.stringify({ from: NOTIFY_FROM, to, subject, html }),
   });
-  const body = await r.text();
-  return { status: r.status, body };
+  // niente errori "muti": se Resend rifiuta, lo logghiamo nei Logs della funzione
+  if (!r.ok) {
+    console.error(`notify: Resend ha risposto ${r.status}: ${await r.text()}`);
+  }
 }
 
 async function sendPush(userId: string, payload: Notice) {
@@ -93,10 +98,8 @@ async function emailOf(userId: string): Promise<string | null> {
 async function dispatch(n: Notice) {
   const link = n.url;
   const html = `<p>${n.body}</p><p><a href="${link}">Apri BioFido</a></p>`;
-  let email: unknown = null;
-  if (n.email) email = await sendEmail(n.email, n.title, html);
+  if (n.email) await sendEmail(n.email, n.title, html);
   if (n.userId) await sendPush(n.userId, n);
-  return email;
 }
 
 Deno.serve(async (req) => {
@@ -107,18 +110,13 @@ Deno.serve(async (req) => {
 
     if (table === "users") {
       // nuova iscrizione (auth.users): avviso l'amministratore via email
-      const email = await dispatch({
+      await dispatch({
         email: "mauriziocapitelli@yahoo.it",
         title: "Nuova iscrizione su BioFido / ECO-VISA",
         body: `Si è iscritta una nuova azienda: ${rec.email ?? "(email non disponibile)"}.`,
         url: `${SITE_URL}/admin/`,
       });
-      // diagnostica: stato della chiamata a Resend + presenza dei secret
-      return ok({
-        resendKeyPresent: !!RESEND_API_KEY,
-        notifyFrom: NOTIFY_FROM,
-        email,
-      });
+      return ok();
     }
 
     if (table === "messaggi") {
@@ -175,8 +173,8 @@ Deno.serve(async (req) => {
   }
 });
 
-function ok(extra: Record<string, unknown> = {}) {
-  return new Response(JSON.stringify({ ok: true, ...extra }), {
+function ok() {
+  return new Response(JSON.stringify({ ok: true }), {
     headers: { "Content-Type": "application/json" },
   });
 }
