@@ -39,6 +39,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_BILLING_ENABLED: "true"
+          NEXT_PUBLIC_TURNSTILE_SITEKEY: "0x4AAAAAADnr8XNOD1sCjHD9"
         run: npm run build
 
       - name: Evita l'elaborazione Jekyll (serve la cartella _next)
