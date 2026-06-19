@@ -679,6 +679,12 @@ function SchedaMappaCard({
                       ({products.length}/{limite} · piano {PLAN_MAP[plan].label})
                     </span>
                   </h3>
+                  <p className="mt-1 text-xs text-green-900/65">
+                    🛒 I prodotti sono in <strong>vetrina</strong>: si vedono sull&apos;app
+                    ma l&apos;acquisto avviene <strong>direttamente in azienda</strong>. Per
+                    ciò che si <strong>prenota</strong> (visite, laboratori, degustazioni)
+                    usa la sezione <strong>Esperienze</strong> qui sotto.
+                  </p>
                   <div className="mt-3 space-y-2">
                     {products.map((p, i) => {
                       const sem = SEMAFORO[calcolaImpronta(coord, p.ingredients ?? []).level];
@@ -877,9 +883,14 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
 
   return (
     <section id="esperienze" className="card mt-6 p-6 scroll-mt-20">
-      <h2 className="font-display text-2xl text-green-800">Le tue esperienze</h2>
+      <h2 className="font-display text-2xl text-green-800">
+        Le tue esperienze / attività prenotabili
+      </h2>
       <p className="mt-1 text-sm text-green-900/70">
-        Visite, degustazioni e corsi prenotabili dal portale. Commissione BioFido{" "}
+        Visite in azienda, laboratori didattici, degustazioni e corsi: queste{" "}
+        <strong>si prenotano dall&apos;app</strong>. La prenotazione arriva nella tua
+        bacheca <em>in attesa</em> e si attiva <strong>solo dopo la tua approvazione</strong>;
+        il cliente <strong>paga in anticipo via Stripe</strong>. Commissione BioFido{" "}
         {Math.round(info.commissionRate * 100)}% sulle prenotazioni confermate.
       </p>
 
