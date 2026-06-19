@@ -2,6 +2,7 @@
 
 import { CATEGORY_MAP, PLAN_MAP } from "@/lib/categories";
 import { euroCents } from "@/lib/bookings";
+import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
 import type { Business } from "@/lib/biofido-data";
 
 /**
@@ -24,6 +25,7 @@ export function SchedaImpresaModal({
   const plan = PLAN_MAP[b.plan];
   const dir = `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lon}`;
   const prodotti = (plan.showProducts ? b.products ?? [] : []).slice(0, plan.maxProducts);
+  const sede = { lat: b.lat, lon: b.lon };
   const esperienze = plan.canSell ? b.experiences?.filter((e) => e.attiva) ?? [] : [];
 
   return (
@@ -108,7 +110,19 @@ export function SchedaImpresaModal({
                     <img src={p.image} alt={p.name} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-semibold text-green-800">{p.name}</div>
+                    <div className="flex items-center gap-2">
+                      {p.mostraSemaforo !== false && (p.ingredients?.length ?? 0) > 0 && (() => {
+                        const sem = SEMAFORO[calcolaImpronta(sede, p.ingredients ?? []).level];
+                        return (
+                          <span
+                            className="h-3 w-3 flex-none rounded-full"
+                            style={{ background: sem.colore }}
+                            title={`Semaforo di sostenibilità: ${sem.testo}`}
+                          />
+                        );
+                      })()}
+                      <div className="truncate font-semibold text-green-800">{p.name}</div>
+                    </div>
                     {p.description && (
                       <div className="truncate text-xs text-green-900/60">{p.description}</div>
                     )}
