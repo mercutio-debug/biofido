@@ -8,13 +8,25 @@ import {
 
 /* ============================================================
    Modello di calcolo ECO-VISA (come da progetto)
-   - materie prime europee: camion = 800 g CO2 / km
-   - materie prime extra-UE: nave = 30 g CO2 / km (tratta marittima)
+   - materie prime EUROPEE e del NORD AFRICA: camion = 800 g CO2 / km
+     (Marocco, Algeria, Tunisia, Libia, Egitto: collegati via gomma/traghetto)
+   - materie prime del resto del mondo: nave = 30 g CO2 / km (tratta marittima)
                               + camion dal porto di sbarco allo stabilimento
    ============================================================ */
 
 export const TRUCK_G_PER_KM = 800;
 export const SHIP_G_PER_KM = 30;
+
+/**
+ * Modalità di trasporto in base alla GEOGRAFIA dell'origine:
+ *  - CAMION per tutta l'Europa e per il Nord Africa;
+ *  - NAVE per tutto il resto del mondo.
+ */
+function viaCamion(lat: number, lon: number): boolean {
+  const europa = lat >= 34 && lat <= 72 && lon >= -25 && lon <= 45;
+  const nordAfrica = lat >= 19 && lat < 37 && lon >= -17 && lon <= 33;
+  return europa || nordAfrica;
+}
 
 export type EcoLevel = "verde" | "giallo" | "rosso";
 
@@ -71,8 +83,8 @@ export function computeIngredient(
 
   const legs: Leg[] = [];
 
-  if (o.eu) {
-    // tutta la tratta via camion
+  if (viaCamion(o.lat, o.lon)) {
+    // Europa + Nord Africa: tutta la tratta via camion
     const km = Math.round(haversineKm(o, plant) * ROAD_FACTOR);
     legs.push({
       mode: "camion",
