@@ -45,6 +45,7 @@ import {
 } from "@/lib/bookings";
 import { ChatPrenotazione } from "@/components/ChatPrenotazione";
 import { NotificheToggle } from "@/components/NotificheToggle";
+import { StatisticheCard } from "@/components/StatisticheCard";
 import { pushConfigured } from "@/lib/push";
 
 export default function DashboardPage() {
@@ -128,6 +129,7 @@ export default function DashboardPage() {
           <PagamentiCard ownerId={user.id} plan={pianoScelto} />
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
           <PrenotazioniCard ownerId={user.id} />
+          <StatisticheCard ownerId={user.id} plan={pianoScelto} />
           <PagamentoFinale ownerId={user.id} scelto={pianoScelto} attivo={activePlan} bioOk={bioOk} />
         </>
       )}

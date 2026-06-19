@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { nearestPlace } from "@/lib/geo";
 import { loadBusinesses, type Business } from "@/lib/biofido-data";
+import { registraVisita } from "@/lib/statistiche";
 import { CATEGORIES, CATEGORY_MAP, PLAN_MAP, rankScore, type CategoryId } from "@/lib/categories";
 import { experiencesByOwners } from "@/lib/bookings";
 import { ComuneAutocomplete } from "./ComuneAutocomplete";
@@ -45,6 +46,11 @@ export function MapExperience() {
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
   const [prenota, setPrenota] = useState<Business | null>(null);
   const [scheda, setScheda] = useState<Business | null>(null);
+
+  // quando un visitatore apre la scheda di un'azienda, conto la visita (statistiche)
+  useEffect(() => {
+    if (scheda?.owner && source === "supabase") registraVisita(scheda.owner);
+  }, [scheda, source]);
 
   // carica le attività dal database (o demo) all'avvio
   useEffect(() => {
