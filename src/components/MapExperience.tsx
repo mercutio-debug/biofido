@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { geocode, nearestPlace } from "@/lib/geo";
+import { nearestPlace } from "@/lib/geo";
 import { loadBusinesses, type Business } from "@/lib/biofido-data";
 import { CATEGORIES, CATEGORY_MAP, PLAN_MAP, rankScore, type CategoryId } from "@/lib/categories";
 import { experiencesByOwners } from "@/lib/bookings";
+import { ComuneAutocomplete } from "./ComuneAutocomplete";
 import { PrenotaModal } from "./PrenotaModal";
 
 // La mappa Leaflet usa `window`: va caricata solo lato browser.
@@ -79,18 +80,6 @@ export function MapExperience() {
     );
   }
 
-  function applyCity(name: string) {
-    setCity(name);
-    const g = geocode(name);
-    if (g) {
-      setCenter({ lat: g.lat, lon: g.lon });
-      setLabel(g.name);
-      setGeoMsg(null);
-    }
-    // se la città non è (ancora) riconosciuta non mostro errori: l'utente
-    // sta probabilmente ancora digitando.
-  }
-
   const results = useMemo(() => {
     return all
       .filter((b) => cat === "all" || b.category === cat)
@@ -115,13 +104,17 @@ export function MapExperience() {
           </div>
         </div>
         <div>
-          <span className="label">…oppure scrivi la città</span>
+          <span className="label">…oppure scegli la città</span>
           <div className="mt-1">
-            <input
-              className="field"
+            <ComuneAutocomplete
               value={city}
-              placeholder="Es. Genova, Roma, Milano…"
-              onChange={(e) => applyCity(e.target.value)}
+              onSelect={(c) => {
+                setCity(c.nome);
+                setCenter({ lat: c.lat, lon: c.lon });
+                setLabel(c.nome);
+                setGeoMsg(null);
+              }}
+              placeholder="Es. Albenga, Genova, Roma…"
             />
           </div>
         </div>
