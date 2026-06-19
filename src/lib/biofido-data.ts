@@ -26,6 +26,9 @@ export type Product = {
   image?: string;
   ingredients?: MateriaPrima[];
   certifications?: string[];
+  /** se false, il prodotto resta in vetrina SENZA semaforo di sostenibilità.
+   *  Default: true (mostra il semaforo calcolato dagli ingredienti). */
+  mostraSemaforo?: boolean;
 };
 
 export type Business = {

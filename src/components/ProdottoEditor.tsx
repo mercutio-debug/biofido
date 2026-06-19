@@ -54,6 +54,7 @@ export function ProdottoEditor({
     initial?.ingredients ?? [{ nome: "", origine: "" }],
   );
   const [certs, setCerts] = useState<string[]>(initial?.certifications ?? []);
+  const [mostraSemaforo, setMostraSemaforo] = useState(initial?.mostraSemaforo ?? true);
   const [err, setErr] = useState<string | null>(null);
 
   const imp = calcolaImpronta(sede, ingredients);
@@ -80,6 +81,7 @@ export function ProdottoEditor({
       image: image.trim() || undefined,
       ingredients: ingredients.filter((i) => i.nome.trim()),
       certifications: certs,
+      mostraSemaforo,
     });
   }
 
@@ -259,6 +261,20 @@ export function ProdottoEditor({
             <div className="text-xs text-green-900/55">CO₂ trasporto · {imp.totalKm} km</div>
           </div>
         </div>
+
+        {/* flag: usare o no il semaforo di sostenibilità su questo prodotto */}
+        <label className="mt-3 flex items-start gap-2 rounded-xl border border-[#e3eed7] p-3 text-sm">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-5 w-5 accent-[var(--lime-500)]"
+            checked={mostraSemaforo}
+            onChange={(e) => setMostraSemaforo(e.target.checked)}
+          />
+          <span className="text-green-900/85">
+            <strong>Mostra il semaforo di sostenibilità</strong> su questo prodotto.
+            Togli la spunta se vuoi tenerlo solo in vetrina, senza semaforo.
+          </span>
+        </label>
 
         {err && <p className="mt-3 text-sm font-semibold text-traffic-red">{err}</p>}
 

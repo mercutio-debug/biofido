@@ -687,6 +687,7 @@ function SchedaMappaCard({
                   </p>
                   <div className="mt-3 space-y-2">
                     {products.map((p, i) => {
+                      const conSemaforo = p.mostraSemaforo !== false;
                       const sem = SEMAFORO[calcolaImpronta(coord, p.ingredients ?? []).level];
                       return (
                         <div
@@ -694,7 +695,11 @@ function SchedaMappaCard({
                           className="flex items-center justify-between gap-3 rounded-xl border border-[#e3eed7] bg-white px-4 py-2"
                         >
                           <div className="flex min-w-0 items-center gap-3">
-                            <span className="h-3 w-3 flex-none rounded-full" style={{ background: sem.colore }} title={sem.testo} />
+                            <span
+                              className="h-3 w-3 flex-none rounded-full"
+                              style={{ background: conSemaforo ? sem.colore : "#cdd5dc" }}
+                              title={conSemaforo ? sem.testo : "Semaforo disattivato (solo vetrina)"}
+                            />
                             <div className="min-w-0">
                               <div className="truncate font-semibold text-green-800">
                                 {p.name || "(senza nome)"}
