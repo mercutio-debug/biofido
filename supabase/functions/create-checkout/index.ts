@@ -99,6 +99,13 @@ Deno.serve(async (req) => {
       success_url: `${base}/dashboard/?abbonamento=ok`,
       cancel_url: `${base}/abbonamenti/?abbonamento=annullato`,
       allow_promotion_codes: true,
+      // IVA: prezzi al netto, Stripe Tax aggiunge il 22% in automatico.
+      // Serve l'indirizzo del cliente per calcolare l'imposta; raccogliamo anche
+      // la P.IVA (B2B) per la fattura/reverse-charge.
+      automatic_tax: { enabled: true },
+      billing_address_collection: "required",
+      customer_update: { address: "auto", name: "auto" },
+      tax_id_collection: { enabled: true },
     });
 
     return json({ url: session.url });
