@@ -10,6 +10,17 @@ import {
   datiCompleti,
   recapitoValido,
 } from "@/lib/fatturazione";
+import { ComuneAutocomplete } from "@/components/ComuneAutocomplete";
+import { loadComuni, type Comune } from "@/lib/comuni";
+import { lookupCap } from "@/lib/geo";
+
+/** Dati anagrafici da cui precompilare la fatturazione (completata col resto). */
+export type PrefillFatturazione = {
+  ragione_sociale?: string;
+  partita_iva?: string;
+  codice_fiscale?: string;
+  citta?: string;
+};
 
 /**
  * Controllo LOCALE del formato P.IVA italiana (11 cifre + cifra di controllo).
@@ -42,9 +53,11 @@ function pivaFormaleOk(input: string): boolean {
 export function DatiFatturazioneForm({
   ownerId,
   onValid,
+  prefill,
 }: {
   ownerId: string;
   onValid?: (valido: boolean) => void;
+  prefill?: PrefillFatturazione;
 }) {
   const [d, setD] = useState<DatiFatturazione>(DATI_VUOTI);
   const [loading, setLoading] = useState(true);
@@ -55,14 +68,43 @@ export function DatiFatturazioneForm({
   const [cfUguale, setCfUguale] = useState(false);
 
   useEffect(() => {
-    caricaDatiFatturazione().then((dati) => {
+    caricaDatiFatturazione().then(async (dati) => {
       if (dati) {
         setD({ ...DATI_VUOTI, ...dati });
         setCfUguale(!!dati.codice_fiscale && dati.codice_fiscale === dati.partita_iva);
         setSalvato(true);
+      } else if (prefill) {
+        // Nessun dato salvato: precompilo dalla scheda anagrafica (da completare).
+        const base: DatiFatturazione = {
+          ...DATI_VUOTI,
+          ragione_sociale: prefill.ragione_sociale ?? "",
+          partita_iva: prefill.partita_iva ?? "",
+          codice_fiscale: prefill.codice_fiscale ?? "",
+          citta: prefill.citta ?? "",
+        };
+        setCfUguale(
+          !!base.codice_fiscale && base.codice_fiscale === base.partita_iva,
+        );
+        setD(base);
+        // Se conosco la città, ricavo subito provincia (dai comuni) e CAP.
+        if (prefill.citta) {
+          try {
+            const comuni = await loadComuni();
+            const norm = (s: string) => s.trim().toLowerCase();
+            const c = comuni.find((x) => norm(x.nome) === norm(prefill.citta!));
+            if (c) {
+              setD((prev) => ({ ...prev, provincia: c.prov }));
+              const cap = await lookupCap(c.nome, c.prov);
+              if (cap) setD((prev) => ({ ...prev, cap }));
+            }
+          } catch {
+            /* comuni non caricati: l'utente sceglie la città dall'autocomplete */
+          }
+        }
       }
       setLoading(false);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Quando "CF uguale alla P.IVA" è spuntato, copia (e mantiene aggiornato) il
@@ -83,6 +125,15 @@ export function DatiFatturazioneForm({
   function set<K extends keyof DatiFatturazione>(k: K, v: DatiFatturazione[K]) {
     setD((prev) => ({ ...prev, [k]: v }));
     setSalvato(false);
+  }
+
+  // Scelta della città dall'autocomplete: compila in cascata città + provincia
+  // e ricava il CAP (modificabile). Stesso automatismo della scheda anagrafica.
+  async function applicaComune(c: Comune) {
+    setD((prev) => ({ ...prev, citta: c.nome, provincia: c.prov }));
+    setSalvato(false);
+    const cap = await lookupCap(c.nome, c.prov);
+    if (cap) setD((prev) => ({ ...prev, cap }));
   }
 
   async function recupera() {
@@ -210,7 +261,13 @@ export function DatiFatturazioneForm({
         </div>
         <div className="sm:col-span-1">
           <span className="label">Città</span>
-          <input className="field mt-1" value={d.citta ?? ""} onChange={(e) => set("citta", e.target.value)} />
+          <div className="mt-1">
+            <ComuneAutocomplete
+              value={d.citta ?? ""}
+              onSelect={applicaComune}
+              placeholder="Inizia a scrivere la città…"
+            />
+          </div>
         </div>
         <div>
           <span className="label">Prov.</span>

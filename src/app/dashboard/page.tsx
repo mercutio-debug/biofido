@@ -24,8 +24,8 @@ import {
   nextPlan,
   type PassoKey,
 } from "@/lib/funzioni";
-import { billingEnabled, startCheckout } from "@/lib/billing";
-import { DatiFatturazioneForm } from "@/components/DatiFatturazioneForm";
+import { billingEnabled, startCheckout, openCustomerPortal } from "@/lib/billing";
+import { DatiFatturazioneForm, type PrefillFatturazione } from "@/components/DatiFatturazioneForm";
 import { SezioneBio } from "@/components/SezioneBio";
 import { SchedaServizi } from "@/components/SchedaServizi";
 import { CatalogoCard } from "@/components/CatalogoCard";
@@ -177,6 +177,13 @@ function PagamentoFinale({
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [fatturazioneOk, setFatturazioneOk] = useState(false);
+  // Precompilo la fatturazione coi dati della scheda mappa (nome + città)
+  const [prefill, setPrefill] = useState<PrefillFatturazione | undefined>(undefined);
+  useEffect(() => {
+    loadMyBusiness(ownerId).then((b) => {
+      if (b) setPrefill({ ragione_sociale: b.name, citta: b.city });
+    });
+  }, [ownerId]);
 
   const giaAttivo = attivo === scelto && attivo !== "free";
 
@@ -222,7 +229,7 @@ function PagamentoFinale({
   return (
     <section className="mt-6 space-y-4">
       {/* dati di fatturazione: obbligatori per i piani a pagamento */}
-      <DatiFatturazioneForm ownerId={ownerId} onValid={setFatturazioneOk} />
+      <DatiFatturazioneForm ownerId={ownerId} onValid={setFatturazioneOk} prefill={prefill} />
 
       <div className="panel-dark rounded-2xl p-6 text-center">
         <h2 className="font-display text-2xl">Hai compilato la tua scheda?</h2>
