@@ -25,6 +25,78 @@ const admin = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
+// Notifica email all'amministratore con il riepilogo del pagamento e i dati di
+// fatturazione, così può emettere la fattura a mano finché non colleghiamo Aruba.
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const NOTIFY_FROM = Deno.env.get("NOTIFY_FROM") ?? "ECO-VISA & BioFido <noreply@ecovisa.it>";
+const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") ?? "mauriziocapitelli@yahoo.it";
+
+async function avvisaAdminPagamento(
+  s: Stripe.Checkout.Session,
+  userId: string,
+  plan: string,
+) {
+  if (!RESEND_API_KEY) {
+    console.error("stripe-webhook: RESEND_API_KEY mancante — email pagamento saltata");
+    return;
+  }
+  // dati di fatturazione del cliente
+  const { data: f } = await admin
+    .from("dati_fatturazione")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const dati = (f ?? {}) as Record<string, string | null>;
+
+  // email dell'account
+  const { data: u } = await admin.auth.admin.getUserById(userId);
+  const emailCliente = u?.user?.email ?? s.customer_details?.email ?? "—";
+
+  const importo = s.amount_total != null
+    ? (s.amount_total / 100).toLocaleString("it-IT", {
+        style: "currency",
+        currency: (s.currency ?? "eur").toUpperCase(),
+      })
+    : "—";
+
+  const html = `
+    <h2>💶 Nuovo pagamento abbonamento</h2>
+    <p><strong>Piano:</strong> ${plan.toUpperCase()}<br/>
+    <strong>Importo incassato:</strong> ${importo}<br/>
+    <strong>Account cliente:</strong> ${emailCliente}<br/>
+    <strong>Data:</strong> ${new Date().toLocaleString("it-IT")}</p>
+    <hr/>
+    <h3>Dati per la fattura</h3>
+    <p>
+      <strong>Ragione sociale:</strong> ${dati.ragione_sociale ?? "—"}<br/>
+      <strong>Partita IVA:</strong> ${dati.partita_iva ?? "—"}<br/>
+      <strong>Codice fiscale:</strong> ${dati.codice_fiscale ?? "—"}<br/>
+      <strong>Indirizzo:</strong> ${dati.indirizzo ?? "—"}, ${dati.cap ?? ""} ${dati.citta ?? ""} ${dati.provincia ?? ""} ${dati.paese ?? ""}<br/>
+      <strong>Codice SDI:</strong> ${dati.codice_sdi ?? "—"}<br/>
+      <strong>PEC:</strong> ${dati.pec ?? "—"}<br/>
+      <strong>Email fatturazione:</strong> ${dati.email ?? "—"}
+    </p>
+    <p style="color:#888;font-size:12px">Stripe session: ${s.id}${s.subscription ? ` · subscription: ${s.subscription}` : ""}</p>
+  `;
+
+  const r = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: NOTIFY_FROM,
+      to: ADMIN_EMAIL,
+      subject: `💶 Pagamento ${plan.toUpperCase()} ${importo} — emetti fattura`,
+      html,
+    }),
+  });
+  if (!r.ok) {
+    console.error(`stripe-webhook: Resend ha risposto ${r.status}: ${await r.text()}`);
+  }
+}
+
 /** Aggiorna l'abbonamento e allinea il piano delle schede dell'utente. */
 async function setPlan(
   userId: string,
@@ -71,6 +143,8 @@ Deno.serve(async (req) => {
             stripe_customer_id: s.customer as string,
             stripe_subscription_id: s.subscription as string,
           });
+          // avvisa l'admin con il riepilogo per la fattura (Aruba non ancora collegato)
+          await avvisaAdminPagamento(s, userId, plan);
         }
         break;
       }

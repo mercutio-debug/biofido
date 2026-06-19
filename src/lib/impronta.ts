@@ -13,9 +13,16 @@ const SHIP_KG_PER_KM = 0.03; // nave per l'extra-UE, ~30 g CO₂/km (come ECO-VI
 // porto italiano di sbarco di riferimento per le merci extra-UE
 const PORTO_RIF = { lat: 44.41, lon: 8.93 }; // Genova
 
-/** vero se le coordinate ricadono grosso modo in Europa (→ trasporto su gomma) */
-function inEuropa(lat: number, lon: number): boolean {
-  return lat >= 34 && lat <= 72 && lon >= -25 && lon <= 45;
+/**
+ * Modalità di trasporto secondo la regola del progetto:
+ *  - CAMION per tutta l'EUROPA e per il NORD AFRICA (Marocco, Algeria, Tunisia,
+ *    Libia, Egitto) — collegati via gomma/traghetto;
+ *  - NAVE per tutto il resto del mondo (extra-europeo, escluso Nord Africa).
+ */
+function viaCamion(lat: number, lon: number): boolean {
+  const europa = lat >= 34 && lat <= 72 && lon >= -25 && lon <= 45;
+  const nordAfrica = lat >= 19 && lat < 37 && lon >= -17 && lon <= 33;
+  return europa || nordAfrica;
 }
 
 function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number) {
@@ -100,12 +107,12 @@ export function calcolaImpronta(
     if (typeof i.lat !== "number" || typeof i.lon !== "number") continue;
     let km: number;
     let co2: number;
-    if (inEuropa(i.lat, i.lon)) {
-      // UE / Europa: tutta la tratta su camion
+    if (viaCamion(i.lat, i.lon)) {
+      // Europa + Nord Africa: tutta la tratta su camion
       km = haversineKm(sede.lat, sede.lon, i.lat, i.lon) * ROAD_FACTOR;
       co2 = km * CO2_KG_PER_KM;
     } else {
-      // extra-UE: nave fino al porto italiano + camion fino alla sede
+      // resto del mondo: nave fino al porto italiano + camion fino alla sede
       const mare = haversineKm(i.lat, i.lon, PORTO_RIF.lat, PORTO_RIF.lon);
       const gomma =
         haversineKm(PORTO_RIF.lat, PORTO_RIF.lon, sede.lat, sede.lon) * ROAD_FACTOR;
