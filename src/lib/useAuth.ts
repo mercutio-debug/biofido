@@ -15,7 +15,11 @@ export function useAuth() {
       setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
+      // Mantieni STABILE l'oggetto sessione finché l'utente è lo stesso.
+      // Eventi come TOKEN_REFRESHED scattano al rientro sulla scheda del
+      // browser: se ricreassimo `session`/`user`, gli effetti agganciati a
+      // `user` ripartirebbero, ricaricando e SVUOTANDO i form non salvati.
+      setSession((prev) => (prev?.user?.id === s?.user?.id ? prev : s));
     });
     return () => sub.subscription.unsubscribe();
   }, []);
