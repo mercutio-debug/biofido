@@ -46,6 +46,7 @@ import {
 import { ChatPrenotazione } from "@/components/ChatPrenotazione";
 import { NotificheToggle } from "@/components/NotificheToggle";
 import { StatisticheCard } from "@/components/StatisticheCard";
+import { AnteprimaScheda } from "@/components/AnteprimaScheda";
 import { pushConfigured } from "@/lib/push";
 
 export default function DashboardPage() {
@@ -125,6 +126,7 @@ export default function DashboardPage() {
         <>
           <SezioneBio ownerId={user.id} onValid={setBioOk} />
           <SchedaMappaCard ownerId={user.id} plan={pianoScelto} activePlan={activePlan} />
+          <AnteprimaScheda ownerId={user.id} />
           <CatalogoCard ownerId={user.id} gold={pianoScelto === "gold"} />
           <PagamentiCard ownerId={user.id} plan={pianoScelto} />
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />

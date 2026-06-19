@@ -16,10 +16,13 @@ export function SchedaImpresaModal({
   business: b,
   onClose,
   onPrenota,
+  embedded = false,
 }: {
   business: Business;
-  onClose: () => void;
+  onClose?: () => void;
   onPrenota?: (b: Business) => void;
+  /** true = mostra il contenuto inline (anteprima in dashboard), senza overlay/modale */
+  embedded?: boolean;
 }) {
   const cat = CATEGORY_MAP[b.category];
   const plan = PLAN_MAP[b.plan];
@@ -30,11 +33,15 @@ export function SchedaImpresaModal({
 
   return (
     <div
-      className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
-      onClick={onClose}
+      className={embedded ? "" : "fixed inset-0 z-[1000] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"}
+      onClick={embedded ? undefined : onClose}
     >
       <div
-        className="max-h-[92vh] w-full max-w-lg overflow-auto rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl"
+        className={
+          embedded
+            ? "rounded-2xl border border-[#e3eed7] bg-white p-5"
+            : "max-h-[92vh] w-full max-w-lg overflow-auto rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl"
+        }
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
@@ -48,14 +55,16 @@ export function SchedaImpresaModal({
               {b.address ? ` · ${b.address}` : ""}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Chiudi"
-            className="shrink-0 rounded-full px-2 text-xl text-green-900/60 hover:bg-leaf"
-          >
-            ✕
-          </button>
+          {!embedded && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Chiudi"
+              className="shrink-0 rounded-full px-2 text-xl text-green-900/60 hover:bg-leaf"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {b.plan !== "free" && (
