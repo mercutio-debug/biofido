@@ -198,6 +198,17 @@ function PagamentoFinale({
     }
   }
 
+  async function gestisci() {
+    setBusy(true);
+    setMsg(null);
+    try {
+      await openCustomerPortal();
+    } catch (e) {
+      setBusy(false);
+      setMsg((e as Error).message);
+    }
+  }
+
   if (scelto === "free") {
     return (
       <section className="card mt-6 p-6 text-center">
@@ -218,6 +229,17 @@ function PagamentoFinale({
         <p className="mt-1 text-sm text-green-900/70">
           Il tuo abbonamento è attivo: tutte le funzioni del piano sono disponibili.
         </p>
+        <button
+          className="btn-ghost mt-4"
+          onClick={gestisci}
+          disabled={busy}
+        >
+          {busy ? "Apro…" : "Gestisci abbonamento (fatture, carta, disdetta)"}
+        </button>
+        <p className="mt-2 text-xs text-green-900/55">
+          Per non rinnovare, disdici almeno 10 giorni prima della scadenza.
+        </p>
+        {msg && <p className="mt-2 text-sm font-semibold text-traffic-red">{msg}</p>}
       </section>
     );
   }
