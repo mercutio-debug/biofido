@@ -44,8 +44,8 @@ type Notice = {
 };
 
 async function sendEmail(to: string, subject: string, html: string) {
-  if (!RESEND_API_KEY) return;
-  await fetch("https://api.resend.com/emails", {
+  if (!RESEND_API_KEY) return { skipped: "RESEND_API_KEY mancante a runtime" };
+  const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${RESEND_API_KEY}`,
@@ -53,6 +53,8 @@ async function sendEmail(to: string, subject: string, html: string) {
     },
     body: JSON.stringify({ from: NOTIFY_FROM, to, subject, html }),
   });
+  const body = await r.text();
+  return { status: r.status, body };
 }
 
 async function sendPush(userId: string, payload: Notice) {
@@ -91,8 +93,10 @@ async function emailOf(userId: string): Promise<string | null> {
 async function dispatch(n: Notice) {
   const link = n.url;
   const html = `<p>${n.body}</p><p><a href="${link}">Apri BioFido</a></p>`;
-  if (n.email) await sendEmail(n.email, n.title, html);
+  let email: unknown = null;
+  if (n.email) email = await sendEmail(n.email, n.title, html);
   if (n.userId) await sendPush(n.userId, n);
+  return email;
 }
 
 Deno.serve(async (req) => {
@@ -103,13 +107,18 @@ Deno.serve(async (req) => {
 
     if (table === "users") {
       // nuova iscrizione (auth.users): avviso l'amministratore via email
-      await dispatch({
+      const email = await dispatch({
         email: "mauriziocapitelli@yahoo.it",
         title: "Nuova iscrizione su BioFido / ECO-VISA",
         body: `Si è iscritta una nuova azienda: ${rec.email ?? "(email non disponibile)"}.`,
         url: `${SITE_URL}/admin/`,
       });
-      return ok();
+      // diagnostica: stato della chiamata a Resend + presenza dei secret
+      return ok({
+        resendKeyPresent: !!RESEND_API_KEY,
+        notifyFrom: NOTIFY_FROM,
+        email,
+      });
     }
 
     if (table === "messaggi") {
@@ -166,8 +175,8 @@ Deno.serve(async (req) => {
   }
 });
 
-function ok() {
-  return new Response(JSON.stringify({ ok: true }), {
+function ok(extra: Record<string, unknown> = {}) {
+  return new Response(JSON.stringify({ ok: true, ...extra }), {
     headers: { "Content-Type": "application/json" },
   });
 }
