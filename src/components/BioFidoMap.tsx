@@ -13,6 +13,8 @@ type Props = {
   radiusKm: number;
   businesses: Business[];
   userLabel?: string;
+  /** apre la scheda dell'impresa al clic sul segnaposto */
+  onSelect?: (b: Business) => void;
 };
 
 /** Segnaposto HTML personalizzato: dimensione per piano, icona per categoria. */
@@ -30,40 +32,7 @@ function markerHtml(b: Business): string {
       <span style="transform:rotate(45deg)">${inner}</span></div>`;
 }
 
-function popupHtml(b: Business): string {
-  const cat = CATEGORY_MAP[b.category];
-  const plan = PLAN_MAP[b.plan];
-  const planBadge =
-    b.plan === "gold"
-      ? `<span style="background:#f7d417;color:#7a1f00;font-weight:700;border-radius:999px;padding:1px 8px;font-size:11px">★ GOLD</span>`
-      : b.plan === "silver"
-      ? `<span style="background:#c9d3da;color:#33414a;font-weight:700;border-radius:999px;padding:1px 8px;font-size:11px">SILVER</span>`
-      : "";
-  const dir = `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lon}`;
-  let html = `<div style="min-width:180px;font-family:system-ui,sans-serif">
-    <div style="font-weight:700;color:#2f6f12;font-size:15px">${b.name} ${planBadge}</div>
-    <div style="color:#5a6b50;font-size:12px;margin-top:2px">${cat.emoji} ${cat.label} · ${b.city}</div>`;
-  if (b.address) html += `<div style="color:#5a6b50;font-size:12px">${b.address}</div>`;
-  // descrizione: solo Silver/Gold
-  if (b.description && b.plan !== "free")
-    html += `<div style="margin-top:6px;font-size:12px;color:#33414a">${b.description}</div>`;
-  // prodotti con prezzi: solo Gold
-  if (plan.showProducts && b.products && b.products.length) {
-    html += `<div style="margin-top:6px;border-top:1px solid #e3eed7;padding-top:6px">
-      <div style="font-size:11px;font-weight:700;color:#2f6f12;text-transform:uppercase">Prodotti</div>`;
-    for (const p of b.products)
-      html += `<div style="display:flex;justify-content:space-between;font-size:12px;gap:8px">
-        <span>${p.name}</span><span style="font-weight:600">${p.price ?? ""}</span></div>`;
-    html += `</div>`;
-  }
-  html += `<a href="${dir}" target="_blank" rel="noopener"
-      style="display:inline-block;margin-top:8px;background:#5baf38;color:#143306;font-weight:700;
-      border-radius:999px;padding:5px 12px;font-size:12px;text-decoration:none">🐾 Raggiungila</a>`;
-  html += `</div>`;
-  return html;
-}
-
-export default function BioFidoMap({ center, radiusKm, businesses, userLabel }: Props) {
+export default function BioFidoMap({ center, radiusKm, businesses, userLabel, onSelect }: Props) {
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -123,14 +92,15 @@ export default function BioFidoMap({ center, radiusKm, businesses, userLabel }: 
         iconSize: [PLAN_MAP[b.plan].markerSize, PLAN_MAP[b.plan].markerSize],
         iconAnchor: [PLAN_MAP[b.plan].markerSize / 2, PLAN_MAP[b.plan].markerSize],
       });
-      L.marker([b.lat, b.lon], { icon }).bindPopup(popupHtml(b)).addTo(layer);
+      const marker = L.marker([b.lat, b.lon], { icon }).addTo(layer);
+      marker.on("click", () => onSelect?.(b));
     }
 
     // inquadra l'area del raggio (bounds del diametro, senza dover aggiungere
     // il cerchio alla mappa)
     const bounds = L.latLng(center.lat, center.lon).toBounds(radiusKm * 2000);
     map.fitBounds(bounds, { padding: [20, 20], maxZoom: 13 });
-  }, [center.lat, center.lon, radiusKm, businesses, userLabel]);
+  }, [center.lat, center.lon, radiusKm, businesses, userLabel, onSelect]);
 
   return <div ref={divRef} className="h-full w-full rounded-2xl" style={{ minHeight: 420 }} />;
 }

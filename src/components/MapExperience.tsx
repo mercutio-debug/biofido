@@ -8,6 +8,7 @@ import { CATEGORIES, CATEGORY_MAP, PLAN_MAP, rankScore, type CategoryId } from "
 import { experiencesByOwners } from "@/lib/bookings";
 import { ComuneAutocomplete } from "./ComuneAutocomplete";
 import { PrenotaModal } from "./PrenotaModal";
+import { SchedaImpresaModal } from "./SchedaImpresaModal";
 
 // La mappa Leaflet usa `window`: va caricata solo lato browser.
 const BioFidoMap = dynamic(() => import("./BioFidoMap"), {
@@ -43,6 +44,7 @@ export function MapExperience() {
   const [source, setSource] = useState<"supabase" | "demo">("demo");
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
   const [prenota, setPrenota] = useState<Business | null>(null);
+  const [scheda, setScheda] = useState<Business | null>(null);
 
   // carica le attività dal database (o demo) all'avvio
   useEffect(() => {
@@ -171,7 +173,7 @@ export function MapExperience() {
       {/* MAPPA + RISULTATI */}
       <div className="mt-5 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="card overflow-hidden p-0">
-          <BioFidoMap center={center} radiusKm={radius} businesses={results} userLabel={label} />
+          <BioFidoMap center={center} radiusKm={radius} businesses={results} userLabel={label} onSelect={setScheda} />
         </div>
         <div>
           <h2 className="font-display text-2xl text-green-800">
@@ -195,7 +197,9 @@ export function MapExperience() {
                 return (
                   <li
                     key={r.id}
-                    className={`group relative flex items-center justify-between rounded-xl border px-4 py-3 ${
+                    onClick={() => setScheda(r)}
+                    title="Apri la scheda dell'impresa"
+                    className={`group relative flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 hover:border-lime-500 ${
                       PLAN_MAP[r.plan].featuredEligible
                         ? "border-badge-yellow bg-[#fffbe9]"
                         : "border-[#e3eed7] bg-white"
@@ -230,7 +234,10 @@ export function MapExperience() {
                       {r.experiences && r.experiences.length > 0 && PLAN_MAP[r.plan].canSell && (
                         <button
                           type="button"
-                          onClick={() => setPrenota(r)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPrenota(r);
+                          }}
                           className="mt-2 rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
                         >
                           🗓️ Prenota un&apos;esperienza
@@ -241,6 +248,7 @@ export function MapExperience() {
                       href={`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="ml-3 shrink-0 text-right"
                     >
                       <div className="font-display text-lg text-lime-500">{r.dist} km</div>
@@ -253,6 +261,17 @@ export function MapExperience() {
           )}
         </div>
       </div>
+
+      {scheda && (
+        <SchedaImpresaModal
+          business={scheda}
+          onClose={() => setScheda(null)}
+          onPrenota={(b) => {
+            setScheda(null);
+            setPrenota(b);
+          }}
+        />
+      )}
 
       {prenota && (
         <PrenotaModal
