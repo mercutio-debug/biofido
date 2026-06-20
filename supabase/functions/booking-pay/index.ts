@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
 
     const { data: p } = await admin
       .from("prenotazioni")
-      .select("id, owner, cliente_user_id, stato, payment_status, totale_cents, commissione_cents, esperienze(titolo)")
+      .select("id, owner, cliente_user_id, stato, payment_status, totale_cents, commissione_cents, titolo, esperienze(titolo)")
       .eq("id", prenotazioneId)
       .maybeSingle();
 
@@ -58,7 +58,9 @@ Deno.serve(async (req) => {
     }
 
     const titolo =
-      (p as { esperienze?: { titolo?: string } }).esperienze?.titolo ?? "Esperienza";
+      (p as { titolo?: string | null }).titolo ||
+      (p as { esperienze?: { titolo?: string } }).esperienze?.titolo ||
+      "Servizio";
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

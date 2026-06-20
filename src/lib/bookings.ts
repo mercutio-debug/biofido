@@ -144,13 +144,14 @@ type BookRow = {
   stato: BookingStatus;
   payment_status?: "non_pagata" | "pagata" | "rimborsata" | null;
   created_at?: string;
+  titolo?: string | null;
   esperienze?: { titolo: string } | null;
 };
 
 const fromBookRow = (r: BookRow): Booking => ({
   id: String(r.id),
-  esperienzaId: String(r.esperienza_id),
-  titolo: r.esperienze?.titolo,
+  esperienzaId: r.esperienza_id != null ? String(r.esperienza_id) : "",
+  titolo: r.titolo ?? r.esperienze?.titolo,
   clienteNome: r.cliente_nome,
   clienteEmail: r.cliente_email,
   clienteTel: r.cliente_tel ?? undefined,
@@ -199,6 +200,48 @@ export async function createBookingRequest(input: {
     stato: "in_attesa",
   });
   return { error: error?.message, totaleCents };
+}
+
+/**
+ * Richiesta di prenotazione per un SERVIZIO del catalogo (non legato a una
+ * "esperienza"): scrive direttamente in `prenotazioni` con il titolo del
+ * servizio e l'importo. Il flusso poi è identico: il produttore conferma e il
+ * cliente paga (booking-pay usa `totale_cents`). esperienza_id resta null.
+ */
+export async function createServizioBooking(input: {
+  ownerId: string;
+  ownerPlan: Plan;
+  servizioNome: string;
+  prezzoCents: number;
+  clienteNome: string;
+  clienteEmail: string;
+  clienteTel?: string;
+  dataRichiesta: string;
+  persone: number;
+  note?: string;
+}): Promise<{ error?: string }> {
+  const totaleCents = input.prezzoCents * Math.max(1, input.persone);
+  const commCents = commissionCents(input.ownerPlan, totaleCents);
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const { error } = await supabase.from("prenotazioni").insert({
+    esperienza_id: null,
+    titolo: input.servizioNome,
+    owner: input.ownerId,
+    cliente_user_id: session?.user.id ?? null,
+    cliente_nome: input.clienteNome,
+    cliente_email: input.clienteEmail,
+    cliente_tel: input.clienteTel || null,
+    data_richiesta: input.dataRichiesta,
+    persone: input.persone,
+    note: input.note || null,
+    totale_cents: totaleCents,
+    commissione_rate: PLAN_MAP[input.ownerPlan].commissionRate,
+    commissione_cents: commCents,
+    stato: "in_attesa",
+  });
+  return { error: error?.message };
 }
 
 export async function listMyBookings(owner: string): Promise<Booking[]> {

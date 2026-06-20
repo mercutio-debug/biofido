@@ -5,7 +5,7 @@ import { CATEGORY_MAP, PLAN_MAP } from "@/lib/categories";
 import { euroCents } from "@/lib/bookings";
 import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
 import { loadCatalogo, TIPI_VOCE, type VoceCatalogo } from "@/lib/catalogo";
-import type { Business } from "@/lib/biofido-data";
+import type { Business, Product } from "@/lib/biofido-data";
 
 /** prezzo numerico → "€ 9,50" (it-IT). */
 const euro = (n: number | null) =>
@@ -23,11 +23,14 @@ export function SchedaImpresaModal({
   business: b,
   onClose,
   onPrenota,
+  onPrenotaServizio,
   embedded = false,
 }: {
   business: Business;
   onClose?: () => void;
   onPrenota?: (b: Business) => void;
+  /** prenotazione di un singolo servizio extra del catalogo prodotti */
+  onPrenotaServizio?: (b: Business, servizio: Product) => void;
   /** true = mostra il contenuto inline (anteprima in dashboard), senza overlay/modale */
   embedded?: boolean;
 }) {
@@ -178,10 +181,10 @@ export function SchedaImpresaModal({
                       </div>
                     )}
                   </div>
-                  {p.prenotabile && onPrenota && (
+                  {p.prenotabile && onPrenotaServizio && (
                     <button
                       type="button"
-                      onClick={() => onPrenota(b)}
+                      onClick={() => onPrenotaServizio(b, p)}
                       className="self-start rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
                     >
                       ✨ Prenota / richiedi

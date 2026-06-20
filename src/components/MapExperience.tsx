@@ -10,6 +10,8 @@ import { experiencesByOwners } from "@/lib/bookings";
 import { ComuneAutocomplete } from "./ComuneAutocomplete";
 import { PrenotaModal } from "./PrenotaModal";
 import { SchedaImpresaModal } from "./SchedaImpresaModal";
+import { RichiestaServizioModal } from "./RichiestaServizioModal";
+import type { Product } from "@/lib/biofido-data";
 
 // La mappa Leaflet usa `window`: va caricata solo lato browser.
 const BioFidoMap = dynamic(() => import("./BioFidoMap"), {
@@ -46,6 +48,7 @@ export function MapExperience() {
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
   const [prenota, setPrenota] = useState<Business | null>(null);
   const [scheda, setScheda] = useState<Business | null>(null);
+  const [prenotaServizio, setPrenotaServizio] = useState<{ business: Business; servizio: Product } | null>(null);
 
   // quando un visitatore apre la scheda di un'azienda, conto la visita (statistiche)
   useEffect(() => {
@@ -340,6 +343,10 @@ export function MapExperience() {
             setScheda(null);
             setPrenota(b);
           }}
+          onPrenotaServizio={(b, s) => {
+            setScheda(null);
+            setPrenotaServizio({ business: b, servizio: s });
+          }}
         />
       )}
 
@@ -348,6 +355,15 @@ export function MapExperience() {
           business={prenota}
           demo={source !== "supabase"}
           onClose={() => setPrenota(null)}
+        />
+      )}
+
+      {prenotaServizio && (
+        <RichiestaServizioModal
+          business={prenotaServizio.business}
+          servizio={prenotaServizio.servizio}
+          demo={source !== "supabase"}
+          onClose={() => setPrenotaServizio(null)}
         />
       )}
     </div>
