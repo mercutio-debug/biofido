@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -48,6 +48,7 @@ import {
   type BookingStatus,
 } from "@/lib/bookings";
 import { ChatPrenotazione } from "@/components/ChatPrenotazione";
+import { listContatti, setContattoGestito, type Contatto } from "@/lib/contatti";
 import { NotificheToggle } from "@/components/NotificheToggle";
 import { StatisticheCard } from "@/components/StatisticheCard";
 import { AnteprimaScheda } from "@/components/AnteprimaScheda";
@@ -136,6 +137,7 @@ export default function DashboardPage() {
           <CatalogoCard ownerId={user.id} gold={pianoScelto === "gold"} />
           <PagamentiCard ownerId={user.id} plan={pianoScelto} />
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
+          <MessaggiCard ownerId={user.id} />
           <PrenotazioniCard ownerId={user.id} />
           <StatisticheCard ownerId={user.id} plan={pianoScelto} />
           <PagamentoFinale ownerId={user.id} scelto={pianoScelto} attivo={activePlan} bioOk={bioOk} />
@@ -187,11 +189,16 @@ function PagamentoFinale({
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [fatturazioneOk, setFatturazioneOk] = useState(false);
-  // Precompilo la fatturazione coi dati della scheda mappa (nome + città)
+  // Precompilo la fatturazione coi dati della scheda mappa (nome, indirizzo, città)
   const [prefill, setPrefill] = useState<PrefillFatturazione | undefined>(undefined);
   useEffect(() => {
     loadMyBusiness(ownerId).then((b) => {
-      if (b) setPrefill({ ragione_sociale: b.name, citta: b.city });
+      if (b)
+        setPrefill({
+          ragione_sociale: b.name,
+          indirizzo: b.address,
+          citta: b.city,
+        });
     });
   }, [ownerId]);
 
@@ -1065,6 +1072,153 @@ function StatoBadge({ stato }: { stato: BookingStatus }) {
     <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${color}`}>
       {STATO_LABEL[stato]}
     </span>
+  );
+}
+
+/* ------------------- MESSAGGI (inbox unica) ------------------- */
+type InboxItem =
+  | { kind: "contatto"; date: string; c: Contatto }
+  | { kind: "prenotazione"; date: string; b: Booking };
+
+function MessaggiCard({ ownerId }: { ownerId: string }) {
+  const [contatti, setContatti] = useState<Contatto[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [chatOpen, setChatOpen] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [c, b] = await Promise.all([listContatti(ownerId), listMyBookings(ownerId)]);
+    setContatti(c);
+    setBookings(b);
+    setLoading(false);
+  }, [ownerId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const items: InboxItem[] = useMemo(() => {
+    const a: InboxItem[] = contatti.map((c) => ({ kind: "contatto", date: c.createdAt ?? "", c }));
+    const d: InboxItem[] = bookings.map((b) => ({ kind: "prenotazione", date: b.createdAt ?? "", b }));
+    return [...a, ...d].sort((x, y) => (y.date > x.date ? 1 : x.date > y.date ? -1 : 0));
+  }, [contatti, bookings]);
+
+  const nuovi = contatti.filter((c) => c.stato === "nuovo").length;
+
+  async function gestito(id: string, val: boolean) {
+    await setContattoGestito(id, val);
+    load();
+  }
+
+  return (
+    <section id="messaggi" className="card mt-6 p-6 scroll-mt-20">
+      <h2 className="font-display text-2xl text-green-800">
+        Messaggi
+        {nuovi > 0 && (
+          <span className="ml-2 rounded-full bg-traffic-green px-2 py-0.5 align-middle text-xs font-bold text-white">
+            {nuovi} nuovi
+          </span>
+        )}
+      </h2>
+      <p className="mt-1 text-sm text-green-900/70">
+        Tutto ciò che ti arriva dai clienti: messaggi di «Contatta l&apos;azienda» e
+        richieste di prenotazione, dal più recente.
+      </p>
+
+      {loading ? (
+        <p className="mt-4 text-sm text-green-900/60">Caricamento…</p>
+      ) : items.length === 0 ? (
+        <p className="mt-4 text-sm text-green-900/70">
+          Nessun messaggio per ora. Quando un cliente ti scrive o prenota, lo trovi qui
+          (e ti arriva anche per email).
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-3">
+          {items.map((it) =>
+            it.kind === "contatto" ? (
+              <li
+                key={`c-${it.c.id}`}
+                className={`rounded-2xl border p-4 ${
+                  it.c.stato === "nuovo" ? "border-traffic-green bg-leaf/40" : "border-[#e3eed7] bg-white"
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-lime-600">
+                      ✉️ Messaggio
+                    </div>
+                    <div className="font-semibold text-green-800">{it.c.nomeCliente}</div>
+                    <div className="text-xs text-green-900/60">{it.c.emailCliente}</div>
+                  </div>
+                  {it.c.createdAt && (
+                    <div className="text-[11px] text-green-900/50">
+                      {it.c.createdAt.slice(0, 10)}
+                    </div>
+                  )}
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-green-900/85">
+                  {it.c.messaggio}
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <a
+                    href={`mailto:${it.c.emailCliente}?subject=${encodeURIComponent(
+                      "Risposta al tuo messaggio",
+                    )}`}
+                    className="rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
+                  >
+                    ✉️ Rispondi via email
+                  </a>
+                  <button
+                    className="rounded-full border border-green-600 px-3 py-1 text-xs font-bold text-green-700"
+                    onClick={() => gestito(it.c.id, it.c.stato !== "gestito")}
+                  >
+                    {it.c.stato === "gestito" ? "↩︎ Riapri" : "✓ Segna gestito"}
+                  </button>
+                </div>
+              </li>
+            ) : (
+              <li key={`b-${it.b.id}`} className="rounded-2xl border border-[#e3eed7] bg-white p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-badge-yellow">
+                      🗓️ Prenotazione
+                    </div>
+                    <div className="font-semibold text-green-800">
+                      {it.b.titolo ?? "Esperienza"} · {it.b.persone} persone
+                    </div>
+                    <div className="text-xs text-green-900/60">
+                      {it.b.clienteNome} · {it.b.clienteEmail}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-display text-green-800">{euroCents(it.b.totaleCents)}</div>
+                    <StatoBadge stato={it.b.stato} />
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    className="rounded-full border border-green-600 px-3 py-1 text-xs font-bold text-green-700"
+                    onClick={() => setChatOpen(chatOpen === it.b.id ? null : it.b.id)}
+                  >
+                    💬 Chat
+                  </button>
+                  <a
+                    href="#prenotazioni"
+                    className="text-xs font-bold text-green-700 hover:underline"
+                  >
+                    Gestisci (conferma/rifiuta) →
+                  </a>
+                </div>
+                {chatOpen === it.b.id && (
+                  <ChatPrenotazione prenotazioneId={it.b.id} mittente="azienda" />
+                )}
+              </li>
+            ),
+          )}
+        </ul>
+      )}
+    </section>
   );
 }
 

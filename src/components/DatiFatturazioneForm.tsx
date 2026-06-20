@@ -19,7 +19,10 @@ export type PrefillFatturazione = {
   ragione_sociale?: string;
   partita_iva?: string;
   codice_fiscale?: string;
+  indirizzo?: string;
+  cap?: string;
   citta?: string;
+  provincia?: string;
 };
 
 /**
@@ -80,22 +83,27 @@ export function DatiFatturazioneForm({
           ragione_sociale: prefill.ragione_sociale ?? "",
           partita_iva: prefill.partita_iva ?? "",
           codice_fiscale: prefill.codice_fiscale ?? "",
+          indirizzo: prefill.indirizzo ?? "",
+          cap: prefill.cap ?? "",
           citta: prefill.citta ?? "",
+          provincia: prefill.provincia ?? "",
         };
         setCfUguale(
           !!base.codice_fiscale && base.codice_fiscale === base.partita_iva,
         );
         setD(base);
-        // Se conosco la città, ricavo subito provincia (dai comuni) e CAP.
-        if (prefill.citta) {
+        // Se conosco la città ma manca provincia o CAP, li ricavo dai comuni.
+        if (prefill.citta && (!base.provincia || !base.cap)) {
           try {
             const comuni = await loadComuni();
             const norm = (s: string) => s.trim().toLowerCase();
             const c = comuni.find((x) => norm(x.nome) === norm(prefill.citta!));
             if (c) {
-              setD((prev) => ({ ...prev, provincia: c.prov }));
-              const cap = await lookupCap(c.nome, c.prov);
-              if (cap) setD((prev) => ({ ...prev, cap }));
+              if (!base.provincia) setD((prev) => ({ ...prev, provincia: c.prov }));
+              if (!base.cap) {
+                const cap = await lookupCap(c.nome, c.prov);
+                if (cap) setD((prev) => ({ ...prev, cap }));
+              }
             }
           } catch {
             /* comuni non caricati: l'utente sceglie la città dall'autocomplete */

@@ -25,6 +25,7 @@ export function SchedaImpresaModal({
   onClose,
   onPrenota,
   onPrenotaServizio,
+  onContatta,
   embedded = false,
 }: {
   business: Business;
@@ -32,6 +33,8 @@ export function SchedaImpresaModal({
   onPrenota?: (b: Business) => void;
   /** prenotazione di un singolo servizio extra del catalogo prodotti */
   onPrenotaServizio?: (b: Business, servizio: Product) => void;
+  /** apre la chat "Contatta l'azienda" (messaggio diretto, anche da ospite) */
+  onContatta?: (b: Business) => void;
   /** true = mostra il contenuto inline (anteprima in dashboard), senza overlay/modale */
   embedded?: boolean;
 }) {
@@ -139,6 +142,20 @@ export function SchedaImpresaModal({
             </div>
           )}
         </div>
+
+        {/* contatta l'azienda: chat diretta (anche da ospite) → email all'azienda */}
+        {onContatta && b.owner && (
+          <button
+            type="button"
+            onClick={() => {
+              registraEvento(b.owner!, "contatto");
+              onContatta(b);
+            }}
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-green-600 px-4 py-1.5 text-sm font-bold text-green-700 hover:bg-leaf"
+          >
+            ✉️ Contatta l&apos;azienda
+          </button>
+        )}
 
         {/* prodotti */}
         {prodotti.length > 0 && (

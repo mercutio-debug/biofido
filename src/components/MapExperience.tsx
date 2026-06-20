@@ -11,6 +11,7 @@ import { ComuneAutocomplete } from "./ComuneAutocomplete";
 import { PrenotaModal } from "./PrenotaModal";
 import { SchedaImpresaModal } from "./SchedaImpresaModal";
 import { RichiestaServizioModal } from "./RichiestaServizioModal";
+import { ContattaAziendaModal } from "./ContattaAziendaModal";
 import type { Product } from "@/lib/biofido-data";
 
 // La mappa Leaflet usa `window`: va caricata solo lato browser.
@@ -49,6 +50,7 @@ export function MapExperience() {
   const [prenota, setPrenota] = useState<Business | null>(null);
   const [scheda, setScheda] = useState<Business | null>(null);
   const [prenotaServizio, setPrenotaServizio] = useState<{ business: Business; servizio: Product } | null>(null);
+  const [contatta, setContatta] = useState<Business | null>(null);
 
   // quando un visitatore apre la scheda di un'azienda, conto la visita +
   // la ZONA di provenienza (l'area su cui è centrata la mappa di chi guarda)
@@ -352,6 +354,10 @@ export function MapExperience() {
             setScheda(null);
             setPrenotaServizio({ business: b, servizio: s });
           }}
+          onContatta={(b) => {
+            setScheda(null);
+            setContatta(b);
+          }}
         />
       )}
 
@@ -370,6 +376,10 @@ export function MapExperience() {
           demo={source !== "supabase"}
           onClose={() => setPrenotaServizio(null)}
         />
+      )}
+
+      {contatta && (
+        <ContattaAziendaModal business={contatta} onClose={() => setContatta(null)} />
       )}
     </div>
   );

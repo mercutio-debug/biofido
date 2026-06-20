@@ -41,9 +41,10 @@ type Notice = {
   title: string;
   body: string;
   url: string;
+  replyTo?: string | null; // "rispondi a" dell'email (es. email del cliente)
 };
 
-async function sendEmail(to: string, subject: string, html: string) {
+async function sendEmail(to: string, subject: string, html: string, replyTo?: string) {
   if (!RESEND_API_KEY) {
     console.error("notify: RESEND_API_KEY mancante a runtime — email saltata");
     return;
@@ -54,7 +55,13 @@ async function sendEmail(to: string, subject: string, html: string) {
       Authorization: `Bearer ${RESEND_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from: NOTIFY_FROM, to, subject, html }),
+    body: JSON.stringify({
+      from: NOTIFY_FROM,
+      to,
+      subject,
+      html,
+      ...(replyTo ? { reply_to: replyTo } : {}),
+    }),
   });
   // niente errori "muti": se Resend rifiuta, lo logghiamo nei Logs della funzione
   if (!r.ok) {
@@ -98,7 +105,7 @@ async function emailOf(userId: string): Promise<string | null> {
 async function dispatch(n: Notice) {
   const link = n.url;
   const html = `<p>${n.body}</p><p><a href="${link}">Apri BioFido</a></p>`;
-  if (n.email) await sendEmail(n.email, n.title, html);
+  if (n.email) await sendEmail(n.email, n.title, html, n.replyTo ?? undefined);
   if (n.userId) await sendPush(n.userId, n);
 }
 
@@ -155,13 +162,43 @@ Deno.serve(async (req) => {
     }
 
     if (table === "prenotazioni") {
-      // nuova richiesta: avviso il produttore
+      const titolo = rec.titolo ?? "un'esperienza";
+      // 1) avviso il produttore della nuova richiesta
       await dispatch({
         userId: rec.owner,
         email: await emailOf(rec.owner),
         title: "Nuova richiesta di prenotazione",
-        body: `${rec.cliente_nome} ha richiesto una prenotazione per ${rec.persone} persone.`,
+        body: `${rec.cliente_nome} ha richiesto «${titolo}» per ${rec.persone} persone.`,
         url: `${SITE_URL}/dashboard/`,
+        replyTo: rec.cliente_email ?? undefined,
+      });
+      // 2) confermo al CLIENTE che la richiesta è partita
+      if (rec.cliente_email) {
+        await dispatch({
+          email: rec.cliente_email,
+          title: "Richiesta di prenotazione inviata ✅",
+          body:
+            `Ciao ${rec.cliente_nome}, abbiamo inviato la tua richiesta per «${titolo}» ` +
+            `(${rec.persone} persone). L'azienda ti contatterà a breve per confermare. ` +
+            `Riceverai un secondo messaggio con l'esito.`,
+          url: `${SITE_URL}/`,
+        });
+      }
+      return ok();
+    }
+
+    if (table === "contatti") {
+      // "Contatta l'azienda": recapito il messaggio del cliente all'azienda,
+      // con reply-to all'email del cliente così può rispondere direttamente.
+      await dispatch({
+        userId: rec.azienda,
+        email: await emailOf(rec.azienda),
+        title: `Nuovo messaggio da ${rec.nome_cliente ?? "un cliente"}`,
+        body:
+          `${rec.nome_cliente ?? "Un cliente"} (${rec.email_cliente ?? "email n.d."}) ti ha scritto:\n\n` +
+          `${rec.messaggio ?? ""}`,
+        url: `${SITE_URL}/dashboard/#messaggi`,
+        replyTo: rec.email_cliente ?? undefined,
       });
       return ok();
     }
