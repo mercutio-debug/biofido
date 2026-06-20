@@ -183,3 +183,32 @@ export async function lookupCap(citta: string, prov?: string): Promise<string | 
     return null;
   }
 }
+
+/**
+ * Geocodifica un INDIRIZZO preciso (via + città) via Nominatim, così il
+ * segnaposto cade sull'indirizzo reale e non sul centro del comune. Ritorna
+ * null se l'indirizzo non viene trovato (allora si usa il centro del comune).
+ */
+export async function geocodeIndirizzo(
+  address: string,
+  citta: string,
+  prov?: string,
+): Promise<{ lat: number; lon: number } | null> {
+  const a = (address || "").trim();
+  const c = (citta || "").trim();
+  if (!a || !c) return null;
+  try {
+    const q = `${a}, ${c}${prov ? ` ${prov}` : ""}, Italia`;
+    const url =
+      "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=it&countrycodes=it&q=" +
+      encodeURIComponent(q);
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) return null;
+    const arr = (await res.json()) as Array<{ lat?: string; lon?: string }>;
+    const hit = arr?.[0];
+    if (!hit?.lat || !hit?.lon) return null;
+    return { lat: parseFloat(hit.lat), lon: parseFloat(hit.lon) };
+  } catch {
+    return null;
+  }
+}

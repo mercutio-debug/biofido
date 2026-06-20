@@ -14,6 +14,7 @@ import {
   type Product,
 } from "@/lib/biofido-data";
 import { ComuneAutocomplete } from "@/components/ComuneAutocomplete";
+import { geocodeIndirizzo } from "@/lib/geo";
 import { ProdottoEditor } from "@/components/ProdottoEditor";
 import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
 import { getMyPlan } from "@/lib/plan";
@@ -520,6 +521,24 @@ function SchedaMappaCard({
   const [editProd, setEditProd] = useState<number | "new" | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [geoBusy, setGeoBusy] = useState(false);
+
+  // Posiziona il segnaposto sull'indirizzo ESATTO (via + civico), non sul centro
+  // del comune. Se l'indirizzo non si trova, resta la posizione del comune.
+  async function localizza() {
+    setGeoBusy(true);
+    setMsg(null);
+    const pt = await geocodeIndirizzo(address, city);
+    setGeoBusy(false);
+    if (pt) {
+      setCoord(pt);
+      setMsg("📍 Indirizzo localizzato: segnaposto spostato sul punto esatto. Salva per confermarlo.");
+    } else {
+      setMsg(
+        "Non ho trovato l'indirizzo preciso: resta il centro del comune. Controlla via e numero civico (es. «Via dei Campi 12»).",
+      );
+    }
+  }
 
   const load = useCallback(async () => {
     const b = await loadMyBusiness(ownerId);
@@ -655,7 +674,26 @@ function SchedaMappaCard({
             </label>
             <label className="block">
               <span className="label">Indirizzo</span>
-              <input className="field mt-1" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Via dei Campi 12" />
+              <div className="mt-1 flex gap-2">
+                <input
+                  className="field flex-1"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Via dei Campi 12"
+                />
+                <button
+                  type="button"
+                  className="btn-ghost whitespace-nowrap"
+                  onClick={localizza}
+                  disabled={geoBusy || !address.trim() || !city.trim()}
+                >
+                  {geoBusy ? "Cerco…" : "📍 Localizza"}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-green-900/55">
+                Premi «Localizza» per mettere il segnaposto sull&apos;indirizzo esatto
+                (non sul centro del comune).
+              </p>
             </label>
             <label className="block">
               <span className="label">Telefono</span>
