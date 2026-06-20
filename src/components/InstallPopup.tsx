@@ -28,7 +28,9 @@ export function InstallPopup() {
       window.matchMedia?.("(display-mode: standalone)").matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     if (standalone) return; // già installata/aperta come app
-    if (localStorage.getItem(DISMISS_KEY)) return; // già chiuso dall'utente
+    // "Non ora" nasconde solo per la sessione corrente: alla prossima visita
+    // il popup ricompare (finché l'app non è installata).
+    if (sessionStorage.getItem(DISMISS_KEY)) return;
 
     const ios = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
     setIsIOS(ios);
@@ -63,7 +65,7 @@ export function InstallPopup() {
 
   function chiudi() {
     try {
-      localStorage.setItem(DISMISS_KEY, "1");
+      sessionStorage.setItem(DISMISS_KEY, "1");
     } catch {}
     setOpen(false);
   }
