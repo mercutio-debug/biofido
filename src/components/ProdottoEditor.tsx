@@ -37,11 +37,14 @@ export function ProdottoEditor({
   initial,
   onSave,
   onClose,
+  ownerId,
 }: {
   sede: { lat: number; lon: number } | null;
   initial?: Product;
   onSave: (p: Product) => void;
   onClose: () => void;
+  /** id utente: serve per salvare la foto nello storage (la RLS richiede l'uid) */
+  ownerId: string;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [category, setCategory] = useState(initial?.category ?? CATEGORIE[0]);
@@ -137,7 +140,7 @@ export function ProdottoEditor({
                   setCaricando(true);
                   setErr(null);
                   try {
-                    setImage(await caricaImmagineCatalogo("prodotti", f));
+                    setImage(await caricaImmagineCatalogo(ownerId, f));
                   } catch (er) {
                     setErr((er as Error).message);
                   } finally {

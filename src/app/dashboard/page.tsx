@@ -779,6 +779,7 @@ function SchedaMappaCard({
                   {editProd !== null && (
                     <ProdottoEditor
                       sede={coord}
+                      ownerId={ownerId}
                       initial={editProd === "new" ? undefined : products[editProd]}
                       onClose={() => setEditProd(null)}
                       onSave={(prod) => {
