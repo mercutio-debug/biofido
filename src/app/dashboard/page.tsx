@@ -13,8 +13,11 @@ import {
   type Business,
   type Product,
 } from "@/lib/biofido-data";
+import dynamic from "next/dynamic";
 import { ComuneAutocomplete } from "@/components/ComuneAutocomplete";
 import { geocodeIndirizzo } from "@/lib/geo";
+
+const MappaPicker = dynamic(() => import("@/components/MappaPicker"), { ssr: false });
 import { ProdottoEditor } from "@/components/ProdottoEditor";
 import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
 import { getMyPlan } from "@/lib/plan";
@@ -691,10 +694,26 @@ function SchedaMappaCard({
                 </button>
               </div>
               <p className="mt-1 text-xs text-green-900/55">
-                Premi «Localizza» per mettere il segnaposto sull&apos;indirizzo esatto
-                (non sul centro del comune).
+                Premi «Localizza» per avvicinarti, poi <strong>trascina il pin</strong>
+                sulla mappa qui sotto per il punto esatto.
               </p>
             </label>
+            {coord && (
+              <div className="md:col-span-2">
+                <span className="label">📍 Posiziona il segnaposto esatto</span>
+                <div className="mt-1 overflow-hidden rounded-2xl border border-[#e3eed7]">
+                  <MappaPicker
+                    lat={coord.lat}
+                    lon={coord.lon}
+                    onChange={(la, lo) => setCoord({ lat: la, lon: lo })}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-green-900/55">
+                  Tocca la mappa o trascina il pin sulla posizione precisa della tua
+                  azienda, poi salva.
+                </p>
+              </div>
+            )}
             <label className="block">
               <span className="label">Telefono</span>
               <input className="field mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} />
