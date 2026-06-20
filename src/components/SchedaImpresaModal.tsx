@@ -44,6 +44,15 @@ export function SchedaImpresaModal({
         }
         onClick={(e) => e.stopPropagation()}
       >
+        {/* copertina azienda: solo per i Gold */}
+        {b.plan === "gold" && b.immagine && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={b.immagine}
+            alt={b.name}
+            className="mb-4 h-40 w-full rounded-xl object-cover"
+          />
+        )}
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">

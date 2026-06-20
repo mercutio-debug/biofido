@@ -44,6 +44,8 @@ export type Business = {
   description?: string;
   website?: string;
   phone?: string;
+  /** immagine di copertina dell'azienda (mostrata nella scheda, per i Gold) */
+  immagine?: string;
   /** prodotti con foto e prezzi (solo piano Gold) */
   products?: Product[];
   /** id utente proprietario della scheda (per legare le esperienze) */
@@ -170,6 +172,7 @@ type Row = {
   description?: string | null;
   website?: string | null;
   phone?: string | null;
+  immagine?: string | null;
   products?: Product[] | null;
   owner?: string | null;
 };
@@ -187,6 +190,7 @@ function fromRow(r: Row): Business {
     description: r.description ?? undefined,
     website: r.website ?? undefined,
     phone: r.phone ?? undefined,
+    immagine: r.immagine ?? undefined,
     products: r.products ?? undefined,
     owner: r.owner ?? undefined,
   };
@@ -198,9 +202,9 @@ function fromRow(r: Row): Business {
  */
 export async function loadBusinesses(): Promise<{ items: Business[]; source: "supabase" | "demo" }> {
   try {
-    const { data, error } = await supabase
-      .from("biofido_businesses")
-      .select("id,name,category,plan,lat,lon,city,address,description,website,phone,products,owner");
+    // select("*"): la colonna "immagine" può non esistere su DB più vecchi →
+    // così non si rompe la mappa (le colonne mancanti restano semplicemente assenti).
+    const { data, error } = await supabase.from("biofido_businesses").select("*");
     if (error) throw error;
     if (data && data.length > 0) {
       return { items: (data as Row[]).map(fromRow), source: "supabase" };
@@ -217,9 +221,7 @@ export async function loadBusinesses(): Promise<{ items: Business[]; source: "su
 export async function loadMyBusiness(owner: string): Promise<Business | null> {
   const { data } = await supabase
     .from("biofido_businesses")
-    .select(
-      "id,name,category,plan,lat,lon,city,address,description,website,phone,products,owner",
-    )
+    .select("*")
     .eq("owner", owner)
     .limit(1)
     .maybeSingle();
