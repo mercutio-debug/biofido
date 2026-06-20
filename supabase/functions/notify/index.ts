@@ -49,6 +49,7 @@ async function sendEmail(to: string, subject: string, html: string, replyTo?: st
     console.error("notify: RESEND_API_KEY mancante a runtime — email saltata");
     return;
   }
+  console.log(`notify: invio email a ${to} (from ${NOTIFY_FROM})`);
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -63,9 +64,11 @@ async function sendEmail(to: string, subject: string, html: string, replyTo?: st
       ...(replyTo ? { reply_to: replyTo } : {}),
     }),
   });
-  // niente errori "muti": se Resend rifiuta, lo logghiamo nei Logs della funzione
+  // logghiamo SEMPRE l'esito (anche il successo), così nei Logs si vede tutto
   if (!r.ok) {
     console.error(`notify: Resend ha risposto ${r.status}: ${await r.text()}`);
+  } else {
+    console.log(`notify: Resend OK ${r.status} per ${to}`);
   }
 }
 
@@ -105,6 +108,7 @@ async function emailOf(userId: string): Promise<string | null> {
 async function dispatch(n: Notice) {
   const link = n.url;
   const html = `<p>${n.body}</p><p><a href="${link}">Apri BioFido</a></p>`;
+  if (!n.email) console.log(`notify: nessun destinatario email per "${n.title}" (email mancante)`);
   if (n.email) await sendEmail(n.email, n.title, html, n.replyTo ?? undefined);
   if (n.userId) await sendPush(n.userId, n);
 }
@@ -114,6 +118,7 @@ Deno.serve(async (req) => {
     const payload = await req.json();
     const table: string = payload.table;
     const rec = payload.record ?? {};
+    console.log(`notify: evento su tabella "${table}"`);
 
     if (table === "users") {
       // nuova iscrizione (auth.users): avviso l'amministratore via email
