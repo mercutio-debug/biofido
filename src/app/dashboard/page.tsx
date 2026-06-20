@@ -51,6 +51,8 @@ import { ChatPrenotazione } from "@/components/ChatPrenotazione";
 import { NotificheToggle } from "@/components/NotificheToggle";
 import { StatisticheCard } from "@/components/StatisticheCard";
 import { AnteprimaScheda } from "@/components/AnteprimaScheda";
+import { ImportoInput } from "@/components/ImportoInput";
+import { euroToCents } from "@/lib/prezzo";
 import { pushConfigured } from "@/lib/push";
 
 export default function DashboardPage() {
@@ -897,8 +899,8 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
   const atLimit = items.length >= info.maxEvents;
 
   async function add() {
-    const cents = Math.round(parseFloat(prezzo.replace(",", ".")) * 100);
-    if (!titolo.trim() || isNaN(cents)) {
+    const cents = euroToCents(prezzo);
+    if (!titolo.trim() || cents == null) {
       setMsg("Inserisci almeno titolo e prezzo.");
       return;
     }
@@ -1002,12 +1004,7 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
                 </label>
                 <label className="block">
                   <span className="label">Prezzo a persona (€) *</span>
-                  <input
-                    className="field mt-1"
-                    value={prezzo}
-                    onChange={(e) => setPrezzo(e.target.value)}
-                    placeholder="15"
-                  />
+                  <ImportoInput value={prezzo} onChange={setPrezzo} placeholder="€ 15,00" />
                 </label>
                 <label className="block">
                   <span className="label">Durata (min)</span>

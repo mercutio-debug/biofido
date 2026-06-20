@@ -10,6 +10,8 @@ import {
   type VoceCatalogo,
   type TipoVoce,
 } from "@/lib/catalogo";
+import { ImportoInput } from "./ImportoInput";
+import { formatPrezzo, parseEuro } from "@/lib/prezzo";
 
 /**
  * Catalogo vendite — funzione GOLD. L'azienda carica prodotti e servizi (con
@@ -212,11 +214,9 @@ function VoceEditor({
           </label>
           <label className="block">
             <span className="label">Prezzo (€)</span>
-            <input
-              type="number"
-              className="field mt-1"
-              value={v.prezzo ?? ""}
-              onChange={(e) => set("prezzo", e.target.value === "" ? null : Number(e.target.value))}
+            <ImportoInput
+              value={v.prezzo == null ? "" : formatPrezzo(v.prezzo)}
+              onChange={(s) => set("prezzo", parseEuro(s))}
             />
           </label>
           <label className="block sm:col-span-2">

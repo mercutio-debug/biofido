@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ComuneAutocomplete } from "./ComuneAutocomplete";
 import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
 import { caricaImmagineCatalogo } from "@/lib/catalogo";
+import { ImportoInput } from "./ImportoInput";
 import type { Product, MateriaPrima } from "@/lib/biofido-data";
 
 const CATEGORIE = [
@@ -175,16 +176,11 @@ export function ProdottoEditor({
               <label className="block">
                 <span className="label">Prezzo</span>
                 <div className="mt-1 flex gap-2">
-                  <input
-                    className="field"
+                  <ImportoInput
                     value={price}
-                    inputMode="decimal"
+                    onChange={setPrice}
+                    className="field"
                     placeholder="€ 15,00"
-                    onChange={(e) => {
-                      // autocompleta il simbolo €: tiene solo cifre/virgola/punto e antepone "€ "
-                      const num = e.target.value.replace(/[^\d.,]/g, "");
-                      setPrice(num ? `€ ${num}` : "");
-                    }}
                   />
                   <select className="field w-32" value={unit} onChange={(e) => setUnit(e.target.value)}>
                     {UNITA.map((u) => (
