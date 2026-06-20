@@ -60,13 +60,22 @@ export async function eliminaVoce(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-/** Carica l'immagine (ridimensionata) nel bucket `catalogo` e ritorna l'URL pubblico. */
+/**
+ * Carica l'immagine (ridimensionata) nel bucket `catalogo` e ritorna l'URL pubblico.
+ * Il percorso DEVE iniziare con l'uid dell'utente loggato: la policy RLS dello
+ * storage accetta solo `auth.uid()/...`. Per questo l'uid viene ricavato qui
+ * dalla sessione e NON dal parametro `owner` (che poteva essere l'id-azienda,
+ * facendo fallire silenziosamente l'upload). Il parametro resta per compatibilità.
+ */
 export async function caricaImmagineCatalogo(owner: string, file: File): Promise<string> {
   if (file.size > MAX_BYTES_INGRESSO) {
     throw new Error("Immagine troppo grande (max 15 MB).");
   }
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth.user?.id ?? owner;
+  if (!uid) throw new Error("Sessione scaduta: accedi di nuovo per caricare l'immagine.");
   const blob = await ridimensionaImmagine(file, 1280, 0.82);
-  const path = `${owner}/${Date.now()}.jpg`;
+  const path = `${uid}/${Date.now()}.jpg`;
   const { error } = await supabase.storage
     .from("catalogo")
     .upload(path, blob, { contentType: "image/jpeg", upsert: true });

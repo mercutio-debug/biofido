@@ -184,11 +184,29 @@ export async function lookupCap(citta: string, prov?: string): Promise<string | 
   }
 }
 
-export type IndirizzoSuggerimento = { label: string; lat: number; lon: number };
+export type IndirizzoSuggerimento = {
+  label: string;
+  lat: number;
+  lon: number;
+  /** via + civico (senza la città), per riempire il campo indirizzo */
+  via?: string;
+  citta?: string;
+  cap?: string;
+  /** sigla provincia (es. "SV") */
+  provincia?: string;
+};
+
+/** Ricava la sigla a 2 lettere della provincia dal codice ISO (es. "IT-SV" → "SV"). */
+function siglaProvincia(iso?: string): string | undefined {
+  if (!iso) return undefined;
+  const m = /-([A-Z]{2})$/.exec(iso);
+  return m ? m[1] : undefined;
+}
 
 /**
  * Autocompletamento INDIRIZZO via Nominatim: digitando "via roma" propone
  * "Via Roma, Torino", "Via Roma, Milano"… così la posizione è precisa al volo.
+ * Ogni suggerimento porta con sé anche CAP e provincia, per riempire i campi.
  */
 export async function searchIndirizzi(query: string): Promise<IndirizzoSuggerimento[]> {
   const q = (query || "").trim();
@@ -211,6 +229,8 @@ export async function searchIndirizzi(query: string): Promise<IndirizzoSuggerime
         village?: string;
         municipality?: string;
         county?: string;
+        postcode?: string;
+        "ISO3166-2-lvl6"?: string;
       };
     }>;
     const out: IndirizzoSuggerimento[] = [];
@@ -225,7 +245,15 @@ export async function searchIndirizzi(query: string): Promise<IndirizzoSuggerime
         (h.display_name ?? "").split(",").slice(0, 2).join(",").trim();
       if (!label || seen.has(label)) continue;
       seen.add(label);
-      out.push({ label, lat: parseFloat(h.lat), lon: parseFloat(h.lon) });
+      out.push({
+        label,
+        lat: parseFloat(h.lat),
+        lon: parseFloat(h.lon),
+        via: via || undefined,
+        citta: citta || undefined,
+        cap: a.postcode || undefined,
+        provincia: siglaProvincia(a["ISO3166-2-lvl6"]),
+      });
     }
     return out;
   } catch {
