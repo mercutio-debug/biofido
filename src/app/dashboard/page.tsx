@@ -15,7 +15,7 @@ import {
 } from "@/lib/biofido-data";
 import dynamic from "next/dynamic";
 import { ComuneAutocomplete } from "@/components/ComuneAutocomplete";
-import { geocodeIndirizzo } from "@/lib/geo";
+import { IndirizzoAutocomplete } from "@/components/IndirizzoAutocomplete";
 
 const MappaPicker = dynamic(() => import("@/components/MappaPicker"), { ssr: false });
 import { ProdottoEditor } from "@/components/ProdottoEditor";
@@ -524,24 +524,6 @@ function SchedaMappaCard({
   const [editProd, setEditProd] = useState<number | "new" | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [geoBusy, setGeoBusy] = useState(false);
-
-  // Posiziona il segnaposto sull'indirizzo ESATTO (via + civico), non sul centro
-  // del comune. Se l'indirizzo non si trova, resta la posizione del comune.
-  async function localizza() {
-    setGeoBusy(true);
-    setMsg(null);
-    const pt = await geocodeIndirizzo(address, city);
-    setGeoBusy(false);
-    if (pt) {
-      setCoord(pt);
-      setMsg("📍 Indirizzo localizzato: segnaposto spostato sul punto esatto. Salva per confermarlo.");
-    } else {
-      setMsg(
-        "Non ho trovato l'indirizzo preciso: resta il centro del comune. Controlla via e numero civico (es. «Via dei Campi 12»).",
-      );
-    }
-  }
 
   const load = useCallback(async () => {
     const b = await loadMyBusiness(ownerId);
@@ -677,25 +659,20 @@ function SchedaMappaCard({
             </label>
             <label className="block">
               <span className="label">Indirizzo</span>
-              <div className="mt-1 flex gap-2">
-                <input
-                  className="field flex-1"
+              <div className="mt-1">
+                <IndirizzoAutocomplete
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Via dei Campi 12"
+                  onChange={setAddress}
+                  onSelect={(s) => {
+                    setCoord({ lat: s.lat, lon: s.lon });
+                    setMsg("📍 Indirizzo trovato: segnaposto posizionato. Rifinisci col pin e salva.");
+                  }}
+                  placeholder="Scrivi la via: es. Via Roma 1, Torino"
                 />
-                <button
-                  type="button"
-                  className="btn-ghost whitespace-nowrap"
-                  onClick={localizza}
-                  disabled={geoBusy || !address.trim() || !city.trim()}
-                >
-                  {geoBusy ? "Cerco…" : "📍 Localizza"}
-                </button>
               </div>
               <p className="mt-1 text-xs text-green-900/55">
-                Premi «Localizza» per avvicinarti, poi <strong>trascina il pin</strong>
-                sulla mappa qui sotto per il punto esatto.
+                Scrivi la via e <strong>scegli il suggerimento</strong>; poi, se serve,
+                <strong> trascina il pin</strong> sulla mappa per il punto esatto.
               </p>
             </label>
             {coord && (

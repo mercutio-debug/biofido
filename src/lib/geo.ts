@@ -184,6 +184,55 @@ export async function lookupCap(citta: string, prov?: string): Promise<string | 
   }
 }
 
+export type IndirizzoSuggerimento = { label: string; lat: number; lon: number };
+
+/**
+ * Autocompletamento INDIRIZZO via Nominatim: digitando "via roma" propone
+ * "Via Roma, Torino", "Via Roma, Milano"… così la posizione è precisa al volo.
+ */
+export async function searchIndirizzi(query: string): Promise<IndirizzoSuggerimento[]> {
+  const q = (query || "").trim();
+  if (q.length < 3) return [];
+  try {
+    const url =
+      "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&addressdetails=1&accept-language=it&countrycodes=it&q=" +
+      encodeURIComponent(q);
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) return [];
+    const arr = (await res.json()) as Array<{
+      lat?: string;
+      lon?: string;
+      display_name?: string;
+      address?: {
+        road?: string;
+        house_number?: string;
+        city?: string;
+        town?: string;
+        village?: string;
+        municipality?: string;
+        county?: string;
+      };
+    }>;
+    const out: IndirizzoSuggerimento[] = [];
+    const seen = new Set<string>();
+    for (const h of arr) {
+      if (!h.lat || !h.lon) continue;
+      const a = h.address ?? {};
+      const via = [a.road, a.house_number].filter(Boolean).join(" ");
+      const citta = a.city || a.town || a.village || a.municipality || a.county || "";
+      const label =
+        [via, citta].filter(Boolean).join(", ") ||
+        (h.display_name ?? "").split(",").slice(0, 2).join(",").trim();
+      if (!label || seen.has(label)) continue;
+      seen.add(label);
+      out.push({ label, lat: parseFloat(h.lat), lon: parseFloat(h.lon) });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Geocodifica un INDIRIZZO preciso (via + città) via Nominatim, così il
  * segnaposto cade sull'indirizzo reale e non sul centro del comune. Ritorna
