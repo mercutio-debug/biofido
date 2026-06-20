@@ -7,10 +7,10 @@ const GIORNO_MS = 24 * 60 * 60 * 1000;
  * bloccare o rallentare la pagina pubblica. Da chiamare quando un visitatore
  * apre la scheda di un'azienda.
  */
-export async function registraVisita(owner: string): Promise<void> {
+export async function registraVisita(owner: string, prodottoId?: string): Promise<void> {
   if (!owner) return;
   try {
-    await supabase.from("biofido_visite").insert({ owner });
+    await supabase.from("biofido_visite").insert({ owner, prodotto_id: prodottoId ?? null });
   } catch {
     /* il conteggio visite è "best effort": ignoriamo gli errori */
   }
