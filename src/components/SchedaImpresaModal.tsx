@@ -5,6 +5,7 @@ import { CATEGORY_MAP, PLAN_MAP } from "@/lib/categories";
 import { euroCents } from "@/lib/bookings";
 import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
 import { loadCatalogo, TIPI_VOCE, type VoceCatalogo } from "@/lib/catalogo";
+import { registraEvento } from "@/lib/statistiche";
 import type { Business, Product } from "@/lib/biofido-data";
 
 /** prezzo numerico → "€ 9,50" (it-IT). */
@@ -114,7 +115,11 @@ export function SchedaImpresaModal({
           {b.phone && (
             <div>
               📞{" "}
-              <a href={`tel:${b.phone}`} className="font-semibold text-green-700 hover:text-lime-500">
+              <a
+                href={`tel:${b.phone}`}
+                onClick={() => b.owner && registraEvento(b.owner, "contatto")}
+                className="font-semibold text-green-700 hover:text-lime-500"
+              >
                 {b.phone}
               </a>
             </div>
@@ -126,6 +131,7 @@ export function SchedaImpresaModal({
                 href={b.website.startsWith("http") ? b.website : `https://${b.website}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => b.owner && registraEvento(b.owner, "contatto")}
                 className="font-semibold text-green-700 hover:text-lime-500"
               >
                 {b.website}
@@ -304,6 +310,7 @@ export function SchedaImpresaModal({
           href={dir}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => b.owner && registraEvento(b.owner, "indicazioni")}
           className="btn-lime mt-5 inline-block w-full text-center"
         >
           🐾 Raggiungila

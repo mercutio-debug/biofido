@@ -50,9 +50,14 @@ export function MapExperience() {
   const [scheda, setScheda] = useState<Business | null>(null);
   const [prenotaServizio, setPrenotaServizio] = useState<{ business: Business; servizio: Product } | null>(null);
 
-  // quando un visitatore apre la scheda di un'azienda, conto la visita (statistiche)
+  // quando un visitatore apre la scheda di un'azienda, conto la visita +
+  // la ZONA di provenienza (l'area su cui è centrata la mappa di chi guarda)
   useEffect(() => {
-    if (scheda?.owner && source === "supabase") registraVisita(scheda.owner);
+    if (scheda?.owner && source === "supabase") {
+      const zona = nearestPlace(center.lat, center.lon)?.name;
+      registraVisita(scheda.owner, { zona });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheda, source]);
 
   // carica le attività dal database (o demo) all'avvio
