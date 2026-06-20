@@ -1,9 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { CATEGORY_MAP, PLAN_MAP } from "@/lib/categories";
 import { euroCents } from "@/lib/bookings";
 import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
+import { loadCatalogo, TIPI_VOCE, type VoceCatalogo } from "@/lib/catalogo";
 import type { Business } from "@/lib/biofido-data";
+
+/** prezzo numerico → "€ 9,50" (it-IT). */
+const euro = (n: number | null) =>
+  n == null ? "" : "€ " + n.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const tipoLabel = (t: string) => TIPI_VOCE.find((x) => x.id === t)?.label ?? t;
 
 /**
  * Pagina dell'impresa (in modale) aperta cliccando il segnaposto o la voce in
@@ -30,6 +37,14 @@ export function SchedaImpresaModal({
   const prodotti = (plan.showProducts ? b.products ?? [] : []).slice(0, plan.maxProducts);
   const sede = { lat: b.lat, lon: b.lon };
   const esperienze = plan.canSell ? b.experiences?.filter((e) => e.attiva) ?? [] : [];
+
+  // Catalogo (funzione Gold): prodotti in vendita + servizi su prenotazione
+  const [catalogo, setCatalogo] = useState<VoceCatalogo[]>([]);
+  useEffect(() => {
+    if (b.owner) loadCatalogo(b.owner).then(setCatalogo).catch(() => {});
+  }, [b.owner]);
+  const prodottiCat = catalogo.filter((v) => v.tipo === "prodotto");
+  const serviziCat = catalogo.filter((v) => v.tipo !== "prodotto");
 
   return (
     <div
@@ -150,6 +165,77 @@ export function SchedaImpresaModal({
                       {p.price}
                       {p.unit ? <span className="text-xs font-normal text-green-900/55"> {p.unit}</span> : null}
                     </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* catalogo: prodotti in vendita (con prezzo) */}
+        {prodottiCat.length > 0 && (
+          <div className="mt-4">
+            <h3 className="text-xs font-bold uppercase tracking-wide text-green-700">In vendita</h3>
+            <ul className="mt-2 space-y-2">
+              {prodottiCat.map((v) => (
+                <li key={v.id} className="flex items-center gap-3 rounded-xl border border-[#e3eed7] bg-white p-2">
+                  {v.immagine && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={v.immagine} alt={v.nome} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-semibold text-green-800">{v.nome}</div>
+                    {v.descrizione && (
+                      <div className="truncate text-xs text-green-900/60">{v.descrizione}</div>
+                    )}
+                  </div>
+                  {v.prezzo != null && (
+                    <div className="shrink-0 text-right text-sm font-semibold text-green-800">
+                      {euro(v.prezzo)}
+                      {v.unita ? <span className="text-xs font-normal text-green-900/55"> {v.unita}</span> : null}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* catalogo: servizi su prenotazione (visite, laboratori, esperienze) */}
+        {serviziCat.length > 0 && (
+          <div className="mt-4">
+            <h3 className="text-xs font-bold uppercase tracking-wide text-green-700">
+              Servizi su prenotazione
+            </h3>
+            <ul className="mt-2 space-y-2">
+              {serviziCat.map((v) => (
+                <li key={v.id} className="rounded-xl border border-badge-yellow bg-[#fffbe9] p-3">
+                  <div className="flex items-center gap-3">
+                    {v.immagine && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={v.immagine} alt={v.nome} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-lime-600">
+                        {tipoLabel(v.tipo)}
+                      </div>
+                      <div className="truncate font-semibold text-green-800">{v.nome}</div>
+                      {v.descrizione && (
+                        <div className="truncate text-xs text-green-900/60">{v.descrizione}</div>
+                      )}
+                    </div>
+                    {v.prezzo != null && (
+                      <div className="shrink-0 text-sm font-bold text-green-800">{euro(v.prezzo)}</div>
+                    )}
+                  </div>
+                  {onPrenota && (
+                    <button
+                      type="button"
+                      onClick={() => onPrenota(b)}
+                      className="mt-2 rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
+                    >
+                      ✨ Richiedi prenotazione
+                    </button>
                   )}
                 </li>
               ))}
