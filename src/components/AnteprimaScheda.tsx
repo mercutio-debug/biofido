@@ -167,7 +167,7 @@ export function AnteprimaScheda({ ownerId }: { ownerId: string }) {
               <div className="mb-1 text-xs font-bold uppercase tracking-wide text-green-700">
                 La scheda che si apre al tocco
               </div>
-              <SchedaImpresaModal business={b} embedded onPrenota={() => {}} />
+              <SchedaImpresaModal business={b} embedded onPrenota={() => {}} onPrenotaServizio={() => {}} />
             </div>
           </div>
         </div>

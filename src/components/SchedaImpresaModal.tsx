@@ -258,10 +258,18 @@ export function SchedaImpresaModal({
                       <div className="shrink-0 text-sm font-bold text-green-800">{euro(v.prezzo)}</div>
                     )}
                   </div>
-                  {onPrenota && (
+                  {onPrenotaServizio && (
                     <button
                       type="button"
-                      onClick={() => onPrenota(b)}
+                      onClick={() =>
+                        // converto la voce-catalogo in "servizio" (Product): apre
+                        // RichiestaServizioModal che calcola prezzo × persone.
+                        onPrenotaServizio(b, {
+                          name: v.nome,
+                          price: v.prezzo != null ? euro(v.prezzo) : undefined,
+                          description: v.descrizione ?? undefined,
+                        })
+                      }
                       className="mt-2 rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
                     >
                       ✨ Richiedi prenotazione
