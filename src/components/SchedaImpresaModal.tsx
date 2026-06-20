@@ -137,34 +137,55 @@ export function SchedaImpresaModal({
             <h3 className="text-xs font-bold uppercase tracking-wide text-green-700">Prodotti</h3>
             <ul className="mt-2 space-y-2">
               {prodotti.map((p, i) => (
-                <li key={i} className="flex items-center gap-3 rounded-xl border border-[#e3eed7] bg-white p-2">
-                  {plan.maxPhotos > 0 && p.image && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.image} alt={p.name} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      {p.mostraSemaforo !== false && (p.ingredients?.length ?? 0) > 0 && (() => {
-                        const sem = SEMAFORO[calcolaImpronta(sede, p.ingredients ?? []).level];
-                        return (
-                          <span
-                            className="h-3 w-3 flex-none rounded-full"
-                            style={{ background: sem.colore }}
-                            title={`Semaforo di sostenibilità: ${sem.testo}`}
-                          />
-                        );
-                      })()}
-                      <div className="truncate font-semibold text-green-800">{p.name}</div>
+                <li
+                  key={i}
+                  className={`flex flex-col gap-2 rounded-xl border bg-white p-2 ${
+                    p.prenotabile ? "border-badge-yellow" : "border-[#e3eed7]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {plan.maxPhotos > 0 && p.image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.image} alt={p.name} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        {p.mostraSemaforo !== false && (p.ingredients?.length ?? 0) > 0 && (() => {
+                          const sem = SEMAFORO[calcolaImpronta(sede, p.ingredients ?? []).level];
+                          return (
+                            <span
+                              className="h-3 w-3 flex-none rounded-full"
+                              style={{ background: sem.colore }}
+                              title={`Semaforo di sostenibilità: ${sem.testo}`}
+                            />
+                          );
+                        })()}
+                        <div className="truncate font-semibold text-green-800">{p.name}</div>
+                        {p.prenotabile && (
+                          <span className="shrink-0 rounded-full bg-badge-yellow px-2 text-[10px] font-bold text-[#7a1f00]">
+                            PRENOTABILE
+                          </span>
+                        )}
+                      </div>
+                      {p.description && (
+                        <div className="truncate text-xs text-green-900/60">{p.description}</div>
+                      )}
                     </div>
-                    {p.description && (
-                      <div className="truncate text-xs text-green-900/60">{p.description}</div>
+                    {p.price && (
+                      <div className="shrink-0 text-right text-sm font-semibold text-green-800">
+                        {p.price}
+                        {p.unit ? <span className="text-xs font-normal text-green-900/55"> {p.unit}</span> : null}
+                      </div>
                     )}
                   </div>
-                  {p.price && (
-                    <div className="shrink-0 text-right text-sm font-semibold text-green-800">
-                      {p.price}
-                      {p.unit ? <span className="text-xs font-normal text-green-900/55"> {p.unit}</span> : null}
-                    </div>
+                  {p.prenotabile && onPrenota && (
+                    <button
+                      type="button"
+                      onClick={() => onPrenota(b)}
+                      className="self-start rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
+                    >
+                      ✨ Prenota / richiedi
+                    </button>
                   )}
                 </li>
               ))}

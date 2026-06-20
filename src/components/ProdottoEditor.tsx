@@ -55,6 +55,11 @@ export function ProdottoEditor({
   );
   const [certs, setCerts] = useState<string[]>(initial?.certifications ?? []);
   const [mostraSemaforo, setMostraSemaforo] = useState(initial?.mostraSemaforo ?? true);
+  // tipo voce: prodotto ordinario oppure servizio extra prenotabile dal cliente
+  const [tipoVoce, setTipoVoce] = useState<"prodotto" | "servizio">(
+    initial?.prenotabile ? "servizio" : "prodotto",
+  );
+  const [accetta, setAccetta] = useState<boolean>(initial?.prenotabile ?? false);
   const [err, setErr] = useState<string | null>(null);
 
   const imp = calcolaImpronta(sede, ingredients);
@@ -72,6 +77,10 @@ export function ProdottoEditor({
       setErr("Inserisci il nome del prodotto.");
       return;
     }
+    if (tipoVoce === "servizio" && !accetta) {
+      setErr("Per rendere il servizio prenotabile, spunta l'accettazione qui sotto.");
+      return;
+    }
     onSave({
       name: name.trim(),
       category,
@@ -82,6 +91,7 @@ export function ProdottoEditor({
       ingredients: ingredients.filter((i) => i.nome.trim()),
       certifications: certs,
       mostraSemaforo,
+      prenotabile: tipoVoce === "servizio" && accetta,
     });
   }
 
@@ -183,6 +193,36 @@ export function ProdottoEditor({
             </div>
           </div>
         </div>
+
+        {/* Tipo voce: prodotto ordinario oppure servizio extra prenotabile */}
+        <label className="mt-3 block">
+          <span className="label">Tipo</span>
+          <select
+            className="field mt-1"
+            value={tipoVoce}
+            onChange={(e) => setTipoVoce(e.target.value as "prodotto" | "servizio")}
+          >
+            <option value="prodotto">Prodotto ordinario</option>
+            <option value="servizio">Servizio extra (prenotabile dal cliente)</option>
+          </select>
+        </label>
+
+        {tipoVoce === "servizio" && (
+          <label className="mt-2 flex items-start gap-2 rounded-xl border-2 border-badge-yellow bg-[#fffbe9] p-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-5 w-5 accent-[var(--lime-500)]"
+              checked={accetta}
+              onChange={(e) => setAccetta(e.target.checked)}
+            />
+            <span className="text-green-900/85">
+              <strong>Rendi questo servizio prenotabile dai clienti dal widget</strong>{" "}
+              (visite, laboratori, esperienze). Accetto che i clienti possano inviare
+              una richiesta di prenotazione e, a conferma, pagare online tramite
+              Stripe (BioFido tratterrà la commissione prevista dal piano).
+            </span>
+          </label>
+        )}
 
         <label className="mt-3 block">
           <span className="label">Descrizione</span>

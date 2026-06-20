@@ -29,6 +29,9 @@ export type Product = {
   /** se false, il prodotto resta in vetrina SENZA semaforo di sostenibilità.
    *  Default: true (mostra il semaforo calcolato dagli ingredienti). */
   mostraSemaforo?: boolean;
+  /** "servizio extra" prenotabile dal cliente nel widget (visite, laboratori,
+   *  esperienze). Se true l'azienda ha accettato di renderlo prenotabile. */
+  prenotabile?: boolean;
 };
 
 export type Business = {
