@@ -17,19 +17,48 @@ type Props = {
   onSelect?: (b: Business) => void;
 };
 
-/** Segnaposto HTML personalizzato: dimensione per piano, icona per categoria. */
+/**
+ * Segnaposto a goccia, con gerarchia visiva per piano:
+ *  - FREE  : piccolo, colore categoria, bordo bianco, ombra leggera, niente icona;
+ *  - SILVER: più grande, icona categoria, alone ARGENTO;
+ *  - GOLD  : il più grande, icona categoria, alone DORATO + badge ★ "in evidenza".
+ * Il colore della goccia resta quello della categoria (riconoscibilità immediata).
+ */
 function markerHtml(b: Business): string {
   const cat = CATEGORY_MAP[b.category];
   const plan = PLAN_MAP[b.plan];
   const size = plan.markerSize;
-  const ring = b.plan === "gold" ? "box-shadow:0 0 0 3px #f7d417,0 2px 6px rgba(0,0,0,.4);" : "box-shadow:0 2px 6px rgba(0,0,0,.35);";
+  const emoji = Math.round(size * 0.46);
+
+  // alone/ombra in base al livello (bordo bianco sempre, per stacco dalla mappa)
+  let ring: string;
+  let badge = "";
+  if (b.plan === "gold") {
+    ring =
+      "border:2px solid #fff;box-shadow:0 0 0 3px #f7d417,0 0 12px rgba(247,212,23,.6),0 4px 10px rgba(0,0,0,.45);";
+    badge =
+      `<span style="position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;` +
+      `background:#f7d417;color:#7a1f00;font-size:12px;font-weight:900;line-height:1;` +
+      `display:flex;align-items:center;justify-content:center;border:2px solid #fff;` +
+      `box-shadow:0 1px 3px rgba(0,0,0,.35);z-index:2">★</span>`;
+  } else if (b.plan === "silver") {
+    ring = "border:2px solid #fff;box-shadow:0 0 0 2px #c9d3da,0 3px 8px rgba(0,0,0,.35);";
+  } else {
+    ring = "border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.3);";
+  }
+
   const inner = plan.showIcon
-    ? `<span style="font-size:${Math.round(size * 0.5)}px;line-height:1">${cat.emoji}</span>`
+    ? `<span style="transform:rotate(45deg);font-size:${emoji}px;line-height:1">${cat.emoji}</span>`
     : "";
-  return `<div style="width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;
-      transform:rotate(-45deg);background:${cat.color};border:2px solid #fff;${ring}
-      display:flex;align-items:center;justify-content:center">
-      <span style="transform:rotate(45deg)">${inner}</span></div>`;
+
+  return (
+    `<div style="position:relative;width:${size}px;height:${size}px">` +
+    badge +
+    `<div style="width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;` +
+    `transform:rotate(-45deg);background:${cat.color};${ring}` +
+    `display:flex;align-items:center;justify-content:center">${inner}</div>` +
+    `</div>`
+  );
 }
 
 export default function BioFidoMap({ center, radiusKm, businesses, userLabel, onSelect }: Props) {
