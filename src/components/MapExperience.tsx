@@ -128,13 +128,21 @@ export function MapExperience() {
       .sort((a, b) => rankScore(b.plan, b.dist) - rankScore(a.plan, a.dist));
   }, [all, cat, center, radius]);
 
-  // Se nel raggio scelto non c'è nulla, propongo comunque le attività PIÙ VICINE
-  // (anche oltre il raggio), ordinate per distanza, con i km indicati.
+  // Se nel raggio scelto non c'è nulla, propongo comunque delle ALTERNATIVE
+  // poco oltre il raggio. Prendo prima le più vicine in assoluto (così la
+  // distanza resta credibile), poi tra queste do priorità al piano
+  // (Gold → Silver → Free) per dare visibilità a chi sostiene il progetto.
   const vicine = useMemo(() => {
-    return all
+    const piuVicine = all
       .filter((b) => cat === "all" || b.category === cat)
       .map((b) => ({ ...b, dist: distKm(center.lat, center.lon, b.lat, b.lon) }))
       .sort((a, b) => a.dist - b.dist)
+      .slice(0, 8);
+    return piuVicine
+      .sort(
+        (a, b) =>
+          PLAN_MAP[b.plan].priority - PLAN_MAP[a.plan].priority || a.dist - b.dist,
+      )
       .slice(0, 5);
   }, [all, cat, center]);
 
@@ -222,7 +230,9 @@ export function MapExperience() {
         </div>
         <div>
           <h2 className="font-display text-2xl text-green-800">
-            {results.length} attività bio entro {radius} km
+            {results.length > 0
+              ? `${results.length} attività bio entro ${radius} km`
+              : "Ancora nessuna proprio qui — guarda le più vicine"}
           </h2>
           <p className="text-xs text-green-900/50">
             Dati: {source === "supabase" ? "database BioFido (live)" : "demo offline"}
@@ -235,7 +245,8 @@ export function MapExperience() {
             ) : (
               <div className="mt-3">
                 <p className="text-green-900/70">
-                  Nessuna attività entro {radius} km. Ecco le <strong>più vicine</strong>:
+                  Nel raggio di {radius} km non c&apos;è ancora nessuno, ma il bio non è
+                  lontano: ecco le attività <strong>più vicine</strong> a te.
                 </p>
                 <ul className="mt-3 space-y-2">
                   {vicine.map((r) => {
@@ -245,12 +256,26 @@ export function MapExperience() {
                         key={r.id}
                         onClick={() => setScheda(r)}
                         title="Apri la scheda dell'impresa"
-                        className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#e3eed7] bg-white px-4 py-3 hover:border-lime-500"
+                        className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-4 py-3 hover:border-lime-500 ${
+                          r.plan === "gold"
+                            ? "border-badge-yellow bg-[#fffbe9]"
+                            : "border-[#e3eed7] bg-white"
+                        }`}
                       >
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 font-semibold text-green-800">
                             <span>{c.emoji}</span>
                             <span className="truncate">{r.name}</span>
+                            {r.plan === "gold" && (
+                              <span className="shrink-0 rounded-full bg-badge-yellow px-2 text-[10px] font-bold text-[#7a1f00]">
+                                ★ GOLD
+                              </span>
+                            )}
+                            {r.plan === "silver" && (
+                              <span className="shrink-0 rounded-full bg-[#c9d3da] px-2 text-[10px] font-bold text-[#33414a]">
+                                SILVER
+                              </span>
+                            )}
                           </div>
                           <div className="truncate text-xs text-green-900/60">
                             {c.label} · {r.city}
@@ -258,7 +283,7 @@ export function MapExperience() {
                         </div>
                         <div className="shrink-0 text-right">
                           <div className="font-display text-lg text-lime-500">{r.dist} km</div>
-                          <div className="text-[11px] font-semibold text-green-700">più vicina</div>
+                          <div className="text-[11px] font-semibold text-green-700">vicino a te</div>
                         </div>
                       </li>
                     );
