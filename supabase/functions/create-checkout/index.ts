@@ -12,6 +12,9 @@
 //   PRICE_SILVER_ANNUAL        price_...
 //   PRICE_GOLD_MONTHLY         price_...
 //   PRICE_GOLD_ANNUAL          price_...
+// SEGRETI OPZIONALI (offerta "Fondatori" sul Gold):
+//   FOUNDER_COUPON             id coupon Stripe (durata "forever"); se assente l'offerta è spenta
+//   FOUNDER_DEADLINE           data ISO entro cui vale (default 2026-12-31)
 // (SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY sono già iniettati da Supabase.)
 
 import Stripe from "npm:stripe@16.12.0";
@@ -35,6 +38,20 @@ function priceId(plan: Plan, period: Period): string | undefined {
   const key =
     `PRICE_${plan.toUpperCase()}_${period === "annual" ? "ANNUAL" : "MONTHLY"}`;
   return Deno.env.get(key);
+}
+
+// Offerta "Fondatori": chi si abbona al Gold entro la scadenza blocca lo sconto
+// a vita (il coupon Stripe deve avere durata "forever"). Restituisce l'id del
+// coupon da applicare, oppure undefined se l'offerta è spenta o scaduta.
+const DEFAULT_FOUNDER_DEADLINE = "2026-12-31";
+function founderCoupon(plan: Plan): string | undefined {
+  if (plan !== "gold") return undefined;
+  const coupon = Deno.env.get("FOUNDER_COUPON");
+  if (!coupon) return undefined; // offerta non configurata → nessuno sconto
+  const deadline = Deno.env.get("FOUNDER_DEADLINE") ?? DEFAULT_FOUNDER_DEADLINE;
+  const end = Date.parse(`${deadline}T23:59:59`);
+  if (!Number.isNaN(end) && Date.now() > end) return undefined; // scaduta
+  return coupon;
 }
 
 Deno.serve(async (req) => {
@@ -88,6 +105,7 @@ Deno.serve(async (req) => {
 
     // 4) crea la sessione di Checkout (abbonamento ricorrente)
     const base = (returnUrl as string) || req.headers.get("origin") || "";
+    const founder = founderCoupon(plan);
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
@@ -98,7 +116,11 @@ Deno.serve(async (req) => {
       subscription_data: { metadata: { user_id: user.id, plan } },
       success_url: `${base}/dashboard/?abbonamento=ok`,
       cancel_url: `${base}/abbonamenti/?abbonamento=annullato`,
-      allow_promotion_codes: true,
+      // Fondatori attivo → applica il coupon a vita; altrimenti consenti i codici
+      // promo (Stripe vieta di usare entrambi nella stessa sessione).
+      ...(founder
+        ? { discounts: [{ coupon: founder }] }
+        : { allow_promotion_codes: true }),
       // IVA: prezzi al netto, Stripe Tax aggiunge il 22% in automatico.
       // Serve l'indirizzo del cliente per calcolare l'imposta; raccogliamo anche
       // la P.IVA (B2B) per la fattura/reverse-charge.
