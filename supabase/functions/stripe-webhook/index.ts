@@ -14,6 +14,7 @@
 
 import Stripe from "npm:stripe@16.12.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { emailLayout, esc } from "../_shared/email.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2024-06-20",
@@ -59,25 +60,30 @@ async function avvisaAdminPagamento(
       })
     : "—";
 
-  const html = `
-    <h2>💶 Nuovo pagamento abbonamento</h2>
-    <p><strong>Piano:</strong> ${plan.toUpperCase()}<br/>
-    <strong>Importo incassato:</strong> ${importo}<br/>
-    <strong>Account cliente:</strong> ${emailCliente}<br/>
-    <strong>Data:</strong> ${new Date().toLocaleString("it-IT")}</p>
-    <hr/>
-    <h3>Dati per la fattura</h3>
-    <p>
-      <strong>Ragione sociale:</strong> ${dati.ragione_sociale ?? "—"}<br/>
-      <strong>Partita IVA:</strong> ${dati.partita_iva ?? "—"}<br/>
-      <strong>Codice fiscale:</strong> ${dati.codice_fiscale ?? "—"}<br/>
-      <strong>Indirizzo:</strong> ${dati.indirizzo ?? "—"}, ${dati.cap ?? ""} ${dati.citta ?? ""} ${dati.provincia ?? ""} ${dati.paese ?? ""}<br/>
-      <strong>Codice SDI:</strong> ${dati.codice_sdi ?? "—"}<br/>
-      <strong>PEC:</strong> ${dati.pec ?? "—"}<br/>
-      <strong>Email fatturazione:</strong> ${dati.email ?? "—"}
-    </p>
-    <p style="color:#888;font-size:12px">Stripe session: ${s.id}${s.subscription ? ` · subscription: ${s.subscription}` : ""}</p>
-  `;
+  const html = emailLayout({
+    title: "💶 Nuovo pagamento abbonamento",
+    bodyHtml: `
+      <p style="margin:0 0 14px;">
+        <strong>Piano:</strong> ${esc(plan.toUpperCase())}<br/>
+        <strong>Importo incassato:</strong> ${esc(importo)}<br/>
+        <strong>Account cliente:</strong> ${esc(emailCliente)}<br/>
+        <strong>Data:</strong> ${esc(new Date().toLocaleString("it-IT"))}
+      </p>
+      <div style="border-top:1px solid #e3eed7;margin:14px 0;"></div>
+      <p style="margin:0 0 6px;font-weight:bold;color:#1c5132;">Dati per la fattura</p>
+      <p style="margin:0;">
+        <strong>Ragione sociale:</strong> ${esc(dati.ragione_sociale ?? "—")}<br/>
+        <strong>Partita IVA:</strong> ${esc(dati.partita_iva ?? "—")}<br/>
+        <strong>Codice fiscale:</strong> ${esc(dati.codice_fiscale ?? "—")}<br/>
+        <strong>Indirizzo:</strong> ${esc(dati.indirizzo ?? "—")}, ${esc(dati.cap ?? "")} ${esc(dati.citta ?? "")} ${esc(dati.provincia ?? "")} ${esc(dati.paese ?? "")}<br/>
+        <strong>Codice SDI:</strong> ${esc(dati.codice_sdi ?? "—")}<br/>
+        <strong>PEC:</strong> ${esc(dati.pec ?? "—")}<br/>
+        <strong>Email fatturazione:</strong> ${esc(dati.email ?? "—")}
+      </p>
+      <p style="margin:14px 0 0;color:#9aa89d;font-size:12px;">Stripe session: ${esc(s.id)}${s.subscription ? ` · subscription: ${esc(String(s.subscription))}` : ""}</p>
+    `,
+    footerNote: "Promemoria interno: emetti la fattura al cliente.",
+  });
 
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",

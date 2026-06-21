@@ -18,6 +18,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
+import { emailLayout, esc, nl2br } from "../_shared/email.ts";
 
 const admin = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -41,6 +42,7 @@ type Notice = {
   title: string;
   body: string;
   url: string;
+  ctaLabel?: string; // testo del pulsante nell'email (default: "Apri la dashboard")
   replyTo?: string | null; // "rispondi a" dell'email (es. email del cliente)
 };
 
@@ -106,8 +108,12 @@ async function emailOf(userId: string): Promise<string | null> {
 }
 
 async function dispatch(n: Notice) {
-  const link = n.url;
-  const html = `<p>${n.body}</p><p><a href="${link}">Apri BioFido</a></p>`;
+  const html = emailLayout({
+    title: n.title,
+    bodyHtml: `<p style="margin:0;">${nl2br(esc(n.body))}</p>`,
+    ctaLabel: n.ctaLabel ?? "Apri la dashboard",
+    ctaUrl: n.url,
+  });
   if (!n.email) console.log(`notify: nessun destinatario email per "${n.title}" (email mancante)`);
   if (n.email) await sendEmail(n.email, n.title, html, n.replyTo ?? undefined);
   if (n.userId) await sendPush(n.userId, n);
@@ -127,6 +133,7 @@ Deno.serve(async (req) => {
         title: "Nuova iscrizione su BioFido / ECO-VISA",
         body: `Si è iscritta una nuova azienda: ${rec.email ?? "(email non disponibile)"}.`,
         url: `${SITE_URL}/admin/`,
+        ctaLabel: "Apri l'area admin",
       });
       return ok();
     }
@@ -152,6 +159,7 @@ Deno.serve(async (req) => {
           title: `Nuovo messaggio · ${titolo}`,
           body: rec.testo,
           url,
+          ctaLabel: "Vedi la conversazione",
         });
       } else {
         // il cliente ha scritto al produttore
@@ -187,6 +195,7 @@ Deno.serve(async (req) => {
             `(${rec.persone} persone). L'azienda ti contatterà a breve per confermare. ` +
             `Riceverai un secondo messaggio con l'esito.`,
           url: `${SITE_URL}/`,
+          ctaLabel: "Vai al portale",
         });
       }
       return ok();
