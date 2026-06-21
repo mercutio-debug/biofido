@@ -52,8 +52,11 @@ export function SchedaImpresaModal({
   useEffect(() => {
     if (b.owner) loadCatalogo(b.owner).then(setCatalogo).catch(() => {});
   }, [b.owner]);
-  const prodottiCat = catalogo.filter((v) => v.tipo === "prodotto");
-  const serviziCat = catalogo.filter((v) => v.tipo !== "prodotto");
+  // Il catalogo (prodotti in vendita + servizi su prenotazione) è una funzione
+  // Gold: sotto quel piano (es. dopo un downgrade) non va mostrato.
+  const catalogoVisibile = b.plan === "gold" ? catalogo : [];
+  const prodottiCat = catalogoVisibile.filter((v) => v.tipo === "prodotto");
+  const serviziCat = catalogoVisibile.filter((v) => v.tipo !== "prodotto");
   const [ordina, setOrdina] = useState<VoceCatalogo | null>(null);
   const [segnala, setSegnala] = useState<VoceCatalogo | null>(null);
 
@@ -170,11 +173,12 @@ export function SchedaImpresaModal({
                 <li
                   key={i}
                   className={`flex flex-col gap-2 rounded-xl border bg-white p-2 ${
-                    p.prenotabile ? "border-badge-yellow" : "border-[#e3eed7]"
+                    plan.canSell && p.prenotabile ? "border-badge-yellow" : "border-[#e3eed7]"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    {plan.maxPhotos > 0 && p.image && (
+                    {/* foto: solo Gold (su downgrade sparisce) */}
+                    {b.plan === "gold" && p.image && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={p.image} alt={p.name} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                     )}
@@ -191,7 +195,7 @@ export function SchedaImpresaModal({
                           );
                         })()}
                         <div className="truncate font-semibold text-green-800">{p.name}</div>
-                        {p.prenotabile && (
+                        {plan.canSell && p.prenotabile && (
                           <span className="shrink-0 rounded-full bg-badge-yellow px-2 text-[10px] font-bold text-[#7a1f00]">
                             PRENOTABILE
                           </span>
@@ -201,14 +205,15 @@ export function SchedaImpresaModal({
                         <div className="truncate text-xs text-green-900/60">{p.description}</div>
                       )}
                     </div>
-                    {p.price && (
+                    {/* prezzo: solo Gold (su downgrade sparisce) */}
+                    {b.plan === "gold" && p.price && (
                       <div className="shrink-0 text-right text-sm font-semibold text-green-800">
                         {p.price}
                         {p.unit ? <span className="text-xs font-normal text-green-900/55"> {p.unit}</span> : null}
                       </div>
                     )}
                   </div>
-                  {p.prenotabile && onPrenotaServizio && (
+                  {plan.canSell && p.prenotabile && onPrenotaServizio && (
                     <button
                       type="button"
                       onClick={() => onPrenotaServizio(b, p)}
