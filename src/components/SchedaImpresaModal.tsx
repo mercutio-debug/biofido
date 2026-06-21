@@ -66,8 +66,8 @@ export function SchedaImpresaModal({
         }
         onClick={(e) => e.stopPropagation()}
       >
-        {/* copertina azienda: solo per i Gold */}
-        {b.plan === "gold" && b.immagine && (
+        {/* copertina azienda: profilo ricco (Silver e Gold), come su ECO-VISA */}
+        {plan.showDescription && b.immagine && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={b.immagine}
