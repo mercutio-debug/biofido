@@ -7,13 +7,13 @@ const BASE = "https://mercutio-debug.github.io/biofido";
 
 export const dynamic = "force-static";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const statiche: MetadataRoute.Sitemap = [
     { url: `${BASE}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${BASE}/bio/`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE}/abbonamenti/`, changeFrequency: "monthly", priority: 0.5 },
   ];
-  const zone: MetadataRoute.Sitemap = tutteLeZoneBio().map((z) => ({
+  const zone: MetadataRoute.Sitemap = (await tutteLeZoneBio()).map((z) => ({
     url: `${BASE}/bio/${z.slug}/`,
     changeFrequency: "weekly",
     priority: 0.8,
