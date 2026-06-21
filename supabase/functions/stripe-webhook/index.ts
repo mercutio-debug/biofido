@@ -31,6 +31,7 @@ const admin = createClient(
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const NOTIFY_FROM = Deno.env.get("NOTIFY_FROM") ?? "ECO-VISA & BioFido <noreply@ecovisa.it>";
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") ?? "mauriziocapitelli@yahoo.it";
+const SITE_URL = Deno.env.get("SITE_URL") ?? "";
 
 async function avvisaAdminPagamento(
   s: Stripe.Checkout.Session,
@@ -132,15 +133,24 @@ async function avvisaAziendaOrdine(ordineId: string) {
   });
   const nomeProd = (prod as { nome?: string } | null)?.nome ?? "Prodotto";
 
-  const html = `
-    <h2>🛒 Nuovo ordine ricevuto</h2>
-    <p><strong>${nomeProd}</strong> × ${o.quantita} — <strong>${importo}</strong><br/>
-    Cliente: ${o.cliente_nome} (${o.cliente_email})<br/>
-    Consegna: ${o.modalita}${o.portale ? ` · ${o.portale}` : ""}</p>
-    <p>Il pagamento è stato <strong>autorizzato</strong> (fondi bloccati). Per
-    incassarlo, <strong>accetta l'ordine</strong> dalla pagina “Ordini ricevuti”;
-    se rifiuti, i fondi vengono rilasciati senza addebito.</p>
-  `;
+  const html = emailLayout({
+    title: "🛒 Nuovo ordine ricevuto",
+    bodyHtml: `
+      <p style="margin:0 0 14px;">
+        <strong>${esc(nomeProd)}</strong> × ${esc(o.quantita)} — <strong>${esc(importo)}</strong><br/>
+        Cliente: ${esc(o.cliente_nome)} (${esc(o.cliente_email)})<br/>
+        Consegna: ${esc(o.modalita)}${o.portale ? ` · ${esc(o.portale)}` : ""}
+      </p>
+      <p style="margin:0;">
+        Il pagamento è stato <strong>autorizzato</strong> (fondi bloccati). Per
+        incassarlo, <strong>accetta l'ordine</strong> dalla pagina “Ordini ricevuti”;
+        se rifiuti, i fondi vengono rilasciati senza addebito.
+      </p>
+    `,
+    ctaLabel: SITE_URL ? "Vai agli ordini ricevuti" : undefined,
+    ctaUrl: SITE_URL ? `${SITE_URL}/dashboard/` : undefined,
+    footerNote: "Accetta entro pochi giorni per non perdere l'autorizzazione del pagamento.",
+  });
 
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
