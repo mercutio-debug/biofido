@@ -8,6 +8,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { mollie, eur } from "../_shared/mollie.ts";
+import { computeBookingAmount } from "../_shared/booking-amount.ts";
 
 const SITE_URL = Deno.env.get("SITE_URL") ?? "";
 const admin = createClient(
@@ -32,7 +33,7 @@ Deno.serve(async (req) => {
     const { prenotazioneId } = await req.json();
     const { data: p } = await admin
       .from("prenotazioni")
-      .select("id, owner, cliente_user_id, stato, payment_status, totale_cents, commissione_cents, esperienze(titolo)")
+      .select("id, owner, cliente_user_id, stato, payment_status, persone, esperienza_id, prodotto_id, voce_id, totale_cents, commissione_cents, esperienze(titolo)")
       .eq("id", prenotazioneId)
       .maybeSingle();
 
@@ -40,6 +41,24 @@ Deno.serve(async (req) => {
     if (p.cliente_user_id !== user.id) return json({ error: "Non autorizzato" }, 403);
     if (p.stato !== "confermata") return json({ error: "La prenotazione non è ancora confermata" }, 400);
     if (p.payment_status === "pagata") return json({ error: "Prenotazione già pagata" }, 400);
+
+    // Importi AUTOREVOLI ricalcolati dal DB (mai dai valori inviati dal client).
+    const amount = await computeBookingAmount(admin, p);
+    if (amount.totaleCents <= 0) {
+      return json({ error: "Importo della prenotazione non valido." }, 400);
+    }
+    if (
+      amount.totaleCents !== p.totale_cents ||
+      amount.commissioneCents !== p.commissione_cents
+    ) {
+      await admin
+        .from("prenotazioni")
+        .update({
+          totale_cents: amount.totaleCents,
+          commissione_cents: amount.commissioneCents,
+        })
+        .eq("id", p.id);
+    }
 
     const { data: acc } = await admin
       .from("mollie_accounts")
@@ -50,8 +69,8 @@ Deno.serve(async (req) => {
       return json({ error: "Il produttore non ha ancora attivato i pagamenti online." }, 400);
     }
 
-    const totale = p.totale_cents / 100;
-    const quotaProduttore = (p.totale_cents - p.commissione_cents) / 100;
+    const totale = amount.totaleCents / 100;
+    const quotaProduttore = (amount.totaleCents - amount.commissioneCents) / 100;
     const titolo =
       (p as { esperienze?: { titolo?: string } }).esperienze?.titolo ?? "Esperienza";
 

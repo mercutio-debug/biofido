@@ -8,8 +8,8 @@ export const metadata = {
   alternates: { canonical: "https://mercutio-debug.github.io/biofido/bio/" },
 };
 
-export default function BioIndex() {
-  const zone = tutteLeZoneBio();
+export default async function BioIndex() {
+  const zone = await tutteLeZoneBio();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">

@@ -17,6 +17,12 @@ export type MateriaPrima = {
 };
 
 export type Product = {
+  /** id del prodotto nel listino (tabella `prodotti`): lega la prenotazione
+   *  alla fonte del prezzo, così il pagamento ricalcola l'importo lato server. */
+  id?: string;
+  /** id della voce di catalogo (tabella `catalogo`), per i servizi extra:
+   *  alternativa a `id`, stessa finalità di ricalcolo prezzo lato server. */
+  voceId?: string;
   name: string;
   price?: string;
   /** unità di prezzo: "a cassetta", "al kg", "a pezzo"… */

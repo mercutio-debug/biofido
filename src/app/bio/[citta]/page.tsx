@@ -5,8 +5,9 @@ import { CATEGORY_MAP } from "@/lib/categories";
 
 // Pagina SEO statica: "Attività bio a {Città}". Generata al build (output: export).
 
-export function generateStaticParams() {
-  return tutteLeZoneBio().map((z) => ({ citta: z.slug }));
+export async function generateStaticParams() {
+  const zone = await tutteLeZoneBio();
+  return zone.map((z) => ({ citta: z.slug }));
 }
 
 export async function generateMetadata({
@@ -15,7 +16,7 @@ export async function generateMetadata({
   params: Promise<{ citta: string }>;
 }) {
   const { citta } = await params;
-  const z = zonaBioBySlug(citta);
+  const z = await zonaBioBySlug(citta);
   if (!z) return { title: "Attività bio — BioFido" };
   const cat = z.categorie.map((c) => c.label).slice(0, 4).join(", ");
   return {
@@ -35,10 +36,10 @@ export default async function ZonaBioPage({
   params: Promise<{ citta: string }>;
 }) {
   const { citta } = await params;
-  const z = zonaBioBySlug(citta);
+  const z = await zonaBioBySlug(citta);
   if (!z) notFound();
 
-  const altre = tutteLeZoneBio().filter((x) => x.slug !== z.slug);
+  const altre = (await tutteLeZoneBio()).filter((x) => x.slug !== z.slug);
 
   const jsonLd = {
     "@context": "https://schema.org",

@@ -213,6 +213,10 @@ export async function createServizioBooking(input: {
   ownerPlan: Plan;
   servizioNome: string;
   prezzoCents: number;
+  /** id del prodotto nel listino: il pagamento ricalcola l'importo dalla fonte */
+  prodottoId?: string;
+  /** id della voce di catalogo (servizio): idem, per il ricalcolo lato server */
+  voceId?: string;
   clienteNome: string;
   clienteEmail: string;
   clienteTel?: string;
@@ -227,6 +231,8 @@ export async function createServizioBooking(input: {
   } = await supabase.auth.getSession();
   const { error } = await supabase.from("prenotazioni").insert({
     esperienza_id: null,
+    prodotto_id: input.prodottoId ?? null,
+    voce_id: input.voceId ?? null,
     titolo: input.servizioNome,
     owner: input.ownerId,
     cliente_user_id: session?.user.id ?? null,

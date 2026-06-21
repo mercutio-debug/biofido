@@ -282,6 +282,7 @@ export function SchedaImpresaModal({
                         // converto la voce-catalogo in "servizio" (Product): apre
                         // RichiestaServizioModal che calcola prezzo × persone.
                         onPrenotaServizio(b, {
+                          voceId: v.id,
                           name: v.nome,
                           price: v.prezzo != null ? euro(v.prezzo) : undefined,
                           description: v.descrizione ?? undefined,

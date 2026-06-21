@@ -70,6 +70,8 @@ export function RichiestaServizioModal({
       ownerPlan: business.plan,
       servizioNome: servizio.name,
       prezzoCents,
+      prodottoId: servizio.id,
+      voceId: servizio.voceId,
       clienteNome: nome,
       clienteEmail: email,
       clienteTel: tel,

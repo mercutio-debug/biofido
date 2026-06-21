@@ -3,11 +3,11 @@
  * attività biologiche per città, così generiamo al build una landing per ogni
  * località: motore di acquisizione organica, statico (output: export).
  *
- * Usa il dataset demo come il resto del sito. Quando le attività reali su
- * Supabase saranno numerose basta passare a `await loadBusinesses()` qui dentro
- * (generateStaticParams accetta funzioni async): stessa struttura, nessun redesign.
+ * Dati REALI: legge le attività iscritte da Supabase (`loadBusinesses`, con
+ * fallback automatico ai dati demo se il DB è vuoto o irraggiungibile al build).
+ * Le funzioni sono async: generateStaticParams, le pagine e la sitemap le awaitano.
  */
-import { DEMO_BUSINESSES, type Business } from "./biofido-data";
+import { loadBusinesses, type Business } from "./biofido-data";
 import { CATEGORY_MAP, type CategoryId } from "./categories";
 
 /** Slug url-safe da un nome di città (minuscolo, accenti rimossi, spazi → -). */
@@ -34,17 +34,17 @@ export type ZonaBio = {
   categorie: ZonaCategoria[];
 };
 
-function tutteLeCitta(): string[] {
-  return [...new Set(DEMO_BUSINESSES.map((b) => b.city))].sort((a, b) =>
-    a.localeCompare(b, "it"),
-  );
+/** Attività da Supabase (con fallback automatico ai demo dentro loadBusinesses). */
+async function tutteLeAttivita(): Promise<Business[]> {
+  const { items } = await loadBusinesses();
+  return items;
 }
 
-export function zonaBioDi(citta: string): ZonaBio | null {
-  const attivita = DEMO_BUSINESSES.filter((b) => b.city === citta);
-  if (!attivita.length) return null;
+function buildZona(attivita: Business[], citta: string): ZonaBio | null {
+  const inCitta = attivita.filter((b) => b.city === citta);
+  if (!inCitta.length) return null;
   const counts = new Map<CategoryId, number>();
-  attivita.forEach((b) => counts.set(b.category, (counts.get(b.category) ?? 0) + 1));
+  inCitta.forEach((b) => counts.set(b.category, (counts.get(b.category) ?? 0) + 1));
   const categorie: ZonaCategoria[] = [...counts.entries()]
     .map(([id, count]) => ({
       id,
@@ -53,16 +53,23 @@ export function zonaBioDi(citta: string): ZonaBio | null {
       count,
     }))
     .sort((a, b) => b.count - a.count);
-  return { slug: citySlug(citta), citta, attivita, categorie };
+  return { slug: citySlug(citta), citta, attivita: inCitta, categorie };
 }
 
-export function tutteLeZoneBio(): ZonaBio[] {
-  return tutteLeCitta()
-    .map((c) => zonaBioDi(c))
+export async function tutteLeZoneBio(): Promise<ZonaBio[]> {
+  const attivita = await tutteLeAttivita();
+  const citta = [...new Set(attivita.map((b) => b.city))].sort((a, b) =>
+    a.localeCompare(b, "it"),
+  );
+  return citta
+    .map((c) => buildZona(attivita, c))
     .filter((z): z is ZonaBio => z !== null);
 }
 
-export function zonaBioBySlug(slug: string): ZonaBio | null {
-  const citta = tutteLeCitta().find((c) => citySlug(c) === slug);
-  return citta ? zonaBioDi(citta) : null;
+export async function zonaBioBySlug(slug: string): Promise<ZonaBio | null> {
+  const attivita = await tutteLeAttivita();
+  const citta = [...new Set(attivita.map((b) => b.city))].find(
+    (c) => citySlug(c) === slug,
+  );
+  return citta ? buildZona(attivita, citta) : null;
 }

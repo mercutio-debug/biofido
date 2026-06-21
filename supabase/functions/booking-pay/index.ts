@@ -8,6 +8,7 @@
 import Stripe from "npm:stripe@16.12.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { computeBookingAmount } from "../_shared/booking-amount.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2024-06-20",
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
 
     const { data: p } = await admin
       .from("prenotazioni")
-      .select("id, owner, cliente_user_id, stato, payment_status, totale_cents, commissione_cents, titolo, esperienze(titolo)")
+      .select("id, owner, cliente_user_id, stato, payment_status, persone, esperienza_id, prodotto_id, voce_id, totale_cents, commissione_cents, titolo, esperienze(titolo)")
       .eq("id", prenotazioneId)
       .maybeSingle();
 
@@ -46,6 +47,26 @@ Deno.serve(async (req) => {
     if (p.cliente_user_id !== user.id) return json({ error: "Non autorizzato" }, 403);
     if (p.stato !== "confermata") return json({ error: "La prenotazione non è ancora confermata" }, 400);
     if (p.payment_status === "pagata") return json({ error: "Prenotazione già pagata" }, 400);
+
+    // Importi AUTOREVOLI ricalcolati dal DB: non ci si fida dei valori inviati
+    // dal client al momento della richiesta (potrebbero essere manomessi).
+    const amount = await computeBookingAmount(admin, p);
+    if (amount.totaleCents <= 0) {
+      return json({ error: "Importo della prenotazione non valido." }, 400);
+    }
+    // riallineo la riga se il client aveva scritto valori diversi (audit/coerenza)
+    if (
+      amount.totaleCents !== p.totale_cents ||
+      amount.commissioneCents !== p.commissione_cents
+    ) {
+      await admin
+        .from("prenotazioni")
+        .update({
+          totale_cents: amount.totaleCents,
+          commissione_cents: amount.commissioneCents,
+        })
+        .eq("id", p.id);
+    }
 
     // account del produttore
     const { data: acc } = await admin
@@ -69,13 +90,13 @@ Deno.serve(async (req) => {
           quantity: 1,
           price_data: {
             currency: "eur",
-            unit_amount: p.totale_cents,
+            unit_amount: amount.totaleCents,
             product_data: { name: titolo },
           },
         },
       ],
       payment_intent_data: {
-        application_fee_amount: p.commissione_cents,
+        application_fee_amount: amount.commissioneCents,
         transfer_data: { destination: acc.account_id },
       },
       metadata: { kind: "booking", prenotazione_id: String(p.id) },
