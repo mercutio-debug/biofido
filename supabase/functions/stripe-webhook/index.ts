@@ -123,6 +123,22 @@ Deno.serve(async (req) => {
     switch (event.type) {
       case "checkout.session.completed": {
         const s = event.data.object as Stripe.Checkout.Session;
+        // Autorizzazione di un ORDINE prodotto (manual capture): registra il
+        // PaymentIntent. I fondi sono bloccati; l'addebito avviene quando
+        // l'azienda accetta (order-capture). L'ordine resta 'richiesto'.
+        if (s.metadata?.kind === "order") {
+          const ordineId = s.metadata?.ordine_id;
+          if (ordineId) {
+            await admin
+              .from("ordini")
+              .update({
+                stripe_payment_intent: s.payment_intent as string,
+                stripe_session_id: s.id,
+              })
+              .eq("id", ordineId);
+          }
+          break;
+        }
         // Pagamento di una prenotazione (Connect)
         if (s.metadata?.kind === "booking") {
           const prenotazioneId = s.metadata?.prenotazione_id;

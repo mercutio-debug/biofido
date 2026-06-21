@@ -104,3 +104,86 @@ export async function creaOrdineEPaga(input: CreaOrdineInput): Promise<{ error?:
   window.location.href = url;
   return {};
 }
+
+export type Ordine = {
+  id: string;
+  prodotto_id: string;
+  owner: string;
+  cliente_user_id: string;
+  cliente_nome: string;
+  cliente_email: string;
+  cliente_tel: string | null;
+  quantita: number;
+  modalita: "spedizione" | "ritiro";
+  spedizione_indirizzo: string | null;
+  spedizione_cap: string | null;
+  spedizione_citta: string | null;
+  spedizione_prov: string | null;
+  totale_cents: number;
+  commissione_cents: number;
+  stato: string;
+  stripe_payment_intent: string | null;
+  created_at: string;
+};
+
+/** Ordini ricevuti dall'azienda loggata (RLS: solo i propri come venditore). */
+export async function loadOrdiniRicevuti(): Promise<Ordine[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data } = await supabase
+    .from("ordini")
+    .select("*")
+    .eq("owner", user.id)
+    .order("created_at", { ascending: false });
+  return (data as Ordine[]) ?? [];
+}
+
+/** Ordini effettuati dal cliente loggato. */
+export async function loadMieiOrdini(): Promise<Ordine[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data } = await supabase
+    .from("ordini")
+    .select("*")
+    .eq("cliente_user_id", user.id)
+    .order("created_at", { ascending: false });
+  return (data as Ordine[]) ?? [];
+}
+
+async function callOrderFn(fn: string, ordineId: string): Promise<{ error?: string }> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return { error: "Accedi di nuovo." };
+  const res = await fetch(`${FUNCTIONS_BASE}/${fn}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ ordineId }),
+  });
+  if (!res.ok) {
+    const { error } = await res.json().catch(() => ({ error: "" }));
+    return { error: error || "Operazione non riuscita." };
+  }
+  return {};
+}
+
+/** L'azienda accetta l'ordine → addebito (capture). */
+export const accettaOrdine = (ordineId: string) => callOrderFn("order-capture", ordineId);
+/** L'azienda rifiuta l'ordine → rilascio dell'autorizzazione. */
+export const rifiutaOrdine = (ordineId: string) => callOrderFn("order-cancel", ordineId);
+
+/** Aggiorna lo stato (es. 'spedito', 'consegnato') — RLS: solo l'owner. */
+export async function setStatoOrdine(
+  ordineId: string,
+  stato: string,
+): Promise<{ error?: string }> {
+  const { error } = await supabase.from("ordini").update({ stato }).eq("id", ordineId);
+  return { error: error?.message };
+}
