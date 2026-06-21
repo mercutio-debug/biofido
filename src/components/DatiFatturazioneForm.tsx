@@ -69,6 +69,7 @@ export function DatiFatturazioneForm({
   const [msg, setMsg] = useState<string | null>(null);
   const [salvato, setSalvato] = useState(false);
   const [cfUguale, setCfUguale] = useState(false);
+  const [vies, setVies] = useState<"valida" | "formale" | "invalida" | null>(null);
 
   useEffect(() => {
     caricaDatiFatturazione().then(async (dati) => {
@@ -150,13 +151,16 @@ export function DatiFatturazioneForm({
     try {
       const dati = await lookupPiva(d.partita_iva);
       if (!dati) {
+        const formale = pivaFormaleOk(d.partita_iva);
+        setVies(formale ? "formale" : "invalida");
         setMsg(
-          pivaFormaleOk(d.partita_iva)
+          formale
             ? "Partita IVA non presente nel registro VIES — è normale per molte piccole imprese e aziende agricole. Il formato è corretto: compila i dati qui sotto a mano e prosegui pure, sei iscritto regolarmente."
             : "La Partita IVA non sembra corretta: controlla che siano 11 cifre.",
         );
       } else {
         setD((prev) => ({ ...prev, ...dati }));
+        setVies("valida");
         setMsg("Dati recuperati dal registro VIES. Controlla e completa il recapito SDI/PEC.");
       }
     } catch (e) {
@@ -212,7 +216,10 @@ export function DatiFatturazioneForm({
             value={d.partita_iva}
             inputMode="numeric"
             placeholder="11 cifre"
-            onChange={(e) => set("partita_iva", e.target.value)}
+            onChange={(e) => {
+              set("partita_iva", e.target.value);
+              setVies(null);
+            }}
           />
           <button
             type="button"
@@ -223,6 +230,17 @@ export function DatiFatturazioneForm({
             {lookupBusy ? "Cerco…" : "Recupera dati"}
           </button>
         </div>
+        {vies === "valida" && (
+          <p className="mt-1 text-xs font-semibold text-green-700">✓ Partita IVA verificata sul registro VIES</p>
+        )}
+        {vies === "formale" && (
+          <p className="mt-1 text-xs font-semibold text-[#b8860b]">
+            ✓ Formato corretto (non presente in VIES — normale per piccole imprese e aziende agricole)
+          </p>
+        )}
+        {vies === "invalida" && (
+          <p className="mt-1 text-xs font-semibold text-traffic-red">✕ Partita IVA non valida: controlla le 11 cifre</p>
+        )}
       </div>
 
       <div className="mt-3">
