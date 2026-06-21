@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import { PianiAbbonamento } from "@/components/Abbonamenti";
-import { PLAN_MAP, CATEGORIES, type Plan, type CategoryId } from "@/lib/categories";
+import { PLAN_MAP, CATEGORIES, isDowngrade, perditeDowngrade, type Plan, type CategoryId } from "@/lib/categories";
 import {
   loadMyBusiness,
   saveMyBusiness,
@@ -89,6 +89,19 @@ export default function DashboardPage() {
   }, [user]);
 
   function scegliPiano(p: Plan, per: "monthly" | "annual") {
+    // Downgrade: avviso che i contenuti/funzioni non inclusi nel piano scelto
+    // non saranno più visibili (i dati restano salvati, tornano col re-upgrade).
+    if (isDowngrade(activePlan, p)) {
+      const perse = perditeDowngrade(activePlan, p);
+      const elenco = perse.length ? "\n\n• " + perse.join("\n• ") : "";
+      const ok = window.confirm(
+        `⚠️ ATTENZIONE — stai passando dal piano ${PLAN_MAP[activePlan].label} al piano ${PLAN_MAP[p].label}, meno ricco.\n\n` +
+          `Con questo cambio NON saranno più visibili sulla tua scheda:${elenco}\n\n` +
+          `I dati non vengono cancellati: torneranno visibili se in futuro risali di piano.\n\n` +
+          `Vuoi procedere con il downgrade?`,
+      );
+      if (!ok) return;
+    }
     setPianoScelto(p);
     setPeriodo(per);
     window.localStorage.setItem("biofido_piano_scelto", p);
