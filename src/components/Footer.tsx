@@ -24,6 +24,7 @@ export function Footer() {
           <h4 className="label mb-2">App</h4>
           <ul className="space-y-1 text-sm">
             <li><Link href="/#mappa" className="hover:text-lime-500">Mappa attività bio</Link></li>
+            <li><Link href="/bio" className="hover:text-lime-500">Attività bio per città</Link></li>
             <li><Link href="/registrati" className="hover:text-lime-500">Iscrivi la tua attività</Link></li>
             <li><Link href="/accedi" className="hover:text-lime-500">Area aziende</Link></li>
           </ul>

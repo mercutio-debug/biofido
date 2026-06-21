@@ -1,0 +1,22 @@
+import type { MetadataRoute } from "next";
+import { tutteLeZoneBio } from "@/lib/zone-bio";
+
+// Sitemap statica (output: export). BioFido è servito da GitHub Pages nella
+// sottocartella /biofido: gli URL includono quel prefisso.
+const BASE = "https://mercutio-debug.github.io/biofido";
+
+export const dynamic = "force-static";
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const statiche: MetadataRoute.Sitemap = [
+    { url: `${BASE}/`, changeFrequency: "weekly", priority: 1 },
+    { url: `${BASE}/bio/`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${BASE}/abbonamenti/`, changeFrequency: "monthly", priority: 0.5 },
+  ];
+  const zone: MetadataRoute.Sitemap = tutteLeZoneBio().map((z) => ({
+    url: `${BASE}/bio/${z.slug}/`,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+  return [...statiche, ...zone];
+}
