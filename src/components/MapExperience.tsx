@@ -270,7 +270,8 @@ export function MapExperience() {
             <ul className="mt-3 space-y-2">
               {results.map((r) => {
                 const c = CATEGORY_MAP[r.category];
-                const fotos = (PLAN_MAP[r.plan].showProducts ? r.products ?? [] : [])
+                // foto dei prodotti: solo Gold (su downgrade spariscono)
+                const fotos = (r.plan === "gold" ? r.products ?? [] : [])
                   .map((p) => p.image)
                   .filter((u): u is string => Boolean(u))
                   .slice(0, 3);
