@@ -41,6 +41,12 @@ export function UserMenu() {
         <Link href="/registrati" className="btn-lime text-xs">
           Iscrivi attività
         </Link>
+        <Link
+          href="/registrati?tipo=cliente"
+          className="rounded-full border border-green-700/40 px-3 py-1.5 text-xs font-semibold text-green-800 hover:bg-leaf"
+        >
+          Cliente
+        </Link>
       </div>
     );
   }

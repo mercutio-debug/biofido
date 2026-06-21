@@ -187,3 +187,25 @@ export async function setStatoOrdine(
   const { error } = await supabase.from("ordini").update({ stato }).eq("id", ordineId);
   return { error: error?.message };
 }
+
+/** Segnala un annuncio del catalogo (notice-and-action DSA). Inserimento aperto. */
+export async function segnalaAnnuncio(input: {
+  catalogoId: string;
+  motivo: string;
+  dettaglio?: string;
+  email?: string;
+  portale?: string;
+}): Promise<{ error?: string }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { error } = await supabase.from("segnalazioni").insert({
+    catalogo_id: input.catalogoId,
+    segnalante: user?.id ?? null,
+    email: input.email || null,
+    motivo: input.motivo,
+    dettaglio: input.dettaglio || null,
+    portale: input.portale || null,
+  });
+  return { error: error?.message };
+}

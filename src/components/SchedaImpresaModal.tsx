@@ -8,6 +8,7 @@ import { loadCatalogo, TIPI_VOCE, type VoceCatalogo } from "@/lib/catalogo";
 import { registraEvento } from "@/lib/statistiche";
 import type { Business, Product } from "@/lib/biofido-data";
 import { OrdineProdottoModal } from "@/components/OrdineProdottoModal";
+import { SegnalaModal } from "@/components/SegnalaModal";
 
 /** prezzo numerico → "€ 9,50" (it-IT). */
 const euro = (n: number | null) =>
@@ -54,6 +55,7 @@ export function SchedaImpresaModal({
   const prodottiCat = catalogo.filter((v) => v.tipo === "prodotto");
   const serviziCat = catalogo.filter((v) => v.tipo !== "prodotto");
   const [ordina, setOrdina] = useState<VoceCatalogo | null>(null);
+  const [segnala, setSegnala] = useState<VoceCatalogo | null>(null);
 
   return (
     <div
@@ -255,6 +257,15 @@ export function SchedaImpresaModal({
                       🛒 Ordina
                     </button>
                   )}
+                  {v.id && (
+                    <button
+                      type="button"
+                      onClick={() => setSegnala(v)}
+                      className="self-start text-[11px] font-semibold text-green-900/45 hover:text-traffic-red"
+                    >
+                      ⚠️ Segnala
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -364,6 +375,15 @@ export function SchedaImpresaModal({
             aziendaNome={b.name}
             portale="BioFido"
             onClose={() => setOrdina(null)}
+          />
+        )}
+
+        {segnala && segnala.id && (
+          <SegnalaModal
+            catalogoId={segnala.id}
+            prodottoNome={segnala.nome}
+            portale="BioFido"
+            onClose={() => setSegnala(null)}
           />
         )}
       </div>

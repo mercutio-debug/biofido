@@ -97,6 +97,63 @@ async function avvisaAdminPagamento(
   }
 }
 
+/** Avvisa l'AZIENDA via email quando arriva (ed è autorizzato) un nuovo ordine. */
+async function avvisaAziendaOrdine(ordineId: string) {
+  if (!RESEND_API_KEY) {
+    console.error("stripe-webhook: RESEND_API_KEY mancante — email ordine saltata");
+    return;
+  }
+  const { data: o } = await admin
+    .from("ordini")
+    .select("owner, cliente_nome, cliente_email, quantita, totale_cents, modalita, prodotto_id, portale")
+    .eq("id", ordineId)
+    .maybeSingle();
+  if (!o) return;
+
+  const { data: prod } = await admin
+    .from("catalogo")
+    .select("nome")
+    .eq("id", o.prodotto_id)
+    .maybeSingle();
+
+  const { data: u } = await admin.auth.admin.getUserById(o.owner);
+  const to = u?.user?.email;
+  if (!to) return;
+
+  const importo = (Number(o.totale_cents) / 100).toLocaleString("it-IT", {
+    style: "currency",
+    currency: "EUR",
+  });
+  const nomeProd = (prod as { nome?: string } | null)?.nome ?? "Prodotto";
+
+  const html = `
+    <h2>🛒 Nuovo ordine ricevuto</h2>
+    <p><strong>${nomeProd}</strong> × ${o.quantita} — <strong>${importo}</strong><br/>
+    Cliente: ${o.cliente_nome} (${o.cliente_email})<br/>
+    Consegna: ${o.modalita}${o.portale ? ` · ${o.portale}` : ""}</p>
+    <p>Il pagamento è stato <strong>autorizzato</strong> (fondi bloccati). Per
+    incassarlo, <strong>accetta l'ordine</strong> dalla pagina “Ordini ricevuti”;
+    se rifiuti, i fondi vengono rilasciati senza addebito.</p>
+  `;
+
+  const r = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: NOTIFY_FROM,
+      to,
+      subject: `🛒 Nuovo ordine: ${nomeProd} ${importo}`,
+      html,
+    }),
+  });
+  if (!r.ok) {
+    console.error(`stripe-webhook: Resend ordine ha risposto ${r.status}: ${await r.text()}`);
+  }
+}
+
 /** Aggiorna l'abbonamento e allinea il piano delle schede dell'utente. */
 async function setPlan(
   userId: string,
@@ -136,6 +193,8 @@ Deno.serve(async (req) => {
                 stripe_session_id: s.id,
               })
               .eq("id", ordineId);
+            // avvisa l'azienda del nuovo ordine da accettare
+            await avvisaAziendaOrdine(ordineId);
           }
           break;
         }
