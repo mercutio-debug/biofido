@@ -185,13 +185,17 @@ export function SchedaImpresaModal({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         {p.mostraSemaforo !== false && (p.ingredients?.length ?? 0) > 0 && (() => {
-                          const sem = SEMAFORO[calcolaImpronta(sede, p.ingredients ?? []).level];
+                          const imp = calcolaImpronta(sede, p.ingredients ?? []);
+                          const sem = SEMAFORO[imp.level];
                           return (
                             <span
-                              className="h-3 w-3 flex-none rounded-full"
-                              style={{ background: sem.colore }}
+                              className="inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold capitalize"
+                              style={{ backgroundColor: `${sem.colore}22`, color: sem.colore }}
                               title={`Semaforo di sostenibilità: ${sem.testo}`}
-                            />
+                            >
+                              <span className="h-2 w-2 rounded-full" style={{ background: sem.colore }} />
+                              {imp.level}
+                            </span>
                           );
                         })()}
                         <div className="truncate font-semibold text-green-800">{p.name}</div>
