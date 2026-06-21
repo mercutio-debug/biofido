@@ -131,6 +131,14 @@ export function UserMenu() {
           >
             🛒 Ordini ricevuti
           </Link>
+          <Link
+            href="/account"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
+          >
+            ⚙️ Il mio account
+          </Link>
           {isAdmin && (
             <Link
               href="/admin"
