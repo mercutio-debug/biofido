@@ -31,5 +31,5 @@ export const eur = (value: number) => ({
 /** prezzi dei piani (devono coincidere con PLAN_MAP nel frontend). */
 export const PLAN_PRICE: Record<string, { monthly: number; annual: number }> = {
   silver: { monthly: 9, annual: 90 },
-  gold: { monthly: 24, annual: 240 },
+  gold: { monthly: 19, annual: 190 },
 };

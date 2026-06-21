@@ -104,7 +104,7 @@ export const PLAN_MAP: Record<Plan, PlanInfo> = {
     searchBoost: 10, featuredEligible: false, priority: 1,
   },
   gold: {
-    id: "gold", label: "Gold", monthlyPrice: 24, annualPrice: 240,
+    id: "gold", label: "Gold", monthlyPrice: 19, annualPrice: 190,
     markerSize: 50, showIcon: true, showDescription: true, showWebsite: true,
     showProducts: true, maxProducts: 100, maxPhotos: 3, hasVideo: true,
     maxEvents: Infinity, statsLevel: "advanced",
