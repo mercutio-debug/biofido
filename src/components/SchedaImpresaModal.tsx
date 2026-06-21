@@ -7,6 +7,7 @@ import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
 import { loadCatalogo, TIPI_VOCE, type VoceCatalogo } from "@/lib/catalogo";
 import { registraEvento } from "@/lib/statistiche";
 import type { Business, Product } from "@/lib/biofido-data";
+import { OrdineProdottoModal } from "@/components/OrdineProdottoModal";
 
 /** prezzo numerico → "€ 9,50" (it-IT). */
 const euro = (n: number | null) =>
@@ -52,6 +53,7 @@ export function SchedaImpresaModal({
   }, [b.owner]);
   const prodottiCat = catalogo.filter((v) => v.tipo === "prodotto");
   const serviziCat = catalogo.filter((v) => v.tipo !== "prodotto");
+  const [ordina, setOrdina] = useState<VoceCatalogo | null>(null);
 
   return (
     <div
@@ -225,22 +227,33 @@ export function SchedaImpresaModal({
             <h3 className="text-xs font-bold uppercase tracking-wide text-green-700">In vendita</h3>
             <ul className="mt-2 space-y-2">
               {prodottiCat.map((v) => (
-                <li key={v.id} className="flex items-center gap-3 rounded-xl border border-[#e3eed7] bg-white p-2">
-                  {v.immagine && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={v.immagine} alt={v.nome} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-semibold text-green-800">{v.nome}</div>
-                    {v.descrizione && (
-                      <div className="truncate text-xs text-green-900/60">{v.descrizione}</div>
+                <li key={v.id} className="flex flex-col gap-2 rounded-xl border border-[#e3eed7] bg-white p-2">
+                  <div className="flex items-center gap-3">
+                    {v.immagine && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={v.immagine} alt={v.nome} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-semibold text-green-800">{v.nome}</div>
+                      {v.descrizione && (
+                        <div className="truncate text-xs text-green-900/60">{v.descrizione}</div>
+                      )}
+                    </div>
+                    {v.prezzo != null && (
+                      <div className="shrink-0 text-right text-sm font-semibold text-green-800">
+                        {euro(v.prezzo)}
+                        {v.unita ? <span className="text-xs font-normal text-green-900/55"> {v.unita}</span> : null}
+                      </div>
                     )}
                   </div>
-                  {v.prezzo != null && (
-                    <div className="shrink-0 text-right text-sm font-semibold text-green-800">
-                      {euro(v.prezzo)}
-                      {v.unita ? <span className="text-xs font-normal text-green-900/55"> {v.unita}</span> : null}
-                    </div>
+                  {b.owner && v.id && (
+                    <button
+                      type="button"
+                      onClick={() => setOrdina(v)}
+                      className="self-start rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
+                    >
+                      🛒 Ordina
+                    </button>
                   )}
                 </li>
               ))}
@@ -341,6 +354,18 @@ export function SchedaImpresaModal({
         >
           🐾 Raggiungila
         </a>
+
+        {ordina && b.owner && (
+          <OrdineProdottoModal
+            prodottoId={ordina.id!}
+            owner={b.owner}
+            prodottoNome={ordina.nome}
+            prezzo={ordina.prezzo != null ? euro(ordina.prezzo) : null}
+            aziendaNome={b.name}
+            portale="BioFido"
+            onClose={() => setOrdina(null)}
+          />
+        )}
       </div>
     </div>
   );
