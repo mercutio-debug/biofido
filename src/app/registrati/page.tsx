@@ -10,8 +10,18 @@ import { Turnstile, turnstileAttivo } from "@/components/Turnstile";
 // serve per far tornare il link di conferma email sulla pagina di benvenuto.
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
+type Tipo = "azienda" | "cliente";
+
 export default function RegistratiPage() {
   const router = useRouter();
+  // Tipo di account: azienda (vende) o cliente (ordina). Preselezionabile con
+  // ?tipo=cliente (es. dal pulsante "Iscriviti come cliente").
+  const [tipo, setTipo] = useState<Tipo>(() =>
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("tipo") === "cliente"
+      ? "cliente"
+      : "azienda",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +29,8 @@ export default function RegistratiPage() {
   const [loading, setLoading] = useState(false);
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [captchaKey, setCaptchaKey] = useState(0);
+
+  const isAzienda = tipo === "azienda";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,15 +45,13 @@ export default function RegistratiPage() {
       return;
     }
     setLoading(true);
-    // Crea l'account con sole email + password. Il nome dell'azienda si
-    // inserisce dopo il login, nella scheda della dashboard.
+    // Il tipo va nei metadati: un trigger DB crea il profilo (profiles.tipo).
     const { data, error: signErr } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        data: { tipo },
         captchaToken: captcha ?? undefined,
-        // dopo il click sul link di conferma si torna sulla pagina di benvenuto
-        // del portale (non più su localhost).
         emailRedirectTo: `${window.location.origin}${BASE}/benvenuto/`,
       },
     });
@@ -52,7 +62,6 @@ export default function RegistratiPage() {
           ? "Utente già registrato. Accedi con le tue credenziali."
           : signErr.message,
       );
-      // il token Turnstile è monouso: ne serve uno nuovo dopo un errore
       setCaptcha(null);
       setCaptchaKey((k) => k + 1);
       return;
@@ -69,28 +78,51 @@ export default function RegistratiPage() {
     }
     if (data.session) {
       // conferma email disattivata: si entra subito
-      router.push("/dashboard");
+      router.push(isAzienda ? "/dashboard" : "/");
     } else {
       // conferma email attiva: bisogna confermare prima di accedere
       setInfo(
         "Account creato! Ti abbiamo inviato un'email di conferma a " +
           email +
-          ". Conferma l'indirizzo, poi accedi."
+          ". Conferma l'indirizzo, poi accedi.",
       );
     }
   }
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
-      <div className="text-xs font-bold uppercase tracking-wide text-lime-500">
-        Area aziende
+      {/* Selettore tipo account */}
+      <div className="flex gap-1 rounded-full bg-leaf p-1">
+        <button
+          type="button"
+          onClick={() => setTipo("azienda")}
+          className={`flex-1 rounded-full px-4 py-2 text-sm font-bold transition ${
+            isAzienda ? "bg-green-700 text-white" : "text-green-800 hover:text-green-700"
+          }`}
+        >
+          Sono un&apos;attività
+        </button>
+        <button
+          type="button"
+          onClick={() => setTipo("cliente")}
+          className={`flex-1 rounded-full px-4 py-2 text-sm font-bold transition ${
+            !isAzienda ? "bg-green-700 text-white" : "text-green-800 hover:text-green-700"
+          }`}
+        >
+          Sono un cliente
+        </button>
+      </div>
+
+      <div className="mt-6 text-xs font-bold uppercase tracking-wide text-lime-500">
+        {isAzienda ? "Area attività" : "Area clienti"}
       </div>
       <h1 className="title-pangea mt-2 text-4xl text-green-700">
-        Iscrivi la tua azienda
+        {isAzienda ? "Iscrivi la tua attività" : "Crea il tuo account cliente"}
       </h1>
       <p className="mt-3 text-green-900/80">
-        Ti bastano email e password. Il nome dell&apos;azienda e gli altri dati
-        li inserisci dopo, dalla tua dashboard.
+        {isAzienda
+          ? "Ti bastano email e password. Nome dell'attività e gli altri dati li inserisci dopo, dalla tua dashboard."
+          : "Registrati per ordinare i prodotti delle attività bio. Bastano email e password; nome e indirizzo di spedizione li inserisci al momento dell'ordine."}
       </p>
 
       <form onSubmit={handleSubmit} className="card mt-8 space-y-4 p-6">
@@ -101,7 +133,7 @@ export default function RegistratiPage() {
             className="field mt-1"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="azienda@esempio.it"
+            placeholder={isAzienda ? "attivita@esempio.it" : "nome@esempio.it"}
             required
           />
         </label>
