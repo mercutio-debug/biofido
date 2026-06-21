@@ -100,6 +100,14 @@ export function UserMenu() {
             🐾 La mia dashboard
           </Link>
           <Link
+            href="/dashboard/#messaggi"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
+          >
+            💬 Messaggi / chat
+          </Link>
+          <Link
             href="/prenotazioni"
             role="menuitem"
             onClick={() => setOpen(false)}
