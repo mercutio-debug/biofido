@@ -58,8 +58,8 @@ export default function AccountPage() {
   async function cambiaPassword(e: React.FormEvent) {
     e.preventDefault();
     setPwdMsg(null);
-    if (pwd.length < 6) {
-      setPwdMsg("La password deve avere almeno 6 caratteri.");
+    if (pwd.length < 8) {
+      setPwdMsg("La password deve avere almeno 8 caratteri.");
       return;
     }
     if (pwd !== pwd2) {
@@ -127,7 +127,7 @@ export default function AccountPage() {
               className="field mt-1"
               value={pwd}
               onChange={(e) => setPwd(e.target.value)}
-              placeholder="Almeno 6 caratteri"
+              placeholder="Almeno 8 caratteri"
               autoComplete="new-password"
             />
           </label>

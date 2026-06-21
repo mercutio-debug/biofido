@@ -32,8 +32,8 @@ export default function ResetPage() {
   async function salva(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
-    if (password.length < 6) {
-      setErr("La password deve avere almeno 6 caratteri.");
+    if (password.length < 8) {
+      setErr("La password deve avere almeno 8 caratteri.");
       return;
     }
     setSaving(true);
@@ -73,7 +73,7 @@ export default function ResetPage() {
               className="field mt-1"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Almeno 6 caratteri"
+              placeholder="Almeno 8 caratteri"
               required
             />
           </label>
