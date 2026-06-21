@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 /**
  * Banner pubblicitario del piano GOLD: invita le aziende a entrare nella
  * community, spiega i vantaggi e li confronta con un e-commerce tradizionale.
@@ -16,6 +18,12 @@ export function GoldPromoBanner({ portale = "BioFido" }: { portale?: string }) {
   return (
     <section className="mx-auto my-10 max-w-5xl px-4">
       <div className="overflow-hidden rounded-3xl border-2 border-badge-yellow bg-gradient-to-br from-[#fffbe9] to-leaf p-6 md:p-8">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${BASE}/brand/altalena-community.svg`}
+          alt="Insieme vinciamo noi: la community bilancia i grandi portali"
+          className="mx-auto mb-5 block w-full max-w-xl"
+        />
         <span className="inline-block rounded-full bg-badge-yellow px-3 py-1 text-xs font-bold text-[#7a1f00]">
           ★ AZIENDA GOLD
         </span>

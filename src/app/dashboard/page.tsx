@@ -32,6 +32,7 @@ import { billingEnabled, startCheckout, openCustomerPortal } from "@/lib/billing
 import { DatiFatturazioneForm, type PrefillFatturazione } from "@/components/DatiFatturazioneForm";
 import { SezioneBio } from "@/components/SezioneBio";
 import { SchedaServizi } from "@/components/SchedaServizi";
+import { GoldPromoBanner } from "@/components/GoldPromoBanner";
 import { CatalogoCard } from "@/components/CatalogoCard";
 import { startOnboarding, refreshConnectStatus } from "@/lib/connect";
 import {
@@ -120,6 +121,8 @@ export default function DashboardPage() {
       </div>
 
       <PianoSelector scelto={pianoScelto} attivo={activePlan} onScegli={scegliPiano} />
+
+      <GoldPromoBanner portale="BioFido" />
 
       <SchedaServizi piano={pianoScelto} attivo={activePlan} />
 
