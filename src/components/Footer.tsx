@@ -58,6 +58,14 @@ export function Footer() {
         <a href={LEGALE.recesso} className="hover:text-lime-500 hover:underline" target="_blank" rel="noopener noreferrer">
           Diritto di recesso e cancellazione account
         </a>{" "}
+        ·{" "}
+        <a href={LEGALE.terminiVendita} className="hover:text-lime-500 hover:underline" target="_blank" rel="noopener noreferrer">
+          Termini di vendita
+        </a>{" "}
+        ·{" "}
+        <a href={LEGALE.condizioniVenditori} className="hover:text-lime-500 hover:underline" target="_blank" rel="noopener noreferrer">
+          Condizioni per i venditori
+        </a>{" "}
         · Mappe © OpenStreetMap
       </div>
     </footer>

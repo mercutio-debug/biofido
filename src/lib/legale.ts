@@ -7,4 +7,7 @@
 export const LEGALE = {
   privacy: "https://ecovisa.it/privacy/",
   recesso: "https://mercutio-debug.github.io/elimina-account.html",
+  // Pagine canoniche su ECO-VISA, condivise con BioFido (come la privacy).
+  terminiVendita: "https://ecovisa.it/termini-vendita/",
+  condizioniVenditori: "https://ecovisa.it/condizioni-venditori/",
 };
