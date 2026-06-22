@@ -51,6 +51,7 @@ import {
 import { ChatPrenotazione } from "@/components/ChatPrenotazione";
 import { listContatti, setContattoGestito, type Contatto } from "@/lib/contatti";
 import { NotificheToggle } from "@/components/NotificheToggle";
+import { SmsNotificheToggle } from "@/components/SmsNotificheToggle";
 import { StatisticheCard } from "@/components/StatisticheCard";
 import { AnteprimaScheda } from "@/components/AnteprimaScheda";
 import { ImportoInput } from "@/components/ImportoInput";
@@ -1140,6 +1141,7 @@ function MessaggiCard({ ownerId }: { ownerId: string }) {
       </p>
 
       <NotificheToggle />
+      <SmsNotificheToggle ownerId={ownerId} />
 
       {loading ? (
         <p className="mt-4 text-sm text-green-900/60">Caricamento…</p>

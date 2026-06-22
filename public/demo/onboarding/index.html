@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ECO-VISA · Onboarding assistito — presentazione</title>
+<style>
+  :root{
+    --green:#1c5132; --green2:#2f6f3f; --lime:#8cc63f; --leaf:#eef4e6;
+    --txt:#1f3d2b; --muted:#6b7c70; --border:#e3eed7;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;font-family:Arial,Helvetica,sans-serif;background:#0e2417;color:var(--txt);}
+  .deck{position:relative;height:100vh;width:100vw;overflow:hidden;}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+    padding:7vh 9vw;opacity:0;transition:opacity .4s;}
+  .slide.active{display:flex;opacity:1;}
+  .slide.bg-cream{background:var(--leaf);}
+  .slide.bg-white{background:#fff;}
+  .slide.bg-green{background:var(--green);color:#fff;}
+  .kicker{font-size:1rem;letter-spacing:4px;text-transform:uppercase;font-weight:bold;color:var(--lime);margin-bottom:18px;}
+  h1{font-family:Georgia,'Times New Roman',serif;font-size:4.2vw;line-height:1.1;color:var(--green);}
+  .bg-green h1{color:#fff;}
+  h2{font-family:Georgia,serif;font-size:3.2vw;line-height:1.15;color:var(--green);}
+  .bg-green h2{color:#fff;}
+  .lead{font-size:1.7vw;line-height:1.6;color:var(--green2);max-width:60ch;margin-top:18px;}
+  .bg-green .lead{color:#dfeccd;}
+  ul{margin-top:22px;list-style:none;}
+  li{font-size:1.6vw;line-height:1.9;color:var(--txt);display:flex;align-items:center;gap:14px;}
+  li::before{content:"";width:14px;height:14px;border-radius:50%;background:var(--lime);flex:none;}
+  .steps{display:flex;gap:22px;margin-top:30px;}
+  .step{flex:1;background:#fff;border:1px solid var(--border);border-radius:18px;padding:26px;}
+  .bg-cream .step{background:#fff;}
+  .step .num{width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;font-family:Georgia,serif;
+    font-weight:bold;font-size:1.4rem;display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+  .step h3{font-family:Georgia,serif;color:var(--green);font-size:1.5vw;margin-bottom:8px;}
+  .step p{font-size:1.05vw;color:var(--muted);line-height:1.6;}
+  .pricebig{font-family:Georgia,serif;font-size:6vw;color:var(--green);font-weight:bold;}
+  .bg-green .pricebig{color:var(--lime);}
+  .promo{display:inline-block;background:var(--lime);color:var(--green);font-weight:bold;border-radius:999px;
+    padding:8px 20px;font-size:1.1vw;margin-top:14px;}
+  /* mockup "schermata" da sostituire con screenshot reale */
+  .shot{margin-top:26px;border-radius:14px;border:1px solid var(--border);background:#fff;overflow:hidden;
+    box-shadow:0 18px 40px rgba(0,0,0,.18);max-width:760px;}
+  .shot .bar{background:var(--green);height:34px;display:flex;align-items:center;gap:7px;padding:0 14px;}
+  .shot .bar i{width:11px;height:11px;border-radius:50%;background:#ffffff66;display:inline-block;}
+  .shot .body{padding:26px;min-height:230px;display:flex;flex-direction:column;gap:12px;}
+  .shotnote{font-size:.8vw;color:var(--muted);margin-top:8px;font-style:italic;}
+  /* fotografie */
+  .cover-photo{background-size:cover !important;background-position:center !important;}
+  .split{display:grid;grid-template-columns:1.05fr .95fr;gap:4vw;align-items:center;width:100%;}
+  .figure{border-radius:18px;overflow:hidden;box-shadow:0 18px 42px rgba(0,0,0,.22);}
+  .figure img{display:block;width:100%;height:60vh;object-fit:cover;}
+  .figure.small img{height:42vh;}
+  .figcap{font-size:.85vw;color:var(--muted);margin-top:8px;font-style:italic;font-family:Arial;}
+  .bg-green .figcap{color:#cfe6b0;}
+  .ph{height:16px;border-radius:6px;background:var(--leaf);}
+  .ph.w40{width:40%;} .ph.w70{width:70%;} .ph.w55{width:55%;}
+  .chiprow{display:flex;gap:10px;flex-wrap:wrap;}
+  .chip{background:var(--leaf);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.95vw;color:var(--green);font-weight:bold;}
+  .arrowflow{display:flex;align-items:center;gap:20px;margin-top:30px;flex-wrap:wrap;}
+  .box{background:#fff;border:2px solid var(--border);border-radius:16px;padding:22px 26px;text-align:center;min-width:170px;}
+  .bg-cream .box{background:#fff;}
+  .box .big{font-size:2.4vw;}
+  .box .t{font-family:Georgia,serif;color:var(--green);font-size:1.25vw;margin-top:8px;}
+  .box .s{font-size:.95vw;color:var(--muted);}
+  .arr{font-size:2.4vw;color:var(--lime);font-weight:bold;}
+  /* navigation */
+  .nav{position:fixed;bottom:22px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:18px;z-index:10;}
+  .nav button{background:#ffffffcc;border:1px solid var(--border);border-radius:999px;width:46px;height:46px;
+    font-size:1.3rem;cursor:pointer;color:var(--green);font-weight:bold;}
+  .dots{display:flex;gap:8px;}
+  .dot{width:9px;height:9px;border-radius:50%;background:#ffffff66;cursor:pointer;}
+  .dot.on{background:var(--lime);}
+  .count{position:fixed;top:18px;right:24px;color:#ffffffaa;font-size:.9rem;z-index:10;}
+  .logo{position:fixed;top:16px;left:24px;color:#fff;font-family:Georgia,serif;font-weight:bold;font-size:1rem;z-index:10;}
+  .bg-cream ~ .logo{color:var(--green);}
+</style>
+</head>
+<body>
+<div class="logo">🌱 ECO-VISA</div>
+<div class="count"><span id="cur">1</span> / <span id="tot">10</span></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 HOOK -->
+  <section class="slide bg-green cover-photo active" style="background:linear-gradient(rgba(28,81,50,.84),rgba(14,36,23,.94)),url('img/campagna.jpg');">
+    <div class="kicker">Onboarding assistito</div>
+    <h1>Il tuo negozio bio online.<br/>Senza fatica.</h1>
+    <p class="lead">Tu ci mandi il listino e le foto. Al resto pensiamo noi: in pochi giorni la tua azienda è online, sulla mappa del km zero, pronta a vendere.</p>
+  </section>
+
+  <!-- 2 PROBLEMA -->
+  <section class="slide bg-cream">
+    <div class="split">
+      <div>
+        <div class="kicker">Il problema</div>
+        <h2>Vendere online sembra una montagna</h2>
+        <ul>
+          <li>Non hai tempo da dedicare a un sito o a un gestionale</li>
+          <li>Le foto sono sparse tra telefono e cataloghi</li>
+          <li>Il listino è su carta o in un PDF vecchio</li>
+          <li>Caricare prodotti uno a uno è un lavoro infinito</li>
+        </ul>
+      </div>
+      <div class="figure"><img src="img/mani.jpg" alt="Produttore al lavoro" /></div>
+    </div>
+  </section>
+
+  <!-- 3 PROMESSA -->
+  <section class="slide bg-white">
+    <div class="kicker">La nostra promessa</div>
+    <h1>Tu ci mandi listino e foto.<br/>Al resto pensiamo noi.</h1>
+    <p class="lead">Niente moduli infiniti, niente competenze tecniche. Trasformiamo i tuoi materiali nel tuo negozio online completo.</p>
+  </section>
+
+  <!-- 4 COME FUNZIONA -->
+  <section class="slide bg-cream">
+    <div class="kicker">Come funziona</div>
+    <h2>Tre passi, e sei online</h2>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><h3>Ci invii i materiali</h3><p>Il tuo listino in PDF e le foto dei prodotti, anche sparse. Bastano quelli che hai.</p></div>
+      <div class="step"><div class="num">2</div><h3>L'IA crea il negozio</h3><p>Legge il listino, ricava prodotti, prezzi e descrizioni, abbina le foto e calcola l'impronta ecologica.</p></div>
+      <div class="step"><div class="num">3</div><h3>Verifichiamo e pubblichiamo</h3><p>Un nostro operatore controlla tutto. Pubblichiamo solo quando è perfetto.</p></div>
+    </div>
+  </section>
+
+  <!-- 5 INPUT -->
+  <section class="slide bg-white">
+    <div class="kicker">Passo 1 · Ci invii i materiali</div>
+    <h2>Basta quello che hai già</h2>
+    <div class="arrowflow">
+      <div class="box"><div class="big">📄</div><div class="t">Listino PDF</div><div class="s">prodotti e prezzi</div></div>
+      <div class="arr">+</div>
+      <div class="box"><div class="big">🖼️</div><div class="t">Foto prodotti</div><div class="s">anche sparse</div></div>
+      <div class="arr">→</div>
+      <div class="box" style="border-color:var(--lime);"><div class="big">🌱</div><div class="t">A noi</div><div class="s">via email</div></div>
+    </div>
+    <p class="lead">Nessun file perfetto richiesto: ci adattiamo noi ai tuoi materiali.</p>
+  </section>
+
+  <!-- 6 IA -->
+  <section class="slide bg-cream">
+    <div class="kicker">Passo 2 · L'intelligenza artificiale</div>
+    <h2>Il tuo negozio si costruisce da solo</h2>
+    <div class="chiprow" style="margin-top:24px;">
+      <div class="chip">Estrae i prodotti dal PDF</div>
+      <div class="chip">Ricava prezzi e descrizioni</div>
+      <div class="chip">Abbina le foto giuste</div>
+      <div class="chip">Calcola l'impronta ecologica</div>
+      <div class="chip">Posiziona sulla mappa km0</div>
+    </div>
+    <div class="shot">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <div class="body">
+        <div class="ph w40"></div>
+        <div class="chiprow"><div class="chip">Olio lavanda · € 12</div><div class="chip">Eucaliptus · € 10</div></div>
+        <div class="ph w70"></div><div class="ph w55"></div>
+      </div>
+    </div>
+    <div class="shotnote">[ Qui andrà lo screenshot reale dello strumento: PDF analizzato → prodotti estratti ]</div>
+  </section>
+
+  <!-- 7 NIENTE FOTO -->
+  <section class="slide bg-white">
+    <div class="split">
+      <div>
+        <div class="kicker">E se mancano le foto?</div>
+        <h2>Niente foto?<br/>Nessun problema.</h2>
+        <p class="lead">Dove manca un'immagine, l'IA ne sceglie una coerente e senza diritti d'autore — per esempio fiori di lavanda per l'olio di lavanda — così la tua vetrina è sempre completa e curata.</p>
+      </div>
+      <div class="figure"><img src="img/lavanda.jpg" alt="Campo di lavanda" />
+        <div class="figcap" style="padding:10px 4px 0;">Esempio: "olio di lavanda" → immagine di lavanda, libera da diritti</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 VERIFICA -->
+  <section class="slide bg-cream">
+    <div class="kicker">Passo 3 · Controllo umano</div>
+    <h2>Pubblichiamo solo quando è perfetto</h2>
+    <p class="lead">Ogni scheda passa dalla revisione di un nostro operatore: correggiamo, sistemiamo, e pubblichiamo solo con la tua approvazione. La tecnologia fa il lavoro pesante, le persone garantiscono la qualità.</p>
+    <div class="shot">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <div class="body">
+        <div class="chiprow"><div class="chip">✓ Verificato</div><div class="chip" style="background:#fff;border-color:var(--lime);color:var(--green);">Pubblica</div></div>
+        <div class="ph w70"></div><div class="ph w40"></div>
+      </div>
+    </div>
+    <div class="shotnote">[ Screenshot reale: pannello "da verificare → pubblica" ]</div>
+  </section>
+
+  <!-- 9 RISULTATO -->
+  <section class="slide bg-green cover-photo" style="background:linear-gradient(rgba(28,81,50,.86),rgba(14,36,23,.92)),url('img/negozio.jpg');">
+    <div class="kicker">Il risultato</div>
+    <h1>Online, completo, verificato.</h1>
+    <ul style="margin-top:26px;">
+      <li style="color:#eaf7d8;">Negozio con prodotti, prezzi e foto</li>
+      <li style="color:#eaf7d8;">Sulla mappa delle realtà a km zero</li>
+      <li style="color:#eaf7d8;">Con passaporto ecologico verificabile</li>
+      <li style="color:#eaf7d8;">Pronto a ricevere ordini e prenotazioni</li>
+    </ul>
+  </section>
+
+  <!-- 10 CTA -->
+  <section class="slide bg-white">
+    <div class="split">
+      <div>
+        <div class="kicker">Onboarding assistito</div>
+        <h2>Mettiamo online la tua azienda. Tu pensa a produrre.</h2>
+        <div class="pricebig">€ 59</div>
+        <div class="promo">−10% per chi inizia entro il 31/12/2026</div>
+        <p class="lead">Per te: 10 minuti per inviarci i materiali. Per noi: tutto il resto.</p>
+      </div>
+      <div class="figure"><img src="img/fattoria.jpg" alt="Azienda agricola biologica" /></div>
+    </div>
+  </section>
+
+</div>
+
+<div class="nav">
+  <button onclick="go(-1)" aria-label="Precedente">‹</button>
+  <div class="dots" id="dots"></div>
+  <button onclick="go(1)" aria-label="Successiva">›</button>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const dots=document.getElementById('dots');
+  let i=0;
+  document.getElementById('tot').textContent=slides.length;
+  slides.forEach((_,k)=>{const d=document.createElement('div');d.className='dot'+(k===0?' on':'');d.onclick=()=>set(k);dots.appendChild(d);});
+  function set(n){i=(n+slides.length)%slides.length;slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    [...dots.children].forEach((d,k)=>d.classList.toggle('on',k===i));
+    document.getElementById('cur').textContent=i+1;}
+  function go(d){set(i+d);}
+  document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')go(1);if(e.key==='ArrowLeft')go(-1);});
+</script>
+</body>
+</html>

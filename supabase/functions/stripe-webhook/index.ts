@@ -33,6 +33,55 @@ const NOTIFY_FROM = Deno.env.get("NOTIFY_FROM") ?? "ECO-VISA & BioFido <noreply@
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") ?? "mauriziocapitelli@yahoo.it";
 const SITE_URL = Deno.env.get("SITE_URL") ?? "";
 
+// Notifiche SMS (funzione GOLD) — il fornitore NON è ancora collegato.
+// Quando lo attiveremo basterà: (1) impostare i segreti SMS_API_KEY (+ SMS_SENDER
+// e l'eventuale endpoint) su Edge Functions; (2) completare la fetch dentro
+// sendSms() con l'API del fornitore scelto. Finché SMS_API_KEY è assente, l'SMS
+// viene saltato (loggato), senza errori.
+const SMS_API_KEY = Deno.env.get("SMS_API_KEY");
+const SMS_SENDER = Deno.env.get("SMS_SENDER") ?? "EcoVisa";
+
+/** Invio SMS — STUB pronto da collegare al fornitore. */
+async function sendSms(to: string, body: string): Promise<void> {
+  if (!SMS_API_KEY) {
+    console.log(`sms: fornitore non collegato (SMS_API_KEY assente) — SMS a ${to} saltato`);
+    return;
+  }
+  try {
+    // TODO collegare il fornitore SMS qui. Esempio generico:
+    // const r = await fetch("https://api.fornitore-sms.it/v1/messages", {
+    //   method: "POST",
+    //   headers: { Authorization: `Bearer ${SMS_API_KEY}`, "Content-Type": "application/json" },
+    //   body: JSON.stringify({ from: SMS_SENDER, to, text: body }),
+    // });
+    // if (!r.ok) console.error(`sms: fornitore ha risposto ${r.status}: ${await r.text()}`);
+    // else console.log(`sms: inviato a ${to}`);
+    console.log(`sms: (placeholder, fornitore da collegare) invierei a ${to} [${SMS_SENDER}]: ${body}`);
+  } catch (e) {
+    console.error("sms: errore invio:", (e as Error).message);
+  }
+}
+
+/** Se l'azienda è GOLD e ha attivato l'SMS ordini, le manda l'avviso via SMS. */
+async function avvisaAziendaOrdineSms(owner: string, testo: string): Promise<void> {
+  // gating Gold lato server (la UI lo nasconde ai non-Gold, ma ricontrolliamo qui)
+  const { data: sub } = await admin
+    .from("subscriptions")
+    .select("plan")
+    .eq("user_id", owner)
+    .maybeSingle();
+  if ((sub?.plan as string) !== "gold") return;
+
+  const { data: pref } = await admin
+    .from("sms_preferenze")
+    .select("attivo, numero")
+    .eq("user_id", owner)
+    .maybeSingle();
+  if (!pref?.attivo || !pref?.numero) return;
+
+  await sendSms(String(pref.numero), testo);
+}
+
 async function avvisaAdminPagamento(
   s: Stripe.Checkout.Session,
   userId: string,
@@ -167,6 +216,17 @@ async function avvisaAziendaOrdine(ordineId: string) {
   });
   if (!r.ok) {
     console.error(`stripe-webhook: Resend ordine ha risposto ${r.status}: ${await r.text()}`);
+  }
+
+  // SMS all'azienda (solo Gold + spunta attiva; no-op finché il fornitore SMS
+  // non è collegato). Best-effort: non deve mai bloccare l'email/ordine.
+  try {
+    await avvisaAziendaOrdineSms(
+      o.owner,
+      `Nuovo ordine su ${SMS_SENDER}: ${nomeProd} x${o.quantita} — ${importo}. Da ${o.cliente_nome}. Gestiscilo in "Ordini ricevuti".`,
+    );
+  } catch (e) {
+    console.error("stripe-webhook: SMS ordine errore:", (e as Error).message);
   }
 }
 
