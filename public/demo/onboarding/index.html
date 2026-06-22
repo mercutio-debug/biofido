@@ -55,6 +55,15 @@
   .figcap{font-size:.85vw;color:var(--muted);margin-top:8px;font-style:italic;font-family:Arial;}
   .bg-green .figcap{color:#cfe6b0;}
   .only-bio{display:none;} body.is-bio .only-bio{display:inline;}
+  /* copertina con illustrazione agricoltore + fumetto */
+  .cover-split{display:grid;grid-template-columns:1.05fr .95fr;gap:3vw;align-items:center;width:100%;}
+  .ill-wrap{position:relative;}
+  .ill-man{display:block;width:100%;max-height:74vh;object-fit:contain;filter:drop-shadow(0 14px 30px rgba(0,0,0,.45));}
+  .fumetto{position:absolute;top:1%;left:-3%;max-width:66%;background:#fff;color:#1c5132;border:2px solid var(--lime);
+    border-radius:22px;padding:14px 20px;font-family:Georgia,'Times New Roman',serif;font-style:italic;
+    font-size:1.4vw;line-height:1.35;box-shadow:0 12px 30px rgba(0,0,0,.3);z-index:3;}
+  .fumetto::before{content:"";position:absolute;bottom:-19px;right:22%;border:10px solid transparent;border-top-color:var(--lime);}
+  .fumetto::after{content:"";position:absolute;bottom:-15px;right:23%;border:8px solid transparent;border-top-color:#fff;}
   .ph{height:16px;border-radius:6px;background:var(--leaf);}
   .ph.w40{width:40%;} .ph.w70{width:70%;} .ph.w55{width:55%;}
   .chiprow{display:flex;gap:10px;flex-wrap:wrap;}
@@ -86,9 +95,17 @@
 
   <!-- 1 HOOK -->
   <section class="slide bg-green cover-photo active" style="background:linear-gradient(rgba(28,81,50,.84),rgba(14,36,23,.94)),url('img/campagna.jpg');">
-    <div class="kicker">Onboarding assistito</div>
-    <h1>Il tuo negozio <span class="only-bio">bio </span>online.<br/>Senza fatica.</h1>
-    <p class="lead">Tu ci mandi il listino e le foto. Al resto pensiamo noi: in pochi giorni la tua azienda è online, sulla mappa del km zero, pronta a vendere.</p>
+    <div class="cover-split">
+      <div>
+        <div class="kicker">Onboarding assistito</div>
+        <h1>Il tuo negozio <span class="only-bio">bio </span>online,<br/>senza perderci tempo.</h1>
+        <p class="lead">Lo sappiamo: gestire un sito è l'ultimo dei tuoi pensieri. Tu ci mandi listino e foto, <strong>al resto pensiamo noi</strong>.</p>
+      </div>
+      <div class="ill-wrap">
+        <img class="ill-man" src="img/contadino.png" alt="Agricoltore" />
+        <div class="fumetto">«Io non ho tempo di stare dietro a un sito!»</div>
+      </div>
+    </div>
   </section>
 
   <!-- 2 PROBLEMA -->
