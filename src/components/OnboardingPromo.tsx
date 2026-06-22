@@ -13,7 +13,7 @@ export function OnboardingPromo() {
         <div className="md:flex md:items-end md:justify-between md:gap-6">
           <div>
             <div className="text-xs font-bold uppercase tracking-wide text-lime-500">
-              Novità · Onboarding assistito
+              Novità · Ci pensiamo noi
             </div>
             <h2 className="mt-1 font-display text-2xl text-green-800 md:text-3xl">
               Hai un&apos;attività bio? La mettiamo online noi.
@@ -39,7 +39,7 @@ export function OnboardingPromo() {
         <div className="mt-6 overflow-hidden rounded-2xl border border-[#e3eed7] bg-[#0e2417] shadow-lg">
           <iframe
             src={`${BASE}/demo/onboarding/`}
-            title="Demo onboarding assistito BioFido"
+            title="Demo «Ci pensiamo noi» BioFido"
             loading="lazy"
             className="h-[420px] w-full md:h-[520px]"
           />

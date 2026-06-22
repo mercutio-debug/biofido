@@ -15,7 +15,7 @@ export const SERVIZI_EXTRA: ServizioExtra[] = [
   {
     key: "onboarding",
     emoji: "🚀",
-    nome: "Onboarding assistito",
+    nome: "Ci pensiamo noi",
     desc: "Mettiamo online la tua azienda: tu invii listino e foto, al resto pensiamo noi. Negozio completo, verificato e pubblicato.",
     prezzo: "€ 59 una-tantum · −10% entro il 31/12/2026",
   },

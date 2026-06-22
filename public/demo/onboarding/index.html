@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ECO-VISA · Onboarding assistito — presentazione</title>
+<title>ECO-VISA · Ci pensiamo noi — presentazione</title>
 <style>
   :root{
     --green:#1c5132; --green2:#2f6f3f; --lime:#8cc63f; --leaf:#eef4e6;
@@ -88,16 +88,16 @@
   .count{position:fixed;top:18px;right:24px;color:#ffffffaa;font-size:.9rem;z-index:10;}
   .logo{position:fixed;top:16px;left:24px;color:#fff;font-family:Georgia,serif;font-weight:bold;font-size:1rem;z-index:10;}
   .bg-cream ~ .logo{color:var(--green);}
-  /* Mobile: la copertina passa in colonna; la didascalia va SOPRA l'uomo, mai sulla faccia */
+  /* Mobile: copertina in colonna, allineata a SINISTRA. La didascalia va in alto
+     a sinistra, SOPRA il kicker "Onboarding"; l'uomo resta in fondo. */
   @media (max-width:820px){
-    .cover-split{grid-template-columns:1fr;gap:0;min-height:0;}
-    .cover-split>div:first-child{text-align:center;}
+    .cover-split{display:flex;flex-direction:column;gap:0;min-height:0;}
+    .ill-wrap{display:contents;}
+    .dialogo{position:static;order:-1;max-width:100%;width:auto;text-align:left;font-size:4.6vw;margin:0 0 12px;}
     .cover-split h1{font-size:7vw;}
     .cover-split .lead{font-size:3.6vw;}
     .cover-split .kicker{font-size:3.2vw;}
-    .ill-wrap{display:block;align-items:initial;}
-    .dialogo{position:static;max-width:100%;width:100%;text-align:center;font-size:5vw;margin:14px 0 2px;}
-    .ill-man{max-height:42vh;object-position:center bottom;}
+    .ill-man{order:1;max-height:46vh;object-position:center bottom;margin-top:10px;}
   }
 </style>
 </head>
@@ -114,7 +114,7 @@
     </svg>
     <div class="cover-split">
       <div>
-        <div class="kicker">Onboarding assistito</div>
+        <div class="kicker">Ci pensiamo noi</div>
         <h1>Il tuo negozio <span class="only-bio">bio </span>online,<br/>senza perderci tempo.</h1>
         <p class="lead">Lo sappiamo: gestire un sito è l'ultimo dei tuoi pensieri. Tu ci mandi listino e foto, <strong>al resto pensiamo noi</strong>.</p>
       </div>
@@ -242,7 +242,7 @@
   <section class="slide bg-white">
     <div class="split">
       <div>
-        <div class="kicker">Onboarding assistito</div>
+        <div class="kicker">Ci pensiamo noi</div>
         <h2>Mettiamo online la tua azienda. Tu pensa a produrre.</h2>
         <div class="pricebig">€ 59</div>
         <div class="promo">−10% per chi inizia entro il 31/12/2026</div>
