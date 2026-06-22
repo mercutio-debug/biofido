@@ -88,6 +88,17 @@
   .count{position:fixed;top:18px;right:24px;color:#ffffffaa;font-size:.9rem;z-index:10;}
   .logo{position:fixed;top:16px;left:24px;color:#fff;font-family:Georgia,serif;font-weight:bold;font-size:1rem;z-index:10;}
   .bg-cream ~ .logo{color:var(--green);}
+  /* Mobile: la copertina passa in colonna; la didascalia va SOPRA l'uomo, mai sulla faccia */
+  @media (max-width:820px){
+    .cover-split{grid-template-columns:1fr;gap:0;min-height:0;}
+    .cover-split>div:first-child{text-align:center;}
+    .cover-split h1{font-size:7vw;}
+    .cover-split .lead{font-size:3.6vw;}
+    .cover-split .kicker{font-size:3.2vw;}
+    .ill-wrap{display:block;align-items:initial;}
+    .dialogo{position:static;max-width:100%;width:100%;text-align:center;font-size:5vw;margin:14px 0 2px;}
+    .ill-man{max-height:42vh;object-position:center bottom;}
+  }
 </style>
 </head>
 <body>
