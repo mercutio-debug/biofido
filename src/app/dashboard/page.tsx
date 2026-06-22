@@ -141,9 +141,6 @@ export default function DashboardPage() {
 
       {user && <GuidaCard ownerId={user.id} plan={pianoScelto} />}
 
-      <div id="notifiche">
-        <NotificheToggle />
-      </div>
 
       {user && (
         <>
@@ -1141,6 +1138,8 @@ function MessaggiCard({ ownerId }: { ownerId: string }) {
         Tutto ciò che ti arriva dai clienti: messaggi di «Contatta l&apos;azienda» e
         richieste di prenotazione, dal più recente.
       </p>
+
+      <NotificheToggle />
 
       {loading ? (
         <p className="mt-4 text-sm text-green-900/60">Caricamento…</p>
