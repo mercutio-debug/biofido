@@ -88,17 +88,6 @@
   .count{position:fixed;top:18px;right:24px;color:#ffffffaa;font-size:.9rem;z-index:10;}
   .logo{position:fixed;top:16px;left:24px;color:#fff;font-family:Georgia,serif;font-weight:bold;font-size:1rem;z-index:10;}
   .bg-cream ~ .logo{color:var(--green);}
-  /* Mobile: copertina in colonna, allineata a SINISTRA. La didascalia va in alto
-     a sinistra, SOPRA il kicker "Onboarding"; l'uomo resta in fondo. */
-  @media (max-width:820px){
-    .cover-split{display:flex;flex-direction:column;gap:0;min-height:0;}
-    .ill-wrap{display:contents;}
-    .dialogo{position:static;order:-1;max-width:100%;width:auto;text-align:left;font-size:4.6vw;margin:0 0 12px;}
-    .cover-split h1{font-size:7vw;}
-    .cover-split .lead{font-size:3.6vw;}
-    .cover-split .kicker{font-size:3.2vw;}
-    .ill-man{order:1;max-height:46vh;object-position:center bottom;margin-top:10px;}
-  }
 </style>
 </head>
 <body>
