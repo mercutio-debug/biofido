@@ -1,0 +1,36 @@
+/**
+ * Dati dei "servizi extra" una-tantum / ricorrenti mostrati nella vetrina e in
+ * dashboard. La demo di ciascuno è una presentazione statica in /demo/<key>/.
+ * Gemello con ECO-VISA: tenere allineati key, testo e prezzi.
+ */
+export type ServizioExtra = {
+  key: "onboarding" | "report" | "badge";
+  emoji: string;
+  nome: string;
+  desc: string;
+  prezzo: string;
+};
+
+export const SERVIZI_EXTRA: ServizioExtra[] = [
+  {
+    key: "onboarding",
+    emoji: "🚀",
+    nome: "Onboarding assistito",
+    desc: "Mettiamo online la tua azienda: tu invii listino e foto, al resto pensiamo noi. Negozio completo, verificato e pubblicato.",
+    prezzo: "€ 59 una-tantum · −10% entro il 31/12/2026",
+  },
+  {
+    key: "report",
+    emoji: "📊",
+    nome: "Report di Sostenibilità",
+    desc: "Un PDF professionale della tua impronta ecologica, col tuo marchio. Da mostrare a clienti, partner e bandi. Si rigenera ogni anno.",
+    prezzo: "€ 19 / anno",
+  },
+  {
+    key: "badge",
+    emoji: "🏅",
+    nome: "Badge fisico",
+    desc: "Il sigillo «Impronta verificata» da esporre: targhetta con QR al passaporto, busta brandizzata e set di adesivi per il punto vendita.",
+    prezzo: "€ 29 + spedizione",
+  },
+];

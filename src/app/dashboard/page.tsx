@@ -32,6 +32,7 @@ import { billingEnabled, startCheckout, openCustomerPortal } from "@/lib/billing
 import { DatiFatturazioneForm, type PrefillFatturazione } from "@/components/DatiFatturazioneForm";
 import { SezioneBio } from "@/components/SezioneBio";
 import { SchedaServizi } from "@/components/SchedaServizi";
+import { ServiziExtra } from "@/components/ServiziExtra";
 import { GoldPromoBanner } from "@/components/GoldPromoBanner";
 import { CatalogoCard } from "@/components/CatalogoCard";
 import { startOnboarding, refreshConnectStatus } from "@/lib/connect";
@@ -150,6 +151,15 @@ export default function DashboardPage() {
           <AnteprimaScheda ownerId={user.id} />
           <CatalogoCard ownerId={user.id} gold={pianoScelto === "gold"} />
           <PagamentiCard ownerId={user.id} plan={pianoScelto} />
+          <section className="card mt-6 p-6">
+            <h2 className="font-display text-2xl text-green-800">Servizi extra</h2>
+            <p className="mt-1 text-sm text-green-900/70">
+              Potenzia la tua attività. Guarda la demo di ciascun servizio.
+            </p>
+            <div className="mt-4">
+              <ServiziExtra showPrices />
+            </div>
+          </section>
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
           <MessaggiCard ownerId={user.id} />
           <PrenotazioniCard ownerId={user.id} />
