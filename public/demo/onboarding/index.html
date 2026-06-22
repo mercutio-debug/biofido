@@ -54,6 +54,7 @@
   .figure.small img{height:42vh;}
   .figcap{font-size:.85vw;color:var(--muted);margin-top:8px;font-style:italic;font-family:Arial;}
   .bg-green .figcap{color:#cfe6b0;}
+  .only-bio{display:none;} body.is-bio .only-bio{display:inline;}
   .ph{height:16px;border-radius:6px;background:var(--leaf);}
   .ph.w40{width:40%;} .ph.w70{width:70%;} .ph.w55{width:55%;}
   .chiprow{display:flex;gap:10px;flex-wrap:wrap;}
@@ -78,7 +79,7 @@
 </style>
 </head>
 <body>
-<div class="logo">🌱 ECO-VISA</div>
+<div class="logo" id="brandlogo">🌱 ECO-VISA</div>
 <div class="count"><span id="cur">1</span> / <span id="tot">10</span></div>
 
 <div class="deck" id="deck">
@@ -86,7 +87,7 @@
   <!-- 1 HOOK -->
   <section class="slide bg-green cover-photo active" style="background:linear-gradient(rgba(28,81,50,.84),rgba(14,36,23,.94)),url('img/campagna.jpg');">
     <div class="kicker">Onboarding assistito</div>
-    <h1>Il tuo negozio bio online.<br/>Senza fatica.</h1>
+    <h1>Il tuo negozio <span class="only-bio">bio </span>online.<br/>Senza fatica.</h1>
     <p class="lead">Tu ci mandi il listino e le foto. Al resto pensiamo noi: in pochi giorni la tua azienda è online, sulla mappa del km zero, pronta a vendere.</p>
   </section>
 
@@ -169,8 +170,9 @@
         <h2>Niente foto?<br/>Nessun problema.</h2>
         <p class="lead">Dove manca un'immagine, l'IA ne sceglie una coerente e senza diritti d'autore — per esempio fiori di lavanda per l'olio di lavanda — così la tua vetrina è sempre completa e curata.</p>
       </div>
-      <div class="figure"><img src="img/lavanda.jpg" alt="Campo di lavanda" />
-        <div class="figcap" style="padding:10px 4px 0;">Esempio: "olio di lavanda" → immagine di lavanda, libera da diritti</div>
+      <div>
+        <div class="figure"><img src="img/lavanda.jpg" alt="Lavanda" /></div>
+        <div class="figcap" style="margin-top:10px;">Esempio: "olio di lavanda" → immagine di lavanda, libera da diritti</div>
       </div>
     </div>
   </section>
@@ -212,7 +214,7 @@
         <div class="promo">−10% per chi inizia entro il 31/12/2026</div>
         <p class="lead">Per te: 10 minuti per inviarci i materiali. Per noi: tutto il resto.</p>
       </div>
-      <div class="figure"><img src="img/fattoria.jpg" alt="Azienda agricola biologica" /></div>
+      <div class="figure"><img src="img/fattoria.jpg" alt="Azienda agricola" /></div>
     </div>
   </section>
 
@@ -235,6 +237,15 @@
     document.getElementById('cur').textContent=i+1;}
   function go(d){set(i+d);}
   document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')go(1);if(e.key==='ArrowLeft')go(-1);});
+  // Personalizzazione per portale: BioFido (path /biofido/ o host biofido) vs ECO-VISA
+  (function(){
+    var isBio = location.pathname.indexOf('/biofido/')>-1 || location.hostname.indexOf('biofido')>-1;
+    if(!isBio) return;
+    document.body.classList.add('is-bio');
+    var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);
+    var n; while(n=w.nextNode()){ if(n.nodeValue.indexOf('ECO-VISA')>-1) n.nodeValue=n.nodeValue.replace(/ECO-VISA/g,'BioFido'); }
+    var lg=document.getElementById('brandlogo'); if(lg) lg.textContent='🐾 BioFido';
+  })();
 </script>
 </body>
 </html>

@@ -41,7 +41,7 @@
 </style>
 </head>
 <body>
-<div class="logo">🌱 ECO-VISA</div>
+<div class="logo" id="brandlogo">🌱 ECO-VISA</div>
 <div class="count"><span id="cur">1</span> / <span id="tot">7</span></div>
 <div class="deck" id="deck">
 
@@ -136,6 +136,14 @@
   function set(n){i=(n+slides.length)%slides.length;slides.forEach((s,k)=>s.classList.toggle('active',k===i));[...dots.children].forEach((d,k)=>d.classList.toggle('on',k===i));document.getElementById('cur').textContent=i+1;}
   function go(d){set(i+d);}
   document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')go(1);if(e.key==='ArrowLeft')go(-1);});
+  (function(){
+    var isBio = location.pathname.indexOf('/biofido/')>-1 || location.hostname.indexOf('biofido')>-1;
+    if(!isBio) return;
+    document.body.classList.add('is-bio');
+    var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);
+    var n; while(n=w.nextNode()){ if(n.nodeValue.indexOf('ECO-VISA')>-1) n.nodeValue=n.nodeValue.replace(/ECO-VISA/g,'BioFido'); }
+    var lg=document.getElementById('brandlogo'); if(lg) lg.textContent='🐾 BioFido';
+  })();
 </script>
 </body>
 </html>
