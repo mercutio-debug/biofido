@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { tutteLeZoneBio } from "@/lib/zone-bio";
+import { tutteLeZoneBio, tutteLeRegioniBio } from "@/lib/zone-bio";
 
 // Sitemap statica (output: export). BioFido è servito da GitHub Pages nella
 // sottocartella /biofido: gli URL includono quel prefisso.
@@ -19,5 +19,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "weekly",
     priority: 0.8,
   }));
-  return [...statiche, ...zone];
+  const regioni: MetadataRoute.Sitemap = (await tutteLeRegioniBio()).map((r) => ({
+    url: `${BASE}/bio/regione/${r.slug}/`,
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }));
+  return [...statiche, ...zone, ...regioni];
 }

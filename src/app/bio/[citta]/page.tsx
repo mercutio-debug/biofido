@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { tutteLeZoneBio, zonaBioBySlug } from "@/lib/zone-bio";
+import { tutteLeZoneBio, zonaBioBySlug, regioneDiCitta } from "@/lib/zone-bio";
 import { CATEGORY_MAP } from "@/lib/categories";
 
 // Pagina SEO statica: "Attività bio a {Città}". Generata al build (output: export).
@@ -40,6 +40,7 @@ export default async function ZonaBioPage({
   if (!z) notFound();
 
   const altre = (await tutteLeZoneBio()).filter((x) => x.slug !== z.slug);
+  const regione = regioneDiCitta(z.citta);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -68,6 +69,17 @@ export default async function ZonaBioPage({
         <Link href="/bio" className="font-bold text-green-700 hover:text-lime-500">
           Attività bio
         </Link>{" "}
+        {regione && (
+          <>
+            /{" "}
+            <Link
+              href={`/bio/regione/${regione.slug}`}
+              className="font-bold text-green-700 hover:text-lime-500"
+            >
+              {regione.nome}
+            </Link>{" "}
+          </>
+        )}
         / <span>{z.citta}</span>
       </nav>
 

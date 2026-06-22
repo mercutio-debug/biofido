@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { tutteLeZoneBio } from "@/lib/zone-bio";
+import { tutteLeZoneBio, tutteLeRegioniBio } from "@/lib/zone-bio";
 
 export const metadata = {
   title: "Attività biologiche per città: produttori, negozi e ristoranti bio | BioFido",
@@ -9,7 +9,10 @@ export const metadata = {
 };
 
 export default async function BioIndex() {
-  const zone = await tutteLeZoneBio();
+  const [zone, regioni] = await Promise.all([
+    tutteLeZoneBio(),
+    tutteLeRegioniBio(),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
@@ -19,7 +22,26 @@ export default async function BioIndex() {
         scopri chi fa spesa a chilometro zero e filiera corta.
       </p>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {regioni.length > 0 && (
+        <section className="mt-8">
+          <h2 className="label mb-3">Sfoglia per regione</h2>
+          <div className="flex flex-wrap gap-2">
+            {regioni.map((r) => (
+              <Link
+                key={r.slug}
+                href={`/bio/regione/${r.slug}`}
+                className="rounded-full border border-[#d6e6c4] bg-leaf px-4 py-1.5 text-sm font-bold text-green-800 transition hover:border-lime-500"
+              >
+                {r.nome}{" "}
+                <span className="font-normal text-green-900/55">({r.zone.length})</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <h2 className="label mb-3 mt-10">Tutte le città</h2>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {zone.map((z) => (
           <Link
             key={z.slug}
