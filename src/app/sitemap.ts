@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const statiche: MetadataRoute.Sitemap = [
     { url: `${BASE}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${BASE}/bio/`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${BASE}/servizi-extra/`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/abbonamenti/`, changeFrequency: "monthly", priority: 0.5 },
   ];
   const zone: MetadataRoute.Sitemap = (await tutteLeZoneBio()).map((z) => ({

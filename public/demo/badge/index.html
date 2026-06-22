@@ -43,6 +43,8 @@
   .count{position:fixed;top:18px;right:24px;color:#ffffffaa;font-size:.9rem;z-index:10;}
   .logo{position:fixed;top:16px;left:24px;color:#fff;font-family:Georgia,serif;font-weight:bold;font-size:1rem;z-index:10;mix-blend-mode:difference;}
   .only-bio{display:none;} body.is-bio .only-bio{display:inline;}
+  .wave-left{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
+  .cover-txt{position:relative;z-index:1;max-width:44%;text-shadow:0 2px 12px rgba(0,0,0,.5);}
 </style>
 </head>
 <body>
@@ -51,10 +53,15 @@
 <div class="deck" id="deck">
 
   <!-- 1 -->
-  <section class="slide bg-green cover-photo active" style="background:linear-gradient(rgba(28,81,50,.82),rgba(14,36,23,.9)),url('img/vetrina.jpg');">
-    <div class="kicker">Badge fisico</div>
-    <h1>Mostra che sei verificato.<br/>Anche dal vivo.</h1>
-    <p class="lead">Il sigillo "Impronta verificata · ECO-VISA" da esporre nel tuo punto vendita: la fiducia del digitale, portata nel mondo reale.</p>
+  <section class="slide bg-green cover-photo active" style="background:linear-gradient(rgba(0,0,0,.2),rgba(0,0,0,.2)),url('img/vetrina.jpg') center/cover;">
+    <svg class="wave-left" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 0 L50 0 C47 28 53 66 45 100 L0 100 Z" fill="#1c5132"/>
+    </svg>
+    <div class="cover-txt">
+      <div class="kicker">Badge fisico</div>
+      <h1>Mostra che sei verificato.<br/>Anche dal vivo.</h1>
+      <p class="lead">Il sigillo "Impronta verificata · ECO-VISA" da esporre nel tuo punto vendita: la fiducia del digitale, portata nel mondo reale.</p>
+    </div>
   </section>
 
   <!-- 2 -->

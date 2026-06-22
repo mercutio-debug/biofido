@@ -25,17 +25,66 @@ const barlow = Barlow({
 });
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const SITE = "https://mercutio-debug.github.io/biofido";
+const TITLE = "BioFido — il segugio del biologico vicino a te";
+const DESCRIPTION =
+  "BioFido trova sulla mappa i produttori, i negozi e le attività biologiche vicino alla tua posizione, fino a 70 km (chilometro zero), e ti aiuta a raggiungerli.";
 
 export const metadata: Metadata = {
-  title: "BioFido — il segugio del biologico vicino a te",
-  description:
-    "BioFido trova sulla mappa i produttori, i negozi e le attività biologiche vicino alla tua posizione, fino a 70 km (chilometro zero), e ti aiuta a raggiungerli.",
+  metadataBase: new URL(SITE),
+  title: TITLE,
+  description: DESCRIPTION,
+  applicationName: "BioFido",
+  keywords: [
+    "biologico vicino a me",
+    "produttori bio km0",
+    "negozi bio",
+    "mercato contadino",
+    "filiera corta",
+    "prodotti biologici locali",
+  ],
   manifest: `${BASE}/manifest.webmanifest`,
   appleWebApp: { capable: true, title: "BioFido", statusBarStyle: "default" },
   icons: {
     icon: `${BASE}/brand/icon-192.png`,
     apple: `${BASE}/brand/icon-180.png`,
   },
+  openGraph: {
+    type: "website",
+    locale: "it_IT",
+    siteName: "BioFido",
+    url: SITE,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [`${SITE}/demo/onboarding/img/campagna.jpg`],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [`${SITE}/demo/onboarding/img/campagna.jpg`],
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE}/#org`,
+      name: "BioFido",
+      url: SITE,
+      description: DESCRIPTION,
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE}/#site`,
+      url: SITE,
+      name: "BioFido",
+      inLanguage: "it-IT",
+      publisher: { "@id": `${SITE}/#org` },
+    },
+  ],
 };
 
 export const viewport: Viewport = {
@@ -48,6 +97,10 @@ export default function RootLayout({
   return (
     <html lang="it" className={`${anton.variable} ${barlow.variable}`}>
       <body className="min-h-full flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

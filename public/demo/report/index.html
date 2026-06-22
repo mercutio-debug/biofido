@@ -25,6 +25,8 @@
   .figure{border-radius:18px;overflow:hidden;box-shadow:0 18px 42px rgba(0,0,0,.22);}
   .figure img{display:block;width:100%;height:60vh;object-fit:cover;}
   .figcap{font-size:.85vw;color:var(--muted);margin-top:8px;font-style:italic;}
+  .wave-left{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
+  .cover-txt{position:relative;z-index:1;max-width:44%;text-shadow:0 2px 12px rgba(0,0,0,.5);}
   .steps{display:flex;gap:20px;margin-top:28px;flex-wrap:wrap;}
   .step{flex:1;min-width:200px;background:#fff;border:1px solid var(--border);border-radius:18px;padding:22px;}
   .step h3{font-family:Georgia,serif;color:var(--green);font-size:1.4vw;margin-bottom:6px;}
@@ -46,10 +48,15 @@
 <div class="deck" id="deck">
 
   <!-- 1 -->
-  <section class="slide bg-green cover-photo active" style="background:linear-gradient(rgba(28,81,50,.82),rgba(14,36,23,.92)),url('img/natura.jpg');">
-    <div class="kicker">Report di Sostenibilità</div>
-    <h1>La tua sostenibilità,<br/>raccontata bene.</h1>
-    <p class="lead">Un documento professionale dell'impronta ecologica della tua azienda, col tuo marchio. Pronto da mostrare a clienti, partner e istituzioni.</p>
+  <section class="slide bg-green cover-photo active" style="background:linear-gradient(rgba(0,0,0,.18),rgba(0,0,0,.18)),url('img/natura.jpg') center/cover;">
+    <svg class="wave-left" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 0 L50 0 C47 28 53 66 45 100 L0 100 Z" fill="#1c5132"/>
+    </svg>
+    <div class="cover-txt">
+      <div class="kicker">Report di Sostenibilità</div>
+      <h1>La tua sostenibilità,<br/>raccontata bene.</h1>
+      <p class="lead">Un documento professionale dell'impronta ecologica della tua azienda, col tuo marchio. Pronto da mostrare a clienti, partner e istituzioni.</p>
+    </div>
   </section>
 
   <!-- 2 -->
