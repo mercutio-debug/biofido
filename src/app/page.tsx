@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MapExperience } from "@/components/MapExperience";
 import { BioFidoLogo } from "@/components/Logo";
 import { GoldPromoBanner } from "@/components/GoldPromoBanner";
+import { OnboardingPromo } from "@/components/OnboardingPromo";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -41,6 +42,9 @@ export default function Home() {
       <section id="mappa" className="mt-6 scroll-mt-20">
         <MapExperience />
       </section>
+
+      {/* Riquadro promozionale: demo onboarding incorporata, sotto la mappa */}
+      <OnboardingPromo />
 
       {/* Banner Gold: invito alle aziende (sotto la mappa) */}
       <GoldPromoBanner portale="BioFido" />

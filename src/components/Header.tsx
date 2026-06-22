@@ -5,6 +5,7 @@ import { UserMenu } from "./UserMenu";
 const nav = [
   { href: "/#mappa", label: "Mappa" },
   { href: "/#come-funziona", label: "Come funziona" },
+  { href: "/servizi-extra", label: "Servizi extra" },
   { href: "/abbonamenti", label: "Abbonamenti" },
 ];
 
