@@ -40,6 +40,25 @@
   .dots{display:flex;gap:8px;} .dot{width:9px;height:9px;border-radius:50%;background:#ffffff66;cursor:pointer;} .dot.on{background:var(--lime);}
   .count{position:fixed;top:18px;right:24px;color:#ffffffaa;font-size:.9rem;z-index:10;}
   .logo{position:fixed;top:16px;left:24px;color:#fff;font-family:Georgia,serif;font-weight:bold;font-size:1rem;z-index:10;mix-blend-mode:difference;}
+  /* ---- MOBILE: leggibilità su smartphone (i testi in vw diventano minuscoli) ---- */
+  @media (max-width:820px){
+    .slide{padding:58px 7vw 92px;justify-content:flex-start;overflow-y:auto;}
+    h1{font-size:1.85rem;}
+    h2{font-size:1.4rem;}
+    .lead{font-size:1.02rem;line-height:1.55;margin-top:14px;}
+    li{font-size:1rem;line-height:1.55;gap:10px;}
+    li::before{width:10px;height:10px;}
+    .kicker{font-size:.78rem;letter-spacing:3px;margin-bottom:12px;}
+    .cover-txt{max-width:100%;}
+    .split{grid-template-columns:1fr;gap:18px;}
+    .figure img{height:30vh;}
+    .figcap{font-size:.74rem;}
+    .steps{flex-direction:column;gap:14px;margin-top:18px;}
+    .step{min-width:0;padding:18px;}
+    .step h3{font-size:1.1rem;} .step p{font-size:.92rem;}
+    .chip{font-size:.85rem;}
+    .pricebig{font-size:2.8rem;} .priceunit{font-size:1rem;} .promo{font-size:.85rem;}
+  }
 </style>
 </head>
 <body>
@@ -92,7 +111,7 @@
       <div class="step"><h3>Impronta dei prodotti</h3><p>CO₂, semafori, confronto: dati verificabili.</p></div>
       <div class="step"><h3>Metodologia + QR</h3><p>Come si calcola e link al passaporto pubblico.</p></div>
     </div>
-    <p class="lead" style="font-size:1.3vw;margin-top:22px;">Vuoi vederlo davvero? C'è un esempio reale su dati di un'azienda nel file <em>mockup-report-sostenibilita.html</em>.</p>
+    <p class="lead" style="margin-top:22px;">Vuoi vederlo davvero? C'è un esempio reale su dati di un'azienda nel file <em>mockup-report-sostenibilita.html</em>.</p>
   </section>
 
   <!-- 5 -->
