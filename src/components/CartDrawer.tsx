@@ -147,8 +147,15 @@ export function CartDrawer({ portale }: { portale: string }) {
                             <span className="w-6 text-center text-sm font-bold text-green-800">{it.qta}</span>
                             <button
                               type="button"
-                              onClick={() => { setQty(it.prodottoId, it.qta + 1); refresh(); }}
-                              className="h-7 w-7 rounded-full border border-[#cfe0bb] text-green-800"
+                              disabled={it.giacenza != null && it.qta >= it.giacenza}
+                              onClick={() => {
+                                const max = it.giacenza ?? Infinity;
+                                if (it.qta < max) {
+                                  setQty(it.prodottoId, it.qta + 1);
+                                  refresh();
+                                }
+                              }}
+                              className="h-7 w-7 rounded-full border border-[#cfe0bb] text-green-800 disabled:opacity-40"
                               aria-label="Più"
                             >
                               +

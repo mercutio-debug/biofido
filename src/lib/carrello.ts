@@ -12,6 +12,8 @@ export type CartItem = {
   /** owner (user id) del produttore: serve per inviargli l'ordine */
   owner: string | null;
   immagine: string | null;
+  /** giacenza a magazzino (null = non gestita / illimitata) */
+  giacenza?: number | null;
   qta: number;
 };
 

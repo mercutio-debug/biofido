@@ -42,6 +42,8 @@ export type Product = {
   in_shop?: boolean;
   /** seconda foto del prodotto, es. l'etichetta (Gold) */
   foto2?: string;
+  /** giacenza a magazzino (Gold); assente = non gestita / illimitata */
+  giacenza?: number;
 };
 
 export type Business = {

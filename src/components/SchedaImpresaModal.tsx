@@ -91,6 +91,7 @@ export function SchedaImpresaModal({
       aziendaNome: b.name,
       owner: b.owner ?? null,
       immagine: p.image ?? null,
+      giacenza: p.giacenza ?? null,
     });
     setCartMsg(`“${p.name}” aggiunto al carrello`);
     setTimeout(() => setCartMsg(null), 2500);
@@ -270,15 +271,28 @@ export function SchedaImpresaModal({
                       className="h-24 w-full rounded-lg object-cover"
                     />
                   )}
-                  {b.plan === "gold" && p.in_shop && (
-                    <button
-                      type="button"
-                      onClick={() => aggiungiCarrello(p, i)}
-                      className="self-start rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
-                    >
-                      🛒 Aggiungi al carrello
-                    </button>
-                  )}
+                  {b.plan === "gold" &&
+                    p.in_shop &&
+                    (p.giacenza === 0 ? (
+                      <span className="self-start rounded-full bg-[#f3dada] px-3 py-1 text-xs font-bold text-traffic-red">
+                        Esaurito
+                      </span>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => aggiungiCarrello(p, i)}
+                          className="rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
+                        >
+                          🛒 Aggiungi al carrello
+                        </button>
+                        {typeof p.giacenza === "number" && (
+                          <span className="text-[11px] font-semibold text-green-900/55">
+                            Disponibili: {p.giacenza}
+                          </span>
+                        )}
+                      </div>
+                    ))}
                 </li>
               ))}
             </ul>

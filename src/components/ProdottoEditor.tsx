@@ -55,6 +55,9 @@ export function ProdottoEditor({
   const [image, setImage] = useState(initial?.image ?? "");
   const [foto2, setFoto2] = useState(initial?.foto2 ?? "");
   const [inShop, setInShop] = useState(initial?.in_shop ?? false);
+  const [giacenza, setGiacenza] = useState(
+    initial?.giacenza != null ? String(initial.giacenza) : "",
+  );
   const [caricando, setCaricando] = useState(false);
   const [caricando2, setCaricando2] = useState(false);
   const [ingredients, setIngredients] = useState<MateriaPrima[]>(
@@ -101,6 +104,10 @@ export function ProdottoEditor({
       mostraSemaforo,
       prenotabile: tipoVoce === "servizio" && accetta,
       in_shop: tipoVoce === "prodotto" && inShop,
+      giacenza:
+        tipoVoce === "prodotto" && inShop && giacenza.trim() !== ""
+          ? Math.max(0, Math.floor(Number(giacenza)) || 0)
+          : undefined,
     });
   }
 
@@ -240,6 +247,20 @@ export function ProdottoEditor({
               <strong>🛒 Rendi questo prodotto ordinabile dallo shop.</strong> Il cliente
               potrà aggiungerlo al carrello e inviarti l&apos;ordine (lo confermi tu).
             </span>
+          </label>
+        )}
+
+        {tipoVoce === "prodotto" && inShop && (
+          <label className="mt-2 block">
+            <span className="label">📦 Magazzino — quantità disponibile (vuoto = illimitata)</span>
+            <input
+              type="number"
+              min={0}
+              className="field mt-1 w-40"
+              value={giacenza}
+              onChange={(e) => setGiacenza(e.target.value)}
+              placeholder="es. 20"
+            />
           </label>
         )}
 
