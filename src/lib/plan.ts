@@ -22,3 +22,19 @@ export async function getMyPlan(): Promise<Plan> {
   if (!row || row.status === "canceled" || row.status === "inactive") return "free";
   return row.plan ?? "free";
 }
+
+/** Data di rinnovo/scadenza dell'abbonamento (ISO) o null se non attivo. */
+export async function getMyScadenza(): Promise<string | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from("subscriptions")
+    .select("current_period_end,status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const row = data as { current_period_end?: string; status?: string } | null;
+  if (!row || row.status === "canceled" || row.status === "inactive") return null;
+  return row.current_period_end ?? null;
+}

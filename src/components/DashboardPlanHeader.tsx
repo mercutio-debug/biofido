@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { caricaDatiBio } from "@/lib/bio";
+import { getMyScadenza } from "@/lib/plan";
 
 /**
  * Intestazione della dashboard col piano dell'azienda BEN VISIBILE (cornice oro
@@ -22,8 +23,10 @@ export function DashboardPlanHeader({
   crossSeBio?: boolean;
 }) {
   const [isBio, setIsBio] = useState(false);
+  const [scadenza, setScadenza] = useState<string | null>(null);
   useEffect(() => {
     caricaDatiBio().then((d) => setIsBio(!!d?.is_bio));
+    getMyScadenza().then(setScadenza);
   }, []);
 
   const stile =
@@ -41,12 +44,19 @@ export function DashboardPlanHeader({
     <div
       className={`mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 px-5 py-4 shadow-sm ${stile}`}
     >
-      <div className="flex items-center gap-3">
-        <span className="font-display text-2xl tracking-wide md:text-3xl">{etichetta}</span>
-        {plan !== "free" && (
-          <span className="rounded-full bg-white/40 px-3 py-0.5 text-xs font-bold">
-            abbonamento attivo
-          </span>
+      <div>
+        <div className="flex items-center gap-3">
+          <span className="font-display text-2xl tracking-wide md:text-3xl">{etichetta}</span>
+          {plan !== "free" && (
+            <span className="rounded-full bg-white/40 px-3 py-0.5 text-xs font-bold">
+              abbonamento attivo
+            </span>
+          )}
+        </div>
+        {plan !== "free" && scadenza && (
+          <div className="mt-1 text-xs font-semibold opacity-80">
+            Rinnovo / scadenza: {new Date(scadenza).toLocaleDateString("it-IT")}
+          </div>
         )}
       </div>
       {mostraCross && (
