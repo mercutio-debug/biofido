@@ -89,6 +89,7 @@ export function SchedaImpresaModal({
       prezzo: p.price ?? null,
       aziendaId: String(b.id),
       aziendaNome: b.name,
+      owner: b.owner ?? null,
       immagine: p.image ?? null,
     });
     setCartMsg(`“${p.name}” aggiunto al carrello`);
