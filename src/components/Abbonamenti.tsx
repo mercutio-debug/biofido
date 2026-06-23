@@ -9,7 +9,12 @@
  * un'unica fonte di verità. Cambi un valore lì e qui si aggiorna da solo.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  isExtraScelto,
+  toggleExtraScelto,
+  onExtraChange,
+} from "@/lib/extra-selezionati";
 import Link from "next/link";
 import { PLAN_MAP, type Plan } from "@/lib/categories";
 import { SERVIZI_EXTRA } from "@/lib/servizi-extra";
@@ -183,11 +188,10 @@ export function PianiAbbonamento({
   onSelect?: (plan: Plan, period: Period) => void;
 }) {
   const [period, setPeriod] = useState<Period>("annual");
-  const [extra, setExtra] = useState<string[]>([]);
+  const [, forceExtra] = useState(0);
+  useEffect(() => onExtraChange(() => forceExtra((n) => n + 1)), []);
   // piano di riferimento per il gating dei servizi (dashboard); null = pagina pubblica
   const pianoRif: Plan | null = selectedPlan ?? currentPlan ?? null;
-  const toggleExtra = (key: string) =>
-    setExtra((e) => (e.includes(key) ? e.filter((x) => x !== key) : [...e, key]));
 
   return (
     <div>
@@ -327,7 +331,7 @@ export function PianiAbbonamento({
         <ul className="mt-3 space-y-2">
           {SERVIZI_EXTRA.map((s) => {
             const ok = pianoRif ? SERVIZI_PER_PIANO[pianoRif].includes(s.key) : false;
-            const on = ok && extra.includes(s.key);
+            const on = ok && isExtraScelto(s.key);
             return (
               <li
                 key={s.key}
@@ -339,7 +343,7 @@ export function PianiAbbonamento({
                       type="checkbox"
                       disabled={!ok}
                       checked={on}
-                      onChange={() => ok && toggleExtra(s.key)}
+                      onChange={() => ok && toggleExtraScelto(s.key)}
                       className="h-5 w-5 accent-[var(--lime-500)]"
                     />
                     <span className="font-semibold text-green-800">

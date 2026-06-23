@@ -22,6 +22,7 @@ const FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 export async function startCheckout(
   plan: Plan,
   period: "monthly" | "annual",
+  extras: string[] = [],
 ): Promise<void> {
   const {
     data: { session },
@@ -36,7 +37,12 @@ export async function startCheckout(
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({ plan, period, returnUrl: window.location.origin }),
+    body: JSON.stringify({
+      plan,
+      period,
+      extras,
+      returnUrl: window.location.origin,
+    }),
   });
 
   if (!res.ok) {

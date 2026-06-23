@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { isExtraScelto, setExtraScelto, onExtraChange } from "@/lib/extra-selezionati";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -11,7 +12,9 @@ const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
  * all'abbonamento Gold. Gemello ECO-VISA / BioFido.
  */
 export function GoldPromoBanner({ portale = "ECO-VISA" }: { portale?: string }) {
-  const [onboarding, setOnboarding] = useState(false);
+  const [, force] = useState(0);
+  useEffect(() => onExtraChange(() => force((n) => n + 1)), []);
+  const onboarding = isExtraScelto("onboarding");
 
   const vantaggi: [string, string, string][] = [
     ["🛍️", "Vendi i tuoi prodotti", "I clienti ordinano online — ai pagamenti pensiamo noi."],
@@ -52,7 +55,7 @@ export function GoldPromoBanner({ portale = "ECO-VISA" }: { portale?: string }) 
             <input
               type="checkbox"
               checked={onboarding}
-              onChange={(e) => setOnboarding(e.target.checked)}
+              onChange={(e) => setExtraScelto("onboarding", e.target.checked)}
               className="mt-1 h-6 w-6 shrink-0 accent-[var(--lime-500)]"
             />
             <span>

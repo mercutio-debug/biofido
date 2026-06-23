@@ -29,6 +29,7 @@ import {
   type PassoKey,
 } from "@/lib/funzioni";
 import { billingEnabled, startCheckout, openCustomerPortal } from "@/lib/billing";
+import { getExtraScelti } from "@/lib/extra-selezionati";
 import { DatiFatturazioneForm, type PrefillFatturazione } from "@/components/DatiFatturazioneForm";
 import { SezioneBio } from "@/components/SezioneBio";
 import { SchedaServizi } from "@/components/SchedaServizi";
@@ -235,7 +236,7 @@ function PagamentoFinale({
     setBusy(true);
     setMsg(null);
     try {
-      await startCheckout(scelto, per);
+      await startCheckout(scelto, per, getExtraScelti());
     } catch (e) {
       setBusy(false);
       setMsg((e as Error).message);

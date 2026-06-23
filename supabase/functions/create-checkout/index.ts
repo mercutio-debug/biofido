@@ -40,6 +40,20 @@ function priceId(plan: Plan, period: Period): string | undefined {
   return Deno.env.get(key);
 }
 
+// Servizi extra acquistabili insieme all'abbonamento (prezzi ONE-TIME creati in
+// Stripe; aggiunti alla PRIMA fattura del Checkout subscription). L'onboarding è
+// solo Gold. Se un PRICE non è configurato, il servizio viene semplicemente
+// saltato (così il checkout non si rompe finché non crei quel prezzo).
+const EXTRA_PRICE: Record<string, string | undefined> = {
+  onboarding: Deno.env.get("PRICE_ONBOARDING"),
+  badge: Deno.env.get("PRICE_BADGE"),
+  report: Deno.env.get("PRICE_REPORT"),
+};
+const EXTRA_PER_PLAN: Record<Plan, string[]> = {
+  silver: ["report", "badge"],
+  gold: ["onboarding", "report", "badge"],
+};
+
 // Offerta "Fondatori": chi si abbona al Gold entro la scadenza blocca lo sconto
 // a vita (il coupon Stripe deve avere durata "forever"). Restituisce l'id del
 // coupon da applicare, oppure undefined se l'offerta è spenta o scaduta.
@@ -75,13 +89,26 @@ Deno.serve(async (req) => {
     }
 
     // 2) valida l'input
-    const { plan, period, returnUrl } = await req.json();
+    const { plan, period, returnUrl, extras } = await req.json();
     if (plan !== "silver" && plan !== "gold") {
       return json({ error: "Piano non valido" }, 400);
     }
     const price = priceId(plan, period === "annual" ? "annual" : "monthly");
     if (!price) {
       return json({ error: "Prezzo non configurato per questo piano" }, 500);
+    }
+
+    // Servizi extra scelti: ammessi per il piano + con un PRICE configurato.
+    const ammessi = EXTRA_PER_PLAN[plan as Plan] ?? [];
+    const extraKeys: string[] = Array.isArray(extras) ? extras : [];
+    const extraItems: { price: string; quantity: number }[] = [];
+    const extraApplicati: string[] = [];
+    for (const k of extraKeys) {
+      if (!ammessi.includes(k)) continue;
+      const pid = EXTRA_PRICE[k];
+      if (!pid) continue; // prezzo non ancora creato in Stripe → salta
+      extraItems.push({ price: pid, quantity: 1 });
+      extraApplicati.push(k);
     }
 
     // 3) trova o crea il cliente Stripe, ricordandolo su subscriptions
@@ -109,11 +136,14 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
-      line_items: [{ price, quantity: 1 }],
+      // piano (ricorrente) + eventuali servizi extra (one-time, sulla 1ª fattura)
+      line_items: [{ price, quantity: 1 }, ...extraItems],
       client_reference_id: user.id,
-      metadata: { user_id: user.id, plan },
+      metadata: { user_id: user.id, plan, extras: extraApplicati.join(",") },
       // il piano vero viene impostato dal webhook su evento confermato
-      subscription_data: { metadata: { user_id: user.id, plan } },
+      subscription_data: {
+        metadata: { user_id: user.id, plan, extras: extraApplicati.join(",") },
+      },
       success_url: `${base}/dashboard/?abbonamento=ok`,
       cancel_url: `${base}/abbonamenti/?abbonamento=annullato`,
       // Fondatori attivo → applica il coupon a vita; altrimenti consenti i codici
