@@ -2,9 +2,11 @@ import Link from "next/link";
 import { BioFidoLogo } from "./Logo";
 import { InstallApp } from "./InstallApp";
 import { LEGALE } from "@/lib/legale";
+import { URL_ECOVISA } from "@/lib/portale";
 
-// ECO-VISA è il portale "madre" di BioFido: le legende rimandano alle sue pagine.
-const ECOVISA = "https://mercutio-debug.github.io/eco-visa";
+// ECO-VISA è il portale "madre" di BioFido: le legende rimandano alle sue pagine
+// sul dominio ufficiale ecovisa.it (NON al mirror github).
+const ECOVISA = URL_ECOVISA;
 
 export function Footer() {
   return (
