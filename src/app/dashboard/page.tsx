@@ -157,7 +157,7 @@ export default function DashboardPage() {
         />
       )}
 
-      <GoldPromoBanner portale="BioFido" />
+      <GoldPromoBanner portale="BioFido" plan={pianoScelto} />
 
       <SchedaServizi piano={pianoScelto} attivo={activePlan} />
 

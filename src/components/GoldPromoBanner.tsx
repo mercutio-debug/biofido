@@ -11,10 +11,22 @@ const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
  * l'onboarding ("Il tuo negozio chiavi in mano"): chi la spunta lo paga insieme
  * all'abbonamento Gold. Gemello ECO-VISA / BioFido.
  */
-export function GoldPromoBanner({ portale = "ECO-VISA" }: { portale?: string }) {
+export function GoldPromoBanner({
+  portale = "ECO-VISA",
+  plan,
+}: {
+  portale?: string;
+  plan?: "free" | "silver" | "gold";
+}) {
   const [, force] = useState(0);
   useEffect(() => onExtraChange(() => force((n) => n + 1)), []);
-  const onboarding = isExtraScelto("onboarding");
+  // l'onboarding è un servizio GOLD: spuntabile solo col piano Gold
+  const canOnboarding = plan === "gold";
+  const onboarding = canOnboarding && isExtraScelto("onboarding");
+  // se non è Gold, non deve restare selezionato (es. dopo un cambio piano)
+  useEffect(() => {
+    if (!canOnboarding && isExtraScelto("onboarding")) setExtraScelto("onboarding", false);
+  }, [canOnboarding]);
 
   const vantaggi: [string, string, string][] = [
     ["🛍️", "Vendi i tuoi prodotti", "I clienti ordinano online — ai pagamenti pensiamo noi."],
@@ -50,13 +62,22 @@ export function GoldPromoBanner({ portale = "ECO-VISA" }: { portale?: string }) 
         </p>
 
         {/* SPUNTA onboarding: il servizio premium, incluso nel pagamento del Gold */}
-        <div className="mt-5 rounded-2xl border-2 border-green-700 bg-white p-4">
-          <label className="flex cursor-pointer items-start gap-3">
+        <div
+          className={`mt-5 rounded-2xl border-2 border-green-700 bg-white p-4 ${
+            canOnboarding ? "" : "opacity-70"
+          }`}
+        >
+          <label
+            className={`flex items-start gap-3 ${
+              canOnboarding ? "cursor-pointer" : "cursor-not-allowed"
+            }`}
+          >
             <input
               type="checkbox"
+              disabled={!canOnboarding}
               checked={onboarding}
-              onChange={(e) => setExtraScelto("onboarding", e.target.checked)}
-              className="mt-1 h-6 w-6 shrink-0 accent-[var(--lime-500)]"
+              onChange={(e) => canOnboarding && setExtraScelto("onboarding", e.target.checked)}
+              className="mt-1 h-6 w-6 shrink-0 accent-[var(--lime-500)] disabled:opacity-40"
             />
             <span>
               <span className="font-display text-xl text-green-800">
@@ -65,7 +86,9 @@ export function GoldPromoBanner({ portale = "ECO-VISA" }: { portale?: string }) 
               <span className="mt-1 block text-sm text-green-900/75">
                 Tu ci mandi listino e foto, noi creiamo il tuo negozio online completo
                 (il servizio «Ci pensiamo noi»).{" "}
-                {onboarding ? (
+                {!canOnboarding ? (
+                  <strong className="text-[#7a5a00]">🔒 Disponibile con il piano Gold.</strong>
+                ) : onboarding ? (
                   <strong className="text-green-700">Aggiunto: lo paghi col tuo Gold ✓</strong>
                 ) : (
                   <>Spuntalo per aggiungerlo: lo paghi insieme all&apos;abbonamento Gold.</>
