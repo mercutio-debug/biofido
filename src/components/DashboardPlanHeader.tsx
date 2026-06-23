@@ -24,6 +24,7 @@ export function DashboardPlanHeader({
 }) {
   const [isBio, setIsBio] = useState(false);
   const [scadenza, setScadenza] = useState<string | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
   useEffect(() => {
     caricaDatiBio().then((d) => setIsBio(!!d?.is_bio));
     getMyScadenza().then(setScadenza);
@@ -41,6 +42,7 @@ export function DashboardPlanHeader({
   const mostraCross = crossUrl && (crossSeBio ? isBio : true);
 
   return (
+    <>
     <div
       className={`mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 px-5 py-4 shadow-sm ${stile}`}
     >
@@ -60,15 +62,55 @@ export function DashboardPlanHeader({
         )}
       </div>
       {mostraCross && (
-        <a
-          href={crossUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={() => setShowInfo(true)}
           className="rounded-full bg-white/70 px-4 py-2 text-sm font-bold text-green-800 hover:bg-white"
         >
           {crossLabel ?? "Vai →"}
-        </a>
+        </button>
       )}
     </div>
+
+    {showInfo && crossUrl && (
+      <div
+        className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/45 p-4"
+        onClick={() => setShowInfo(false)}
+      >
+        <div className="card max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+          <h3 className="font-display text-2xl text-green-800">Portale gemello 🐾🌐</h3>
+          <p className="mt-3 text-sm text-green-900/85">
+            <strong>BioFido</strong> è il sito <strong>gemello</strong> di questo portale.
+            Per entrare nella tua dashboard ti basta accedere con le{" "}
+            <strong>stesse credenziali</strong> (stessa email e password di questo account):
+            non serve registrarsi di nuovo.
+          </p>
+          <p className="mt-2 text-sm text-green-900/85">
+            E quando aggiorni la tua scheda — non importa su quale dei due portali — i dati
+            si aggiornano <strong>su entrambi</strong> automaticamente: account e scheda
+            azienda sono condivisi.
+          </p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+            <a
+              href={crossUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setShowInfo(false)}
+              className="btn-lime flex-1 justify-center"
+            >
+              {crossLabel ?? "Continua →"}
+            </a>
+            <button
+              type="button"
+              onClick={() => setShowInfo(false)}
+              className="btn-ghost flex-1 justify-center"
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
