@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { loadMieiOrdini, type Ordine } from "@/lib/ordini";
+import { MieiOrdiniShop } from "@/components/MieiOrdiniShop";
 
 const euro = (c: number) =>
   (c / 100).toLocaleString("it-IT", { style: "currency", currency: "EUR" });
@@ -68,6 +69,8 @@ export default function MieiOrdiniPage() {
           })}
         </div>
       )}
+
+      <MieiOrdiniShop />
     </div>
   );
 }

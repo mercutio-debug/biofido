@@ -55,6 +55,7 @@ import { NotificheToggle } from "@/components/NotificheToggle";
 import { SmsNotificheToggle } from "@/components/SmsNotificheToggle";
 import { StatisticheCard } from "@/components/StatisticheCard";
 import { AnteprimaScheda } from "@/components/AnteprimaScheda";
+import { OrdiniShopRicevuti } from "@/components/OrdiniShopRicevuti";
 import { ImportoInput } from "@/components/ImportoInput";
 import { euroToCents } from "@/lib/prezzo";
 import { pushConfigured } from "@/lib/push";
@@ -161,7 +162,9 @@ export default function DashboardPage() {
             </div>
           </section>
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
+          <OrdiniShopRicevuti />
           <MessaggiCard ownerId={user.id} />
+
           <PrenotazioniCard ownerId={user.id} />
           <StatisticheCard ownerId={user.id} plan={pianoScelto} />
           <PagamentoFinale ownerId={user.id} scelto={pianoScelto} attivo={activePlan} bioOk={bioOk} />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { createContatto } from "@/lib/contatti";
+import { createOrdineShop } from "@/lib/ordini-shop";
 import {
   getCart,
   setQty,
@@ -57,20 +57,17 @@ export function CartDrawer({ portale }: { portale: string }) {
       window.location.href = "/accedi";
       return;
     }
-    const email = user.email ?? "";
-    const nome = (user.user_metadata?.nome as string) || email || "Cliente";
-    const lines = gruppo
-      .map((it) => `• ${it.qta}× ${it.nome}${it.prezzo ? ` (${it.prezzo})` : ""}`)
-      .join("\n");
-    const messaggio =
-      `🛒 Nuovo ordine dal carrello (${portale}):\n${lines}\n\n` +
-      `Cliente: ${email}\nConfermami disponibilità, spedizione e pagamento. Grazie!`;
-    const { error } = await createContatto({
-      azienda: owner,
-      nomeCliente: nome,
-      emailCliente: email,
-      messaggio,
+    const articoli = gruppo.map((it) => ({
+      prodottoId: it.prodottoId,
+      nome: it.nome,
+      prezzo: it.prezzo,
+      qta: it.qta,
+    }));
+    const { error } = await createOrdineShop({
+      owner,
+      aziendaNome: gruppo[0].aziendaNome,
       portale,
+      articoli,
     });
     setSending(null);
     if (error) {
