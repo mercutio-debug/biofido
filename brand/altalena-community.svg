@@ -1,0 +1,44 @@
+<svg width="680" height="380" viewBox="0 0 680 380" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Altalena in equilibrio con la corda della community</title>
+<desc>Un'altalena orizzontale in equilibrio: a sinistra i grandi portali e-commerce, a destra la community che si arrampica su una corda fino all'altalena. Motto: insieme vinciamo noi.</desc>
+<rect x="250" y="326" width="395" height="6" rx="3" fill="#cdd9c2"/>
+<polygon points="340,228 314,326 366,326" fill="#2f7d3a"/>
+<rect x="90" y="228" width="500" height="16" rx="6" fill="#c08a4a" stroke="#9a6c34" stroke-width="1"/>
+<text x="180" y="100" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#7a8590">i grandi portali e-commerce</text>
+<g font-family="system-ui, sans-serif" font-size="13" font-weight="500" fill="#ffffff" text-anchor="middle">
+  <rect x="110" y="110" width="140" height="22" rx="4" fill="#5b636b"/><text x="180" y="125">Amazon</text>
+  <rect x="110" y="134" width="140" height="22" rx="4" fill="#6c757d"/><text x="180" y="149">eBay</text>
+  <rect x="110" y="158" width="140" height="22" rx="4" fill="#5b636b"/><text x="180" y="173">Shopify</text>
+  <rect x="110" y="182" width="140" height="22" rx="4" fill="#6c757d"/><text x="180" y="197">Etsy</text>
+  <rect x="110" y="206" width="140" height="22" rx="4" fill="#5b636b"/><text x="180" y="221">Alibaba</text>
+</g>
+<text x="500" y="138" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#2f7d3a">la nostra community</text>
+<path d="M512 152 C 590 196, 640 268, 630 326" stroke="#8a5a2c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<g stroke-linecap="round">
+  <circle cx="440" cy="206" r="5" fill="#f3cda1"/><rect x="434" y="211" width="12" height="17" rx="5" fill="#2f7d3a"/>
+  <circle cx="470" cy="206" r="5" fill="#f3cda1"/><rect x="464" y="211" width="12" height="17" rx="5" fill="#3a9d4a"/>
+  <circle cx="500" cy="206" r="5" fill="#f3cda1"/><rect x="494" y="211" width="12" height="17" rx="5" fill="#5bb85b"/>
+  <circle cx="530" cy="206" r="5" fill="#f3cda1"/><rect x="524" y="211" width="12" height="17" rx="5" fill="#3a9d4a"/>
+  <circle cx="560" cy="206" r="5" fill="#f3cda1"/><rect x="554" y="211" width="12" height="17" rx="5" fill="#2f7d3a"/>
+  <circle cx="455" cy="189" r="5" fill="#f3cda1"/><rect x="449" y="194" width="12" height="17" rx="5" fill="#5bb85b"/>
+  <circle cx="485" cy="189" r="5" fill="#f3cda1"/><rect x="479" y="194" width="12" height="17" rx="5" fill="#7cc24f"/>
+  <circle cx="515" cy="189" r="5" fill="#f3cda1"/><rect x="509" y="194" width="12" height="17" rx="5" fill="#3a9d4a"/>
+  <circle cx="545" cy="189" r="5" fill="#f3cda1"/><rect x="539" y="194" width="12" height="17" rx="5" fill="#5bb85b"/>
+  <circle cx="470" cy="172" r="5" fill="#f3cda1"/><rect x="464" y="177" width="12" height="17" rx="5" fill="#7cc24f"/>
+  <circle cx="500" cy="172" r="5" fill="#f3cda1"/><rect x="494" y="177" width="12" height="17" rx="5" fill="#2f7d3a"/>
+  <circle cx="530" cy="172" r="5" fill="#f3cda1"/><rect x="524" y="177" width="12" height="17" rx="5" fill="#5bb85b"/>
+  <circle cx="500" cy="155" r="5" fill="#f3cda1"/><rect x="494" y="160" width="12" height="17" rx="5" fill="#3a9d4a"/>
+  <path d="M495 162 L487 150" stroke="#3a9d4a" stroke-width="2" fill="none"/>
+  <path d="M505 162 L513 150" stroke="#3a9d4a" stroke-width="2" fill="none"/>
+  <circle cx="566" cy="214" r="4" fill="#f3cda1"/><rect x="561" y="218" width="9" height="11" rx="4" fill="#5bb85b"/>
+  <path d="M569 220 L577 212" stroke="#5bb85b" stroke-width="2" fill="none"/>
+  <path d="M564 221 L558 229" stroke="#5bb85b" stroke-width="2" fill="none"/>
+  <circle cx="604" cy="262" r="4" fill="#f3cda1"/><rect x="599" y="266" width="9" height="11" rx="4" fill="#3a9d4a"/>
+  <path d="M607 268 L616 261" stroke="#3a9d4a" stroke-width="2" fill="none"/>
+  <path d="M602 269 L596 277" stroke="#3a9d4a" stroke-width="2" fill="none"/>
+  <circle cx="622" cy="305" r="4" fill="#f3cda1"/><rect x="617" y="309" width="9" height="11" rx="4" fill="#2f7d3a"/>
+  <path d="M625 311 L632 304" stroke="#2f7d3a" stroke-width="2" fill="none"/>
+  <path d="M619 312 L613 319" stroke="#2f7d3a" stroke-width="2" fill="none"/>
+</g>
+<text x="340" y="360" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="500" fill="#2f7d3a">insieme vinciamo noi!</text>
+</svg>
