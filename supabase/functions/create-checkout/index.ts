@@ -105,7 +105,14 @@ Deno.serve(async (req) => {
     const extraApplicati: string[] = [];
     for (const k of extraKeys) {
       if (!ammessi.includes(k)) continue;
-      const pid = EXTRA_PRICE[k];
+      let pid = EXTRA_PRICE[k];
+      // Onboarding: sconto -10% di lancio → usa il prezzo PROMO entro la scadenza.
+      if (k === "onboarding") {
+        const promo = Deno.env.get("PRICE_ONBOARDING_PROMO");
+        const deadline = Deno.env.get("ONBOARDING_PROMO_DEADLINE") ?? "2026-12-31";
+        const end = Date.parse(`${deadline}T23:59:59`);
+        if (promo && !Number.isNaN(end) && Date.now() <= end) pid = promo;
+      }
       if (!pid) continue; // prezzo non ancora creato in Stripe → salta
       extraItems.push({ price: pid, quantity: 1 });
       extraApplicati.push(k);
