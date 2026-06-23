@@ -38,6 +38,10 @@ export type Product = {
   /** "servizio extra" prenotabile dal cliente nel widget (visite, laboratori,
    *  esperienze). Se true l'azienda ha accettato di renderlo prenotabile. */
   prenotabile?: boolean;
+  /** ordinabile dai clienti nello shop (Gold) — Fase A e-commerce */
+  in_shop?: boolean;
+  /** seconda foto del prodotto, es. l'etichetta (Gold) */
+  foto2?: string;
 };
 
 export type Business = {

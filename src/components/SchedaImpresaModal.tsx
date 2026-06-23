@@ -9,6 +9,8 @@ import { registraEvento } from "@/lib/statistiche";
 import type { Business, Product } from "@/lib/biofido-data";
 import { OrdineProdottoModal } from "@/components/OrdineProdottoModal";
 import { SegnalaModal } from "@/components/SegnalaModal";
+import { supabase } from "@/lib/supabase";
+import { addToCart } from "@/lib/carrello";
 
 /** prezzo numerico → "€ 9,50" (it-IT). */
 const euro = (n: number | null) =>
@@ -59,6 +61,39 @@ export function SchedaImpresaModal({
   const serviziCat = catalogoVisibile.filter((v) => v.tipo !== "prodotto");
   const [ordina, setOrdina] = useState<VoceCatalogo | null>(null);
   const [segnala, setSegnala] = useState<VoceCatalogo | null>(null);
+  const [cartMsg, setCartMsg] = useState<string | null>(null);
+
+  // 🛒 Aggiungi al carrello (Fase A): ospite → login; loggato → nel carrello.
+  const aggiungiCarrello = async (p: Product, i: number) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(
+            "postLoginRedirect",
+            window.location.pathname + window.location.search,
+          );
+        } catch {
+          /* ignore */
+        }
+        alert("Per ordinare questo prodotto devi registrarti o accedere.");
+        window.location.href = "/accedi";
+      }
+      return;
+    }
+    addToCart({
+      prodottoId: p.id ?? `${b.id}-${i}`,
+      nome: p.name,
+      prezzo: p.price ?? null,
+      aziendaId: String(b.id),
+      aziendaNome: b.name,
+      immagine: p.image ?? null,
+    });
+    setCartMsg(`“${p.name}” aggiunto al carrello`);
+    setTimeout(() => setCartMsg(null), 2500);
+  };
 
   return (
     <div
@@ -224,6 +259,23 @@ export function SchedaImpresaModal({
                       className="self-start rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
                     >
                       ✨ Prenota / richiedi
+                    </button>
+                  )}
+                  {b.plan === "gold" && p.foto2 && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.foto2}
+                      alt={`${p.name} — etichetta`}
+                      className="h-24 w-full rounded-lg object-cover"
+                    />
+                  )}
+                  {b.plan === "gold" && p.in_shop && (
+                    <button
+                      type="button"
+                      onClick={() => aggiungiCarrello(p, i)}
+                      className="self-start rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
+                    >
+                      🛒 Aggiungi al carrello
                     </button>
                   )}
                 </li>
@@ -394,6 +446,12 @@ export function SchedaImpresaModal({
             portale="BioFido"
             onClose={() => setSegnala(null)}
           />
+        )}
+
+        {cartMsg && (
+          <div className="fixed bottom-5 left-1/2 z-[1100] -translate-x-1/2 rounded-full bg-green-800 px-5 py-2 text-sm font-bold text-white shadow-lg">
+            🛒 {cartMsg}
+          </div>
         )}
       </div>
     </div>
