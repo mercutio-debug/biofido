@@ -31,6 +31,7 @@ import {
 import { billingEnabled, startCheckout, openCustomerPortal } from "@/lib/billing";
 import { getExtraScelti } from "@/lib/extra-selezionati";
 import { PurchasePopup } from "@/components/PurchasePopup";
+import { DashboardPlanHeader } from "@/components/DashboardPlanHeader";
 import { DatiFatturazioneForm, type PrefillFatturazione } from "@/components/DatiFatturazioneForm";
 import { SezioneBio } from "@/components/SezioneBio";
 import { SchedaServizi } from "@/components/SchedaServizi";
@@ -140,6 +141,8 @@ export default function DashboardPage() {
           Esci
         </button>
       </div>
+
+      <DashboardPlanHeader plan={activePlan} />
 
       <PianoSelector scelto={pianoScelto} attivo={activePlan} onScegli={scegliPiano} />
 
