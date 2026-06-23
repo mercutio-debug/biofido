@@ -1,33 +1,43 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 /**
- * Banner pubblicitario del piano GOLD: invita le aziende a entrare nella
- * community, spiega i vantaggi e li confronta con un e-commerce tradizionale.
- * Gemello ECO-VISA / BioFido: il nome del portale è un parametro.
+ * Cornice "community", presentata come ESTENSIONE del piano Gold (un ponte
+ * visivo che la collega alla colonna Gold). Dentro c'è la spunta per aggiungere
+ * l'onboarding ("Il tuo negozio chiavi in mano"): chi la spunta lo paga insieme
+ * all'abbonamento Gold. Gemello ECO-VISA / BioFido.
  */
-export function GoldPromoBanner({ portale = "BioFido" }: { portale?: string }) {
+export function GoldPromoBanner({ portale = "ECO-VISA" }: { portale?: string }) {
+  const [onboarding, setOnboarding] = useState(false);
+
   const vantaggi: [string, string, string][] = [
     ["🛍️", "Vendi i tuoi prodotti", "I clienti ordinano online — ai pagamenti pensiamo noi."],
     ["✨", "Servizi extra prenotabili", "Visite guidate, laboratori didattici, esperienze."],
     ["🏷️", "La tua azienda raccontata", "Descrizione, foto e contatti: una scheda completa."],
-    ["📍", "Ti trovano nella community", "Visibilità tra chi cerca prodotti locali e bio."],
+    ["📍", "Ti trovano nella community", "Visibilità tra chi cerca prodotti locali e sostenibili."],
   ];
 
   return (
     <section className="mx-auto my-10 max-w-5xl px-4">
-      <div className="overflow-hidden rounded-3xl border-2 border-badge-yellow bg-gradient-to-br from-[#fffbe9] to-leaf p-6 md:p-8">
+      {/* ponte visivo verso la colonna Gold */}
+      <div className="flex justify-center">
+        <div className="h-6 w-0.5 bg-badge-yellow" />
+      </div>
+      <div className="mx-auto -mb-3 w-fit rounded-full bg-badge-yellow px-4 py-1 text-xs font-bold text-[#7a1f00]">
+        ▲ Estensione del piano GOLD
+      </div>
+
+      <div className="overflow-hidden rounded-3xl border-2 border-badge-yellow bg-gradient-to-br from-[#fffbe9] to-leaf p-6 pt-7 md:p-8 md:pt-9">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={`${BASE}/brand/altalena-community.svg`}
           alt="Insieme vinciamo noi: la community bilancia i grandi portali"
           className="mx-auto mb-5 block w-full max-w-xl"
         />
-        <span className="inline-block rounded-full bg-badge-yellow px-3 py-1 text-xs font-bold text-[#7a1f00]">
-          ★ AZIENDA GOLD
-        </span>
-        <h2 className="title-pangea mt-3 text-3xl text-green-700 md:text-4xl">
+        <h2 className="title-pangea text-3xl text-green-700 md:text-4xl">
           Entra nella community di {portale}
         </h2>
         <p className="mt-2 max-w-2xl text-green-900/85">
@@ -35,6 +45,40 @@ export function GoldPromoBanner({ portale = "BioFido" }: { portale?: string }) {
           l&apos;abbonamento <strong>Gold</strong> ci pensiamo noi: tu pensi alla tua azienda,
           noi a farti trovare e a gestire ordini e pagamenti.
         </p>
+
+        {/* SPUNTA onboarding: il servizio premium, incluso nel pagamento del Gold */}
+        <div className="mt-5 rounded-2xl border-2 border-green-700 bg-white p-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={onboarding}
+              onChange={(e) => setOnboarding(e.target.checked)}
+              className="mt-1 h-6 w-6 shrink-0 accent-[var(--lime-500)]"
+            />
+            <span>
+              <span className="font-display text-xl text-green-800">
+                🚀 Il tuo negozio chiavi in mano: pensiamo noi a tutto!
+              </span>
+              <span className="mt-1 block text-sm text-green-900/75">
+                Tu ci mandi listino e foto, noi creiamo il tuo negozio online completo
+                (il servizio «Ci pensiamo noi»).{" "}
+                {onboarding ? (
+                  <strong className="text-green-700">Aggiunto: lo paghi col tuo Gold ✓</strong>
+                ) : (
+                  <>Spuntalo per aggiungerlo: lo paghi insieme all&apos;abbonamento Gold.</>
+                )}
+              </span>
+              <a
+                href={`${BASE}/demo/onboarding/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-block text-sm font-bold text-green-700 hover:text-lime-500"
+              >
+                Per saperne di più →
+              </a>
+            </span>
+          </label>
+        </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {vantaggi.map(([e, t, d]) => (
@@ -80,18 +124,6 @@ export function GoldPromoBanner({ portale = "BioFido" }: { portale?: string }) {
           Ti restituiamo la cosa più preziosa: il tuo <strong>tempo libero</strong> — lontano
           da uno schermo.
         </p>
-
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Link href="/abbonamenti" className="btn-lime">
-            Scopri il piano Gold
-          </Link>
-          <Link
-            href="/registrati"
-            className="rounded-full border border-green-700 px-5 py-2.5 text-sm font-bold text-green-700 hover:bg-leaf"
-          >
-            Iscrivi la tua azienda
-          </Link>
-        </div>
       </div>
     </section>
   );

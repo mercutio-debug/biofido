@@ -12,8 +12,23 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PLAN_MAP, type Plan } from "@/lib/categories";
+import { SERVIZI_EXTRA } from "@/lib/servizi-extra";
+
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const ORDER: Plan[] = ["free", "silver", "gold"];
+
+/** Quali servizi extra sono attivabili per ciascun piano (Gold: tutti; Silver: no onboarding). */
+const SERVIZI_PER_PIANO: Record<Plan, string[]> = {
+  free: [],
+  silver: ["report", "badge"],
+  gold: ["onboarding", "report", "badge"],
+};
+const REQ_SERVIZIO: Record<string, string> = {
+  onboarding: "Gold",
+  report: "Silver o Gold",
+  badge: "Silver o Gold",
+};
 
 const euro = (n: number) =>
   n === 0
@@ -168,6 +183,11 @@ export function PianiAbbonamento({
   onSelect?: (plan: Plan, period: Period) => void;
 }) {
   const [period, setPeriod] = useState<Period>("annual");
+  const [extra, setExtra] = useState<string[]>([]);
+  // piano di riferimento per il gating dei servizi (dashboard); null = pagina pubblica
+  const pianoRif: Plan | null = selectedPlan ?? currentPlan ?? null;
+  const toggleExtra = (key: string) =>
+    setExtra((e) => (e.includes(key) ? e.filter((x) => x !== key) : [...e, key]));
 
   return (
     <div>
@@ -294,6 +314,61 @@ export function PianiAbbonamento({
             </div>
           );
         })}
+      </div>
+
+      {/* SERVIZI EXTRA selezionabili in fondo ai piani */}
+      <div className="mt-8 rounded-2xl border border-[#e3eed7] bg-leaf/40 p-5">
+        <h3 className="font-display text-xl text-green-800">Aggiungi i servizi extra</h3>
+        <p className="mt-1 text-sm text-green-900/75">
+          {pianoRif
+            ? "Spunta i servizi che vuoi: li paghi insieme all'abbonamento."
+            : "Disponibili con i piani Silver e Gold (l'onboarding solo Gold). Scopri ciascun servizio:"}
+        </p>
+        <ul className="mt-3 space-y-2">
+          {SERVIZI_EXTRA.map((s) => {
+            const ok = pianoRif ? SERVIZI_PER_PIANO[pianoRif].includes(s.key) : false;
+            const on = ok && extra.includes(s.key);
+            return (
+              <li
+                key={s.key}
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-white p-3"
+              >
+                {pianoRif ? (
+                  <label className={`flex items-center gap-2 ${ok ? "" : "opacity-50"}`}>
+                    <input
+                      type="checkbox"
+                      disabled={!ok}
+                      checked={on}
+                      onChange={() => ok && toggleExtra(s.key)}
+                      className="h-5 w-5 accent-[var(--lime-500)]"
+                    />
+                    <span className="font-semibold text-green-800">
+                      {s.emoji} {s.nome}
+                    </span>
+                  </label>
+                ) : (
+                  <span className="font-semibold text-green-800">
+                    {s.emoji} {s.nome}
+                  </span>
+                )}
+                <span className="text-sm text-green-900/70">{s.prezzo}</span>
+                {!ok && (
+                  <span className="rounded-full bg-[#fff3d4] px-2 py-0.5 text-[11px] font-bold text-[#7a5a00]">
+                    richiede {REQ_SERVIZIO[s.key]}
+                  </span>
+                )}
+                <a
+                  href={`${BASE}/demo/${s.key}/`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-auto text-sm font-bold text-green-700 hover:text-lime-500"
+                >
+                  Per saperne di più →
+                </a>
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
       <p className="mt-4 text-center text-xs text-green-900/55">

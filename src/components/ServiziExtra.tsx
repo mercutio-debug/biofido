@@ -6,6 +6,13 @@ import { SERVIZI_EXTRA } from "@/lib/servizi-extra";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
+/** Con quale abbonamento si sblocca ciascun servizio. */
+const REQ: Record<string, string> = {
+  onboarding: "Servizio extra acquistabile solo con l'abbonamento Gold",
+  report: "Servizio acquistabile con l'abbonamento Silver",
+  badge: "Servizio acquistabile con l'abbonamento Silver",
+};
+
 /**
  * Vetrina dei "servizi extra" (onboarding, report, badge). Ogni card ha un tasto
  * "Guarda la demo" che apre la presentazione (statica in /demo/<key>/) in un
@@ -44,10 +51,13 @@ export function ServiziExtra({ showPrices = false }: { showPrices?: boolean }) {
             {showPrices && (
               <div className="mt-3 font-semibold text-green-800">{s.prezzo}</div>
             )}
+            <div className="mt-3 rounded-lg bg-leaf/60 px-3 py-1.5 text-center text-xs font-bold text-green-800">
+              {REQ[s.key] ?? "Servizio extra"}
+            </div>
             <button
               type="button"
               onClick={() => setDemo({ key: s.key, nome: s.nome })}
-              className="btn-ghost mt-4 justify-center text-sm"
+              className="btn-ghost mt-3 justify-center text-sm"
             >
               ▶ Guarda la demo
             </button>
