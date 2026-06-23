@@ -58,6 +58,11 @@ export function ProdottoEditor({
   const [giacenza, setGiacenza] = useState(
     initial?.giacenza != null ? String(initial.giacenza) : "",
   );
+  const [confezione, setConfezione] = useState(initial?.confezione ?? "");
+  const [contenuto, setContenuto] = useState(
+    initial?.contenuto != null ? String(initial.contenuto) : "",
+  );
+  const [unitaCont, setUnitaCont] = useState(initial?.unita ?? "");
   const [caricando, setCaricando] = useState(false);
   const [caricando2, setCaricando2] = useState(false);
   const [ingredients, setIngredients] = useState<MateriaPrima[]>(
@@ -108,6 +113,9 @@ export function ProdottoEditor({
         tipoVoce === "prodotto" && inShop && giacenza.trim() !== ""
           ? Math.max(0, Math.floor(Number(giacenza)) || 0)
           : undefined,
+      confezione: confezione.trim() || undefined,
+      contenuto: contenuto.trim() === "" ? undefined : Number(contenuto),
+      unita: unitaCont.trim() || undefined,
     });
   }
 
@@ -268,6 +276,40 @@ export function ProdottoEditor({
           <span className="label">Descrizione</span>
           <textarea className="field mt-1" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Racconta il prodotto: cos'è, come nasce, stagionalità…" />
         </label>
+
+        {/* confezione + contenuto: es. olio essenziale · flacone · 10 ml */}
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <label className="block">
+            <span className="label">Confezione</span>
+            <select className="field mt-1" value={confezione} onChange={(e) => setConfezione(e.target.value)}>
+              <option value="">—</option>
+              {["flacone", "barattolo", "sacchetto", "scatola", "bottiglia", "vasetto", "confezione"].map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="label">Contenuto</span>
+            <input
+              type="number"
+              min={0}
+              step="any"
+              className="field mt-1"
+              value={contenuto}
+              onChange={(e) => setContenuto(e.target.value)}
+              placeholder="es. 10"
+            />
+          </label>
+          <label className="block">
+            <span className="label">Unità</span>
+            <select className="field mt-1" value={unitaCont} onChange={(e) => setUnitaCont(e.target.value)}>
+              <option value="">—</option>
+              {["gr", "kg", "l", "dl", "ml", "cl", "pz"].map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         <div className="mt-3">
           <span className="label">2ª foto (es. l&apos;etichetta) — opzionale</span>

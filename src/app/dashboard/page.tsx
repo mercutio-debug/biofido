@@ -30,6 +30,7 @@ import {
 } from "@/lib/funzioni";
 import { billingEnabled, startCheckout, openCustomerPortal } from "@/lib/billing";
 import { getExtraScelti } from "@/lib/extra-selezionati";
+import { PurchasePopup } from "@/components/PurchasePopup";
 import { DatiFatturazioneForm, type PrefillFatturazione } from "@/components/DatiFatturazioneForm";
 import { SezioneBio } from "@/components/SezioneBio";
 import { SchedaServizi } from "@/components/SchedaServizi";
@@ -70,6 +71,8 @@ export default function DashboardPage() {
   const [activePlan, setActivePlan] = useState<Plan>("free");
   const [pianoScelto, setPianoScelto] = useState<Plan>("free");
   const [periodo, setPeriodo] = useState<"monthly" | "annual">("annual");
+  // popup-carrello del pagamento (reminder all'azienda quando sceglie un piano)
+  const [popupPag, setPopupPag] = useState<{ plan: Plan; period: "monthly" | "annual" } | null>(null);
   // BioFido è riservato alle aziende bio: la certificazione è obbligatoria
   const [bioOk, setBioOk] = useState(false);
 
@@ -109,6 +112,7 @@ export default function DashboardPage() {
     setPianoScelto(p);
     setPeriodo(per);
     window.localStorage.setItem("biofido_piano_scelto", p);
+    if (p !== "free") setPopupPag({ plan: p, period: per });
   }
 
   if (authLoading || loading) {
@@ -138,6 +142,20 @@ export default function DashboardPage() {
       </div>
 
       <PianoSelector scelto={pianoScelto} attivo={activePlan} onScegli={scegliPiano} />
+
+      {popupPag && (
+        <PurchasePopup
+          plan={popupPag.plan}
+          period={popupPag.period}
+          planLabel={PLAN_MAP[popupPag.plan].label}
+          planPrice={
+            popupPag.period === "annual"
+              ? PLAN_MAP[popupPag.plan].annualPrice
+              : PLAN_MAP[popupPag.plan].monthlyPrice
+          }
+          onClose={() => setPopupPag(null)}
+        />
+      )}
 
       <GoldPromoBanner portale="BioFido" />
 

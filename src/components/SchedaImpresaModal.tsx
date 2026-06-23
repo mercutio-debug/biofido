@@ -216,8 +216,14 @@ export function SchedaImpresaModal({
                   <div className="flex items-center gap-3">
                     {/* foto: solo Gold (su downgrade sparisce) */}
                     {b.plan === "gold" && p.image && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.image} alt={p.name} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          className="h-14 w-14 object-cover transition-transform duration-300 hover:scale-150"
+                        />
+                      </div>
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
@@ -245,6 +251,16 @@ export function SchedaImpresaModal({
                       {p.description && (
                         <div className="truncate text-xs text-green-900/60">{p.description}</div>
                       )}
+                      {(p.confezione || p.contenuto != null) && (
+                        <div className="text-xs font-semibold text-green-900/70">
+                          {[
+                            p.confezione,
+                            p.contenuto != null ? `${p.contenuto} ${p.unita ?? ""}`.trim() : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </div>
+                      )}
                     </div>
                     {/* prezzo: solo Gold (su downgrade sparisce) */}
                     {b.plan === "gold" && p.price && (
@@ -264,12 +280,19 @@ export function SchedaImpresaModal({
                     </button>
                   )}
                   {b.plan === "gold" && p.foto2 && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={p.foto2}
-                      alt={`${p.name} — etichetta`}
-                      className="h-24 w-full rounded-lg object-cover"
-                    />
+                    <figure>
+                      <div className="h-24 w-full overflow-hidden rounded-lg">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={p.foto2}
+                          alt={`${p.name} — etichetta`}
+                          className="h-24 w-full object-cover transition-transform duration-300 hover:scale-150"
+                        />
+                      </div>
+                      <figcaption className="mt-1 text-center text-xs font-semibold text-green-900/60">
+                        Etichetta
+                      </figcaption>
+                    </figure>
                   )}
                   {b.plan === "gold" &&
                     p.in_shop &&
