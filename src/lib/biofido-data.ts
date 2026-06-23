@@ -224,6 +224,45 @@ export async function loadBusinesses(): Promise<{ items: Business[]; source: "su
   return { items: DEMO_BUSINESSES, source: "demo" };
 }
 
+/* ---- pagine-attività condivisibili (/azienda/[slug]) ---- */
+
+/** Slug url-safe da un nome (minuscolo, accenti rimossi, spazi → -). */
+export function businessSlug(name: string): string {
+  return (
+    (name || "attivita")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "attivita"
+  );
+}
+
+export type BusinessConSlug = Business & { slug: string };
+
+/**
+ * Tutte le attività con uno slug STABILE e UNIVOCO per la pagina condivisibile
+ * /azienda/[slug]. Ordino per id (stabile tra build) e disambiguo i nomi
+ * duplicati con un suffisso derivato dall'id.
+ */
+export async function elencoBusinessConSlug(): Promise<BusinessConSlug[]> {
+  const { items } = await loadBusinesses();
+  const sorted = [...items].sort((a, b) => String(a.id).localeCompare(String(b.id)));
+  const used = new Set<string>();
+  return sorted.map((b) => {
+    let slug = businessSlug(b.name);
+    if (used.has(slug)) slug = `${slug}-${String(b.id).slice(0, 4)}`;
+    while (used.has(slug)) slug = `${slug}-${String(b.id).slice(0, 8)}`;
+    used.add(slug);
+    return { ...b, slug };
+  });
+}
+
+/** Risolve uno slug nell'attività corrispondente (per la pagina statica). */
+export async function businessBySlug(slug: string): Promise<BusinessConSlug | null> {
+  return (await elencoBusinessConSlug()).find((b) => b.slug === slug) ?? null;
+}
+
 /* ---- gestione della propria scheda (produttore) ---- */
 
 /** Carica la scheda mappa del produttore loggato (se esiste). */
