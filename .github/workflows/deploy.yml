@@ -1,0 +1,47 @@
+name: Pubblica build per Hostinger
+
+# Builda il sito statico ROOT (senza basePath) e pubblica out/ sul branch
+# "hostinger-deploy". Hostinger si collega a quel branch (Git integration) e
+# scarica i file già compilati in public_html del dominio biofido.it.
+# NB: finché Hostinger non è collegato a questo branch + DNS biofido.it, questo
+# workflow crea solo un branch (inerte, non serve nulla online).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del codice
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Installa dipendenze
+        run: npm ci
+
+      - name: Build (export statico, percorsi root per Hostinger)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_BILLING_ENABLED: "true"
+          NEXT_PUBLIC_TURNSTILE_SITEKEY: "0x4AAAAAADnr8XNOD1sCjHD9"
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+        run: npm run build
+
+      - name: Pubblica out/ sul branch hostinger-deploy
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
+          publish_branch: hostinger-deploy
+          commit_message: "Deploy sito compilato per Hostinger (biofido.it)"
