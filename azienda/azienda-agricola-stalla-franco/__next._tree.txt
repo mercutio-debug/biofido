@@ -1,4 +1,4 @@
-:HL["/_next/static/chunks/0fdqupr5co746.css","style"]
+:HL["/_next/static/chunks/1l_3ogerf-apc.css","style"]
 :HL["/_next/static/media/0595f7052377a1a2-s.p.2lpos000q_nzo.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/_next/static/media/6c98c9fb873995d2-s.p.22ggkaf3lyu8c.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/_next/static/media/9e9f04e3c37952ab-s.p.0pan85mumqyf3.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
@@ -8,4 +8,4 @@
 :HL["https://kvpxnxsjiyiixqksinzr.supabase.co/storage/v1/object/public/catalogo/3a136810-717b-48eb-8ced-3966a96d5ae2/1781868663949.jpg","image"]
 :HL["https://kvpxnxsjiyiixqksinzr.supabase.co/storage/v1/object/public/catalogo/3a136810-717b-48eb-8ced-3966a96d5ae2/1781868781872.jpg","image"]
 :HL["https://kvpxnxsjiyiixqksinzr.supabase.co/storage/v1/object/public/catalogo/3a136810-717b-48eb-8ced-3966a96d5ae2/1781886374076.jpg","image"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"azienda","param":null,"prefetchHints":0,"slots":{"children":{"name":"slug","param":{"type":"d","key":"azienda-agricola-stalla-franco","siblings":null},"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"o7ZYis595biccbN6N6brx"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"azienda","param":null,"prefetchHints":0,"slots":{"children":{"name":"slug","param":{"type":"d","key":"azienda-agricola-stalla-franco","siblings":null},"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"knREmIlekYnTkvNY6oCMG"}
