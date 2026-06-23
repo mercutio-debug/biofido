@@ -1,9 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { loadMyBusiness, type Business } from "@/lib/biofido-data";
+import {
+  loadMyBusiness,
+  elencoBusinessConSlug,
+  type Business,
+} from "@/lib/biofido-data";
 import { listMyExperiences } from "@/lib/bookings";
 import { CATEGORY_MAP, PLAN_MAP } from "@/lib/categories";
+import { URL_BIOFIDO } from "@/lib/portale";
 import { SchedaImpresaModal } from "./SchedaImpresaModal";
 
 /** Segnaposto come appare sulla mappa (stessa stilizzazione di BioFidoMap). */
@@ -111,12 +116,35 @@ function Legenda({ business: b }: { business: Business }) {
 export function AnteprimaScheda({ ownerId }: { ownerId: string }) {
   const [b, setB] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paginaUrl, setPaginaUrl] = useState<string | null>(null);
+  const [copiato, setCopiato] = useState(false);
+
+  const copia = async () => {
+    if (!paginaUrl) return;
+    try {
+      await navigator.clipboard.writeText(paginaUrl);
+      setCopiato(true);
+      setTimeout(() => setCopiato(false), 1800);
+    } catch {
+      /* clipboard non disponibile: l'utente seleziona e copia a mano */
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
     const biz = await loadMyBusiness(ownerId);
     if (biz) {
       biz.experiences = await listMyExperiences(ownerId);
+      // URL pubblico condivisibile: slug identico alla pagina /azienda/[slug]
+      try {
+        const elenco = await elencoBusinessConSlug();
+        const mine = elenco.find((x) => x.id === biz.id);
+        setPaginaUrl(mine ? `${URL_BIOFIDO}azienda/${mine.slug}/` : null);
+      } catch {
+        setPaginaUrl(null);
+      }
+    } else {
+      setPaginaUrl(null);
     }
     setB(biz);
     setLoading(false);
@@ -140,6 +168,35 @@ export function AnteprimaScheda({ ownerId }: { ownerId: string }) {
         È <strong>esattamente</strong> ciò che vedono i clienti su BioFido. Salva la
         scheda qui sopra, poi premi «Aggiorna» per rivedere le modifiche.
       </p>
+
+      {paginaUrl && (
+        <div className="mt-4 rounded-2xl border border-[#cfe6b0] bg-leaf/50 p-4">
+          <div className="text-sm font-bold text-green-800">🔗 La tua pagina pubblica</div>
+          <p className="mt-0.5 text-xs text-green-900/70">
+            Condividila su social, sito, email e carta intestata: è il tuo mini-sito
+            su BioFido, con la tua attività e i tuoi prodotti.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              readOnly
+              value={paginaUrl}
+              onFocus={(e) => e.currentTarget.select()}
+              className="min-w-0 flex-1 rounded-lg border border-[#d6e6c4] bg-white px-3 py-1.5 text-sm text-green-900"
+            />
+            <button type="button" onClick={copia} className="btn-lime text-sm">
+              {copiato ? "✓ Copiato" : "Copia link"}
+            </button>
+            <a
+              href={paginaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-ghost text-sm"
+            >
+              Apri ↗
+            </a>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <p className="mt-4 text-sm text-green-900/60">Carico l&apos;anteprima…</p>
