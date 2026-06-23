@@ -6,6 +6,7 @@ import {
   accettaContropropostaShop,
   rifiutaContropropostaShop,
   annullaOrdineShop,
+  pagaOrdineShop,
   type OrdineShop,
 } from "@/lib/ordini-shop";
 
@@ -89,10 +90,18 @@ export function MieiOrdiniShop() {
               )}
 
               {(o.stato === "confermato" || o.stato === "accettato") && (
-                <p className="mt-3 rounded-xl bg-leaf/50 p-3 text-xs text-green-900/70">
-                  ✓ Ordine confermato. Il pagamento sicuro sarà disponibile a breve; nel
-                  frattempo l&apos;azienda ti contatterà per spedizione e dettagli.
-                </p>
+                <div className="mt-3 rounded-xl bg-leaf/50 p-3">
+                  <p className="text-xs text-green-900/70">
+                    ✓ Ordine confermato dall&apos;azienda. Completa il pagamento sicuro:
+                  </p>
+                  <button
+                    className="btn-lime mt-2 text-sm"
+                    disabled={busy === o.id}
+                    onClick={() => azione(() => pagaOrdineShop(o.id), o.id)}
+                  >
+                    {busy === o.id ? "Avvio…" : "💳 Paga ora"}
+                  </button>
+                </div>
               )}
 
               {o.stato === "richiesto" && (

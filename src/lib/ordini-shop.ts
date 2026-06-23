@@ -138,3 +138,32 @@ export const controproponiOrdineShop = (id: string, articoli: ArticoloOrdine[]) 
 export const accettaContropropostaShop = (id: string) => upd(id, { stato: "accettato" });
 export const rifiutaContropropostaShop = (id: string) => upd(id, { stato: "rifiutato" });
 export const annullaOrdineShop = (id: string) => upd(id, { stato: "annullato" });
+
+/** Fase D: avvia il pagamento (Stripe Checkout) di un ordine confermato/accettato. */
+export async function pagaOrdineShop(ordineId: string): Promise<{ error?: string }> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return { error: "Accedi per pagare." };
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return { error: "Configurazione mancante." };
+  try {
+    const res = await fetch(`${base}/functions/v1/shop-checkout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ ordineId }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) return { error: data.error || "Errore nel pagamento." };
+    if (data.url) {
+      window.location.href = data.url;
+      return {};
+    }
+    return { error: "Sessione di pagamento non creata." };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}

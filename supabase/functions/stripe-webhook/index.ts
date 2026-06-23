@@ -274,6 +274,17 @@ Deno.serve(async (req) => {
           }
           break;
         }
+        // Pagamento di un ORDINE SHOP (dopo conferma azienda/accettazione): pagato.
+        if (s.metadata?.kind === "order_shop") {
+          const ordineId = s.metadata?.ordine_shop_id;
+          if (ordineId) {
+            await admin
+              .from("ordini_shop")
+              .update({ stato: "pagato", updated_at: new Date().toISOString() })
+              .eq("id", ordineId);
+          }
+          break;
+        }
         // Pagamento di una prenotazione (Connect)
         if (s.metadata?.kind === "booking") {
           const prenotazioneId = s.metadata?.prenotazione_id;
