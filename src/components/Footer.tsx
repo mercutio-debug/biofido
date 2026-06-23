@@ -21,6 +21,30 @@ export function Footer() {
           </p>
           {/* installazione disponibile in qualsiasi momento, anche dopo il popup */}
           <InstallApp />
+          {/* logo ECO-VISA cliccabile (senza cornice) → portale madre */}
+          <a
+            href={ECOVISA}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Vai su ECO-VISA"
+            className="mt-5 inline-flex items-center gap-2 text-green-800 hover:text-lime-600"
+          >
+            <svg width={26} height={26} viewBox="0 0 64 64" aria-hidden>
+              <defs>
+                <linearGradient id="ev-ftr" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stopColor="#8cc63f" />
+                  <stop offset="1" stopColor="#327413" />
+                </linearGradient>
+              </defs>
+              <circle cx="32" cy="32" r="28" fill="url(#ev-ftr)" />
+              <g fill="none" stroke="#eaffd6" strokeWidth="2" opacity="0.85">
+                <ellipse cx="32" cy="32" rx="12" ry="28" />
+                <line x1="4" y1="32" x2="60" y2="32" />
+              </g>
+              <path d="M32 16c10 4 14 12 12 22-10 2-18-4-18-14 0-3 2-6 6-8z" fill="#eaffd6" opacity="0.95" />
+            </svg>
+            <span className="font-display text-lg">ECO-VISA</span>
+          </a>
         </div>
         <div>
           <h4 className="label mb-2">App</h4>

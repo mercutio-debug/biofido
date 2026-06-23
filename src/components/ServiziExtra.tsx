@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { SERVIZI_EXTRA } from "@/lib/servizi-extra";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -46,10 +47,16 @@ export function ServiziExtra({ showPrices = false }: { showPrices?: boolean }) {
             <button
               type="button"
               onClick={() => setDemo({ key: s.key, nome: s.nome })}
-              className="btn-lime mt-4 justify-center text-sm"
+              className="btn-ghost mt-4 justify-center text-sm"
             >
               ▶ Guarda la demo
             </button>
+            <Link
+              href="/abbonamenti"
+              className="btn-lime mt-2 justify-center text-sm"
+            >
+              🛒 Acquista {s.nome}
+            </Link>
           </div>
         ))}
       </div>
