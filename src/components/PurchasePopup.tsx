@@ -9,6 +9,7 @@ import {
   onExtraChange,
 } from "@/lib/extra-selezionati";
 import { startCheckout } from "@/lib/billing";
+import { caricaDatiFatturazione, datiCompleti } from "@/lib/fatturazione";
 
 /** Servizi attivabili per piano (onboarding solo Gold). */
 const SERVIZI_PER_PIANO: Record<string, string[]> = {
@@ -47,6 +48,12 @@ export function PurchasePopup({
   useEffect(() => onExtraChange(() => force((n) => n + 1)), []);
   const [paying, setPaying] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // I dati di fatturazione (P.IVA, indirizzo, SDI/PEC) DEVONO essere completi:
+  // senza, niente pagamento (così non emettiamo più fatture vuote).
+  const [datiOk, setDatiOk] = useState<boolean | null>(null);
+  useEffect(() => {
+    caricaDatiFatturazione().then((d) => setDatiOk(!!d && datiCompleti(d)));
+  }, []);
 
   const ammessi = SERVIZI_PER_PIANO[plan] ?? [];
   const selezionati = SERVIZI_EXTRA.filter(
@@ -56,6 +63,12 @@ export function PurchasePopup({
   const totale = planPrice + totaleExtra;
 
   async function paga() {
+    if (!datiOk) {
+      setErr(
+        "Per pagare completa prima i dati di fatturazione (P.IVA, indirizzo, SDI o PEC) nella sezione «Attiva il piano» qui sotto, poi torna qui.",
+      );
+      return;
+    }
     setPaying(true);
     setErr(null);
     try {
@@ -141,6 +154,13 @@ export function PurchasePopup({
           extra addebitati una volta sulla prima fattura. IVA esclusa.
         </p>
 
+        {datiOk === false && (
+          <p className="mt-3 rounded-xl bg-[#fff3d4] p-3 text-sm font-semibold text-[#7a5a00]">
+            ⚠️ Per pagare, completa prima i <strong>dati di fatturazione</strong> (P.IVA,
+            indirizzo, SDI o PEC) nella sezione «Attiva il piano» più in basso. Poi torna
+            qui a pagare.
+          </p>
+        )}
         {err && <p className="mt-3 text-sm font-semibold text-traffic-red">{err}</p>}
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
