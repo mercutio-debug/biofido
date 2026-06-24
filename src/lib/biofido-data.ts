@@ -228,7 +228,31 @@ export async function loadBusinesses(): Promise<{ items: Business[]; source: "su
     const { data, error } = await supabase.from("biofido_businesses").select("*");
     if (error) throw error;
     if (data && data.length > 0) {
-      return { items: (data as Row[]).map(fromRow), source: "supabase" };
+      const items = (data as Row[]).map(fromRow);
+      // La posizione VERA è quella che l'azienda salva col pin in anagrafica
+      // (tabella aziende). biofido_businesses.lat/lon può essere stantio: lo
+      // sovrascrivo con le coordinate precise di aziende, se presenti.
+      try {
+        const { data: az } = await supabase
+          .from("aziende_pubbliche")
+          .select("owner, lat, lon");
+        const byOwner = new Map<string, { lat: number; lon: number }>();
+        for (const a of (az as { owner?: string; lat?: number | null; lon?: number | null }[]) ?? []) {
+          if (a.owner && a.lat != null && a.lon != null) {
+            byOwner.set(a.owner, { lat: Number(a.lat), lon: Number(a.lon) });
+          }
+        }
+        for (const it of items) {
+          const p = it.owner ? byOwner.get(it.owner) : undefined;
+          if (p) {
+            it.lat = p.lat;
+            it.lon = p.lon;
+          }
+        }
+      } catch {
+        /* aziende non leggibili: tengo le coordinate del business */
+      }
+      return { items, source: "supabase" };
     }
   } catch {
     // tabella assente, RLS, o rete: si prosegue con i dati demo
