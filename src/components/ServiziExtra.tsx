@@ -3,8 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SERVIZI_EXTRA } from "@/lib/servizi-extra";
+import { supabase } from "@/lib/supabase";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+/** Il report di sostenibilità si può richiedere dopo 1 anno dall'iscrizione. */
+const REPORT_GIORNI = 365;
+const GIORNO_MS = 24 * 60 * 60 * 1000;
 
 /** Con quale abbonamento si sblocca ciascun servizio. */
 const REQ: Record<string, string> = {
@@ -13,17 +18,42 @@ const REQ: Record<string, string> = {
   badge: "Servizio acquistabile con l'abbonamento Silver",
 };
 
+function formatRimanente(ms: number): string {
+  const t = Math.max(0, Math.floor(ms / 1000));
+  const g = Math.floor(t / 86400);
+  const h = Math.floor((t % 86400) / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const s = t % 60;
+  return `${g}g ${h}h ${m}m ${s}s`;
+}
+
 /**
  * Vetrina dei "servizi extra" (onboarding, report, badge). Ogni card ha un tasto
- * "Guarda la demo" che apre la presentazione (statica in /demo/<key>/) in un
- * overlay DENTRO l'app, con una ✕ per chiuderla (così dall'app non si è
- * costretti al tasto «indietro», che uscirebbe dall'app).
+ * "Guarda la demo". Il REPORT di sostenibilità è speciale: si attiva solo dopo
+ * 365 giorni dall'iscrizione, con countdown prima e messaggio di auguri dopo.
  * Usata sia nella pagina pubblica /servizi-extra sia nella dashboard.
  */
 export function ServiziExtra({ showPrices = false }: { showPrices?: boolean }) {
   const [demo, setDemo] = useState<{ key: string; nome: string } | null>(null);
+  // data di iscrizione (created_at dell'utente) per il countdown del report
+  const [iscrizione, setIscrizione] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
-  // chiusura con Esc + messaggio dalla ✕ interna al deck (iframe)
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const c = data.user?.created_at;
+      if (c) setIscrizione(new Date(c).getTime());
+    });
+  }, []);
+
+  // ticker per il countdown live (1s) — attivo solo se serve (utente loggato)
+  useEffect(() => {
+    if (iscrizione == null) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [iscrizione]);
+
+  // chiusura demo con Esc + messaggio dalla ✕ interna al deck (iframe)
   useEffect(() => {
     if (!demo) return;
     const onKey = (e: KeyboardEvent) => {
@@ -40,35 +70,61 @@ export function ServiziExtra({ showPrices = false }: { showPrices?: boolean }) {
     };
   }, [demo]);
 
+  const reportTarget = iscrizione != null ? iscrizione + REPORT_GIORNI * GIORNO_MS : null;
+  const reportSbloccato = reportTarget != null && now >= reportTarget;
+
   return (
     <>
       <div className="grid gap-4 md:grid-cols-3">
-        {SERVIZI_EXTRA.map((s) => (
-          <div key={s.key} className="card flex flex-col p-5">
-            <div className="text-2xl">{s.emoji}</div>
-            <h3 className="mt-1 font-display text-xl text-green-800">{s.nome}</h3>
-            <p className="mt-2 flex-1 text-sm text-green-900/75">{s.desc}</p>
-            {showPrices && (
-              <div className="mt-3 font-semibold text-green-800">{s.prezzo}</div>
-            )}
-            <div className="mt-3 rounded-lg bg-leaf/60 px-3 py-1.5 text-center text-xs font-bold text-green-800">
-              {REQ[s.key] ?? "Servizio extra"}
+        {SERVIZI_EXTRA.map((s) => {
+          // REPORT: gestione speciale del countdown a 365 giorni
+          const isReport = s.key === "report";
+          const reportBloccato = isReport && reportTarget != null && !reportSbloccato;
+          return (
+            <div key={s.key} className="card flex flex-col p-5">
+              <div className="text-2xl">{s.emoji}</div>
+              <h3 className="mt-1 font-display text-xl text-green-800">{s.nome}</h3>
+              <p className="mt-2 flex-1 text-sm text-green-900/75">{s.desc}</p>
+              {showPrices && <div className="mt-3 font-semibold text-green-800">{s.prezzo}</div>}
+              <div className="mt-3 rounded-lg bg-leaf/60 px-3 py-1.5 text-center text-xs font-bold text-green-800">
+                {REQ[s.key] ?? "Servizio extra"}
+              </div>
+              <button
+                type="button"
+                onClick={() => setDemo({ key: s.key, nome: s.nome })}
+                className="btn-ghost mt-3 justify-center text-sm"
+              >
+                ▶ Guarda la demo
+              </button>
+
+              {/* REPORT bloccato: card inattiva + countdown */}
+              {reportBloccato ? (
+                <div className="mt-2 rounded-xl border border-[#e3eed7] bg-leaf/40 p-3 text-center">
+                  <div className="text-xs font-semibold text-green-900/70">
+                    Potrai richiedere il tuo report di sostenibilità tra
+                  </div>
+                  <div className="mt-1 font-display text-lg tabular-nums text-green-800">
+                    {formatRimanente(reportTarget! - now)}
+                  </div>
+                </div>
+              ) : isReport && reportSbloccato ? (
+                <>
+                  <div className="mt-2 animate-pulse rounded-xl border-2 border-badge-yellow bg-[#fffbe9] p-3 text-center text-xs font-bold text-[#7a1f00]">
+                    🎉 È trascorso un anno dalla tua iscrizione, complimenti! Ora puoi
+                    richiedere il tuo report di sostenibilità!!
+                  </div>
+                  <Link href="/abbonamenti" className="btn-lime mt-2 justify-center text-sm">
+                    🛒 Richiedi {s.nome}
+                  </Link>
+                </>
+              ) : (
+                <Link href="/abbonamenti" className="btn-lime mt-2 justify-center text-sm">
+                  🛒 Acquista {s.nome}
+                </Link>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={() => setDemo({ key: s.key, nome: s.nome })}
-              className="btn-ghost mt-3 justify-center text-sm"
-            >
-              ▶ Guarda la demo
-            </button>
-            <Link
-              href="/abbonamenti"
-              className="btn-lime mt-2 justify-center text-sm"
-            >
-              🛒 Acquista {s.nome}
-            </Link>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {demo && (
