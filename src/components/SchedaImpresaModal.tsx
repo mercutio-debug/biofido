@@ -352,7 +352,7 @@ export function SchedaImpresaModal({
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-semibold text-green-800">{v.nome}</div>
                       {v.descrizione && (
-                        <div className="truncate text-xs text-green-900/60">{v.descrizione}</div>
+                        <div className="whitespace-pre-line text-xs text-green-900/70">{v.descrizione}</div>
                       )}
                     </div>
                     {v.prezzo != null && (
@@ -406,7 +406,7 @@ export function SchedaImpresaModal({
                       </div>
                       <div className="truncate font-semibold text-green-800">{v.nome}</div>
                       {v.descrizione && (
-                        <div className="truncate text-xs text-green-900/60">{v.descrizione}</div>
+                        <div className="whitespace-pre-line text-xs text-green-900/70">{v.descrizione}</div>
                       )}
                     </div>
                     {v.prezzo != null && (

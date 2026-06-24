@@ -4,6 +4,7 @@ import { elencoBusinessConSlug, businessBySlug } from "@/lib/biofido-data";
 import { CATEGORY_MAP, PLAN_MAP, type Plan } from "@/lib/categories";
 import { citySlug } from "@/lib/zone-bio";
 import { MappaPosizioneWrap } from "@/components/MappaPosizioneWrap";
+import { SchedaPubblicaClient } from "@/components/SchedaPubblicaClient";
 
 // Pagina pubblica condivisibile di un'attività bio: URL pulito /azienda/{slug},
 // contenuto nell'HTML (indicizzabile), Open Graph + JSON-LD LocalBusiness con
@@ -55,10 +56,7 @@ export default async function AziendaBioPage({
 
   const cat = CATEGORY_MAP[b.category];
   const info = PLAN_MAP[(b.plan as Plan) ?? "free"] ?? PLAN_MAP.free;
-  const showDesc = info.showDescription;
-  const showContatti = info.showWebsite; // contatti (sito/telefono) da Silver
-  const showImg = info.maxPhotos > 0; // foto da Silver
-  const prodotti = info.showProducts && b.products ? b.products.slice(0, info.maxProducts) : [];
+  const showContatti = info.showWebsite; // usato nel JSON-LD (sito/telefono da Silver)
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -99,63 +97,17 @@ export default async function AziendaBioPage({
         / <span>{b.name}</span>
       </nav>
 
-      {showImg && b.immagine && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={b.immagine}
-          alt={b.name}
-          className="mt-3 h-48 w-full rounded-2xl object-cover md:h-64"
-        />
-      )}
+      {/* H1 per la SEO (la scheda interattiva qui sotto usa un H2 per il nome) */}
+      <h1 className="sr-only">
+        {b.name} · {cat?.label ?? "Attività bio"} a {b.city}
+      </h1>
 
-      <div className="mt-3 flex items-center gap-2">
-        <span className="rounded-full bg-leaf px-3 py-1 text-xs font-bold text-green-800">
-          {cat?.emoji} {cat?.label ?? "Attività bio"}
-        </span>
-        {b.plan === "gold" && (
-          <span className="rounded-full bg-badge-yellow px-2 py-0.5 text-[10px] font-bold text-[#7a1f00]">
-            ★ GOLD
-          </span>
-        )}
-        {b.plan === "silver" && (
-          <span className="rounded-full bg-[#c9d3da] px-2 py-0.5 text-[10px] font-bold text-[#33414a]">
-            SILVER
-          </span>
-        )}
+      {/* Scheda RICCA e interattiva: copertina, descrizione, prodotti espandibili,
+          servizi/esperienze con descrizione e prenotazione — come nell'app, ma
+          con URL proprio (condivisibile + indicizzabile). */}
+      <div className="mt-4">
+        <SchedaPubblicaClient business={b} demo={String(b.id).startsWith("demo-")} />
       </div>
-
-      <h1 className="title-pangea mt-2 text-4xl text-green-700 md:text-5xl">{b.name}</h1>
-      <p className="mt-1 text-green-900/70">
-        {b.address ? `${b.address} · ` : ""}
-        {b.city}
-      </p>
-
-      {showDesc && b.description && (
-        <p className="mt-4 max-w-2xl whitespace-pre-line text-green-900/80">{b.description}</p>
-      )}
-
-      {showContatti && (b.website || b.phone) && (
-        <div className="mt-4 flex flex-wrap gap-3 text-sm">
-          {b.website && (
-            <a
-              href={b.website.startsWith("http") ? b.website : `https://${b.website}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-green-600 px-4 py-1.5 font-bold text-green-700 hover:bg-leaf"
-            >
-              🌐 Sito web
-            </a>
-          )}
-          {b.phone && (
-            <a
-              href={`tel:${b.phone.replace(/\s+/g, "")}`}
-              className="inline-flex items-center gap-1.5 rounded-full border border-green-600 px-4 py-1.5 font-bold text-green-700 hover:bg-leaf"
-            >
-              📞 {b.phone}
-            </a>
-          )}
-        </div>
-      )}
 
       {Number.isFinite(b.lat) && Number.isFinite(b.lon) && (
         <div className="mt-6">
@@ -173,39 +125,6 @@ export default async function AziendaBioPage({
       <Link href="/#mappa" className="btn-lime mt-5 inline-block">
         📍 Vedi tutte sulla mappa
       </Link>
-
-      {prodotti.length > 0 && (
-        <section className="mt-10">
-          <h2 className="font-display text-2xl text-green-800">Prodotti</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {prodotti.map((p, i) => (
-              <div key={p.id ?? `${p.name}-${i}`} className="card overflow-hidden p-0">
-                {showImg && p.image && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.image} alt={p.name} className="h-40 w-full object-cover" />
-                )}
-                <div className="p-5">
-                  {p.category && (
-                    <div className="text-xs font-bold uppercase tracking-wide text-lime-500">
-                      {p.category}
-                    </div>
-                  )}
-                  <h3 className="font-display text-xl leading-tight text-green-800">{p.name}</h3>
-                  {p.description && (
-                    <p className="mt-1 text-sm text-green-900/65">{p.description}</p>
-                  )}
-                  {p.price && (
-                    <div className="mt-2 text-lg font-bold text-green-800">
-                      {p.price}
-                      {p.unit ? <span className="text-sm font-normal text-green-900/60"> {p.unit}</span> : null}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* CTA azienda */}
       <div className="mt-12 rounded-2xl border border-[#e3eed7] bg-leaf p-6">

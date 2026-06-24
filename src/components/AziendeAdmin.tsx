@@ -246,8 +246,8 @@ export function AziendeAdmin() {
 
                 {/* Immagini di copertina: controllo contenuti (inappropriati) */}
                 {(() => {
-                  const imgAz = (c.azienda as Record<string, unknown> | null)?.immagine;
-                  const imgBz = (c.business as Record<string, unknown> | null)?.immagine;
+                  const imgAz = (c.azienda as Record<string, unknown> | null)?.immagine as string | undefined;
+                  const imgBz = (c.business as Record<string, unknown> | null)?.immagine as string | undefined;
                   if (!imgAz && !imgBz) return null;
                   return (
                     <div className="mt-3">
