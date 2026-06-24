@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
         email: u.email ?? null,
         createdAt: u.created_at ?? null,
         nome: (u.user_metadata?.nome as string) ?? null,
+        tipo: (u.user_metadata?.tipo as string) ?? null,
         vuoleBiofido: !!u.user_metadata?.vuole_biofido,
         emailVerificata: !!u.email_confirmed_at,
         azienda: aziendaByOwner.get(u.id) ?? null,

@@ -7,6 +7,8 @@ export type Company = {
   email: string | null;
   createdAt: string | null;
   nome: string | null;
+  /** "cliente" | "azienda" dal metadato di registrazione (può mancare sui vecchi account) */
+  tipo: string | null;
   vuoleBiofido: boolean;
   emailVerificata: boolean;
   azienda: Record<string, unknown> | null;
