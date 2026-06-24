@@ -103,8 +103,14 @@ async function sendPush(userId: string, payload: Notice) {
 }
 
 async function emailOf(userId: string): Promise<string | null> {
-  const { data } = await admin.auth.admin.getUserById(userId);
-  return data.user?.email ?? null;
+  // robusto: un id assente o non-UUID non deve far fallire l'intera notifica
+  try {
+    if (!userId) return null;
+    const { data } = await admin.auth.admin.getUserById(userId);
+    return data.user?.email ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function dispatch(n: Notice) {
