@@ -2,6 +2,7 @@ export const metadata = {
   title: "Privacy e cookie — BioFido",
   description:
     "Informativa sul trattamento dei dati personali e sull'uso dei cookie di BioFido (Ligusto Srl).",
+  alternates: { canonical: "https://biofido.it/privacy/" },
 };
 
 export default function PrivacyPage() {

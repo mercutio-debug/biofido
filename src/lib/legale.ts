@@ -1,13 +1,12 @@
 /**
- * Link legali comuni ai portali ECO-VISA e BioFido (stesso titolare: Ligusto
- * Srl). Origine UNICA e condivisa, così le voci non sono duplicate né divergono
- * tra i due siti: la privacy/cookie è la pagina canonica di ECO-VISA, il
- * diritto di recesso/cancellazione account è la pagina pubblica condivisa.
+ * Link legali del portale BioFido (titolare: Ligusto Srl). Ora che biofido.it è
+ * un dominio autonomo, ogni voce punta alle pagine SUL PROPRIO dominio biofido.it
+ * (privacy, recesso/cancellazione account, termini, condizioni), non più a
+ * ecovisa.it o al mirror github → congruenza dominio.
  */
 export const LEGALE = {
-  privacy: "https://ecovisa.it/privacy/",
-  recesso: "https://mercutio-debug.github.io/elimina-account.html",
-  // Pagine canoniche su ECO-VISA, condivise con BioFido (come la privacy).
-  terminiVendita: "https://ecovisa.it/termini-vendita/",
-  condizioniVenditori: "https://ecovisa.it/condizioni-venditori/",
+  privacy: "https://biofido.it/privacy/",
+  recesso: "https://biofido.it/elimina-account/",
+  terminiVendita: "https://biofido.it/termini-vendita/",
+  condizioniVenditori: "https://biofido.it/condizioni-venditori/",
 };
