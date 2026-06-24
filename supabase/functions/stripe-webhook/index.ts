@@ -259,6 +259,61 @@ async function setPlan(
   await admin.from("biofido_businesses").update({ plan }).eq("owner", userId);
 }
 
+type ArtMag = { prodottoId?: string; qta?: number };
+/** Fase E magazzino: alla vendita scala la giacenza dei prodotti.
+ *  ECO-VISA → tabella `prodotti` (id stabili); BioFido → JSON `products` su
+ *  biofido_businesses (best-effort, solo se il prodotto ha id + giacenza). */
+async function scalaMagazzino(ord: {
+  owner: string;
+  portale: string | null;
+  articoli: ArtMag[] | null;
+  controproposta: ArtMag[] | null;
+}): Promise<void> {
+  const items =
+    ord.controproposta && ord.controproposta.length ? ord.controproposta : ord.articoli ?? [];
+  if (!items.length) return;
+  try {
+    if (ord.portale === "BioFido") {
+      const { data: biz } = await admin
+        .from("biofido_businesses")
+        .select("id, products")
+        .eq("owner", ord.owner)
+        .maybeSingle();
+      const prods = (biz?.products as { id?: string; giacenza?: number }[] | null) ?? null;
+      if (biz && prods) {
+        let changed = false;
+        const next = prods.map((p) => {
+          const art = items.find((a) => a.prodottoId && a.prodottoId === p.id);
+          if (art && typeof p.giacenza === "number") {
+            changed = true;
+            return { ...p, giacenza: Math.max(0, p.giacenza - (art.qta || 0)) };
+          }
+          return p;
+        });
+        if (changed) await admin.from("biofido_businesses").update({ products: next }).eq("id", biz.id);
+      }
+    } else {
+      for (const a of items) {
+        if (!a.prodottoId) continue;
+        const { data: pr } = await admin
+          .from("prodotti")
+          .select("giacenza")
+          .eq("id", a.prodottoId)
+          .maybeSingle();
+        const g = (pr as { giacenza?: number | null } | null)?.giacenza;
+        if (typeof g === "number") {
+          await admin
+            .from("prodotti")
+            .update({ giacenza: Math.max(0, g - (a.qta || 0)) })
+            .eq("id", a.prodottoId);
+        }
+      }
+    }
+  } catch (e) {
+    console.error("stripe-webhook: scalaMagazzino errore:", (e as Error).message);
+  }
+}
+
 Deno.serve(async (req) => {
   const sig = req.headers.get("stripe-signature");
   const body = await req.text();
@@ -295,10 +350,17 @@ Deno.serve(async (req) => {
         if (s.metadata?.kind === "order_shop") {
           const ordineId = s.metadata?.ordine_shop_id;
           if (ordineId) {
+            // leggo l'ordine PRIMA, per scalare il magazzino (Fase E)
+            const { data: ord } = await admin
+              .from("ordini_shop")
+              .select("owner, portale, articoli, controproposta")
+              .eq("id", ordineId)
+              .maybeSingle();
             await admin
               .from("ordini_shop")
               .update({ stato: "pagato", updated_at: new Date().toISOString() })
               .eq("id", ordineId);
+            if (ord) await scalaMagazzino(ord);
           }
           break;
         }
