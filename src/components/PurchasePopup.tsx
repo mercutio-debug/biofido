@@ -10,6 +10,15 @@ import {
 } from "@/lib/extra-selezionati";
 import { startCheckout } from "@/lib/billing";
 import { caricaDatiFatturazione, datiCompleti } from "@/lib/fatturazione";
+import { LEGALE } from "@/lib/legale";
+
+/** Consensi obbligatori prima del pagamento dell'abbonamento (qui il venditore
+ *  è la piattaforma Ligusto, quindi consensi diversi da quelli degli ordini). */
+const CONSENSI_ABBONAMENTO: { id: string; testo: string; link?: { label: string; href: string } }[] = [
+  { id: "termini", testo: "Ho letto e accetto i {LINK}.", link: { label: "Termini di vendita", href: LEGALE.terminiVendita } },
+  { id: "privacy", testo: "Ho letto l'{LINK} e accetto il trattamento dei dati per l'abbonamento e la fatturazione (Ligusto Srl).", link: { label: "Informativa privacy", href: LEGALE.privacy } },
+  { id: "responsabilita", testo: "Dichiaro di rappresentare un'azienda reale e mi assumo la responsabilità dei contenuti che pubblico (testi, immagini, dati): non caricherò materiale illecito o ingannevole." },
+];
 
 /** Servizi attivabili per piano (onboarding solo Gold). */
 const SERVIZI_PER_PIANO: Record<string, string[]> = {
@@ -54,6 +63,8 @@ export function PurchasePopup({
   useEffect(() => {
     caricaDatiFatturazione().then((d) => setDatiOk(!!d && datiCompleti(d)));
   }, []);
+  const [spunte, setSpunte] = useState<Record<string, boolean>>({});
+  const consensiOk = CONSENSI_ABBONAMENTO.every((c) => spunte[c.id]);
 
   const ammessi = SERVIZI_PER_PIANO[plan] ?? [];
   const selezionati = SERVIZI_EXTRA.filter(
@@ -67,6 +78,10 @@ export function PurchasePopup({
       setErr(
         "Per pagare completa prima i dati di fatturazione (P.IVA, indirizzo, SDI o PEC) nella sezione «Attiva il piano» qui sotto, poi torna qui.",
       );
+      return;
+    }
+    if (!consensiOk) {
+      setErr("Spunta i consensi obbligatori per procedere al pagamento.");
       return;
     }
     setPaying(true);
@@ -154,6 +169,37 @@ export function PurchasePopup({
           extra addebitati una volta sulla prima fattura. IVA esclusa.
         </p>
 
+        {/* Consensi obbligatori prima del pagamento */}
+        <div className="mt-4 space-y-2">
+          {CONSENSI_ABBONAMENTO.map((c) => {
+            const [pre, post] = c.link ? c.testo.split("{LINK}") : [c.testo, ""];
+            return (
+              <label key={c.id} className="flex items-start gap-2 text-xs text-green-900/85">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-5 w-5 accent-[var(--lime-500)]"
+                  checked={!!spunte[c.id]}
+                  onChange={(e) => setSpunte((s) => ({ ...s, [c.id]: e.target.checked }))}
+                />
+                <span>
+                  {pre}
+                  {c.link && (
+                    <a
+                      href={c.link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-green-700 underline"
+                    >
+                      {c.link.label}
+                    </a>
+                  )}
+                  {post}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+
         {datiOk === false && (
           <p className="mt-3 rounded-xl bg-[#fff3d4] p-3 text-sm font-semibold text-[#7a5a00]">
             ⚠️ Per pagare, completa prima i <strong>dati di fatturazione</strong> (P.IVA,
@@ -167,8 +213,8 @@ export function PurchasePopup({
           <button
             type="button"
             onClick={paga}
-            disabled={paying}
-            className="btn-lime flex-1 justify-center"
+            disabled={paying || !consensiOk}
+            className="btn-lime flex-1 justify-center disabled:opacity-50"
           >
             {paying ? "Apro Stripe…" : "Vai al pagamento"}
           </button>

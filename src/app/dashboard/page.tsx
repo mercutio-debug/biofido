@@ -174,6 +174,15 @@ export default function DashboardPage() {
           <AnteprimaScheda ownerId={user.id} />
           <CatalogoCard ownerId={user.id} gold={pianoScelto === "gold"} />
           <PagamentiCard ownerId={user.id} plan={pianoScelto} />
+          <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
+          <OrdiniShopRicevuti />
+          <MessaggiCard ownerId={user.id} />
+
+          <PrenotazioniCard ownerId={user.id} />
+          <StatisticheCard ownerId={user.id} plan={pianoScelto} />
+          <PagamentoFinale ownerId={user.id} scelto={pianoScelto} attivo={activePlan} bioOk={bioOk} />
+
+          {/* Servizi extra: in fondo (già richiamati più volte sopra) */}
           <section className="card mt-6 p-6">
             <h2 className="font-display text-2xl text-green-800">Servizi extra</h2>
             <p className="mt-1 text-sm text-green-900/70">
@@ -183,13 +192,6 @@ export default function DashboardPage() {
               <ServiziExtra showPrices />
             </div>
           </section>
-          <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
-          <OrdiniShopRicevuti />
-          <MessaggiCard ownerId={user.id} />
-
-          <PrenotazioniCard ownerId={user.id} />
-          <StatisticheCard ownerId={user.id} plan={pianoScelto} />
-          <PagamentoFinale ownerId={user.id} scelto={pianoScelto} attivo={activePlan} bioOk={bioOk} />
         </>
       )}
     </div>
