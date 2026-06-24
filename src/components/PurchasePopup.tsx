@@ -61,7 +61,13 @@ export function PurchasePopup({
   // senza, niente pagamento (così non emettiamo più fatture vuote).
   const [datiOk, setDatiOk] = useState<boolean | null>(null);
   useEffect(() => {
-    caricaDatiFatturazione().then((d) => setDatiOk(!!d && datiCompleti(d)));
+    caricaDatiFatturazione().then((d) => {
+      // oltre ai dati minimi, all'acquisto serve un recapito fattura esplicito:
+      // SDI (7 car., diverso da 0000000) OPPURE una PEC valida.
+      const sdi = (d?.codice_sdi || "").toUpperCase();
+      const recapito = (sdi.length === 7 && sdi !== "0000000") || !!(d?.pec && d.pec.includes("@"));
+      setDatiOk(!!d && datiCompleti(d) && recapito);
+    });
   }, []);
   const [spunte, setSpunte] = useState<Record<string, boolean>>({});
   const consensiOk = CONSENSI_ABBONAMENTO.every((c) => spunte[c.id]);
