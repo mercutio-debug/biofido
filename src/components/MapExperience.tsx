@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { nearestPlace } from "@/lib/geo";
-import { loadBusinesses, type Business } from "@/lib/biofido-data";
+import { loadBusinesses, businessSlug, type Business } from "@/lib/biofido-data";
+import { isStandaloneApp } from "@/lib/standalone";
 import { registraVisita } from "@/lib/statistiche";
 import { CATEGORIES, CATEGORY_MAP, PLAN_MAP, rankScore, type CategoryId } from "@/lib/categories";
 import { experiencesByOwners } from "@/lib/bookings";
@@ -49,6 +51,13 @@ export function MapExperience() {
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
   const [prenota, setPrenota] = useState<Business | null>(null);
   const [scheda, setScheda] = useState<Business | null>(null);
+  const router = useRouter();
+  // Regola: in APP la scheda si apre in-app (modale); nel BROWSER si apre la
+  // pagina /azienda/[slug] con URL proprio (condivisibile + SEO).
+  const apriAzienda = (b: Business) => {
+    if (isStandaloneApp()) setScheda(b);
+    else router.push(`/azienda/${businessSlug(b.name)}/`);
+  };
   const [prenotaServizio, setPrenotaServizio] = useState<{ business: Business; servizio: Product } | null>(null);
   const [contatta, setContatta] = useState<Business | null>(null);
 
@@ -226,7 +235,7 @@ export function MapExperience() {
       {/* MAPPA + RISULTATI */}
       <div className="mt-5 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="card overflow-hidden p-0">
-          <BioFidoMap center={center} radiusKm={radius} businesses={results.length ? results : vicine} userLabel={label} onSelect={setScheda} />
+          <BioFidoMap center={center} radiusKm={radius} businesses={results.length ? results : vicine} userLabel={label} onSelect={apriAzienda} />
         </div>
         <div>
           <h2 className="font-display text-2xl text-green-800">
@@ -254,7 +263,7 @@ export function MapExperience() {
                     return (
                       <li
                         key={r.id}
-                        onClick={() => setScheda(r)}
+                        onClick={() => apriAzienda(r)}
                         title="Apri la scheda dell'impresa"
                         className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-4 py-3 hover:border-lime-500 ${
                           r.plan === "gold"
@@ -303,7 +312,7 @@ export function MapExperience() {
                 return (
                   <li
                     key={r.id}
-                    onClick={() => setScheda(r)}
+                    onClick={() => apriAzienda(r)}
                     title="Apri la scheda dell'impresa"
                     className={`group relative flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 hover:border-lime-500 ${
                       PLAN_MAP[r.plan].featuredEligible
