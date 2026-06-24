@@ -1,7 +1,7 @@
 /* Service worker BioFido — installabilità PWA, cache offline e notifiche Push. */
 
 // Nome cache: cambiare la versione invalida la vecchia cache al prossimo deploy.
-const CACHE = "biofido-cache-v2";
+const CACHE = "biofido-cache-v3";
 // Cartella base dell'app (gestisce il basePath /biofido/ di GitHub Pages).
 const BASE = new URL("./", self.location).pathname;
 // Risorse minime dell'"app shell" da avere subito disponibili offline.
