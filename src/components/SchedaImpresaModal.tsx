@@ -46,6 +46,8 @@ export function SchedaImpresaModal({
   const plan = PLAN_MAP[b.plan];
   const dir = `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lon}`;
   const prodotti = (plan.showProducts ? b.products ?? [] : []).slice(0, plan.maxProducts);
+  // prodotto "aperto" (espanso): mostra descrizione completa + foto grande
+  const [apertoProd, setApertoProd] = useState<number | null>(null);
   const sede = { lat: b.lat, lon: b.lon };
   const esperienze = plan.canSell ? b.experiences?.filter((e) => e.attiva) ?? [] : [];
 
@@ -213,15 +215,21 @@ export function SchedaImpresaModal({
                     plan.canSell && p.prenotabile ? "border-badge-yellow" : "border-[#e3eed7]"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    {/* foto: solo Gold (su downgrade sparisce) */}
+                  <div
+                    className="flex cursor-pointer items-center gap-3"
+                    onClick={() => setApertoProd(apertoProd === i ? null : i)}
+                    title="Tocca per vedere i dettagli del prodotto"
+                  >
+                    {/* foto: solo Gold (su downgrade sparisce). Grande se aperto. */}
                     {b.plan === "gold" && p.image && (
-                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+                      <div
+                        className={`${apertoProd === i ? "h-24 w-24" : "h-14 w-14"} shrink-0 overflow-hidden rounded-lg transition-all`}
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={p.image}
                           alt={p.name}
-                          className="h-14 w-14 object-cover transition-transform duration-300 hover:scale-150"
+                          className="h-full w-full object-cover"
                         />
                       </div>
                     )}
@@ -249,7 +257,14 @@ export function SchedaImpresaModal({
                         )}
                       </div>
                       {p.description && (
-                        <div className="truncate text-xs text-green-900/60">{p.description}</div>
+                        <div
+                          className={`text-xs text-green-900/60 ${apertoProd === i ? "whitespace-pre-line" : "truncate"}`}
+                        >
+                          {p.description}
+                        </div>
+                      )}
+                      {p.description && apertoProd !== i && (
+                        <div className="text-[10px] font-semibold text-green-700">tocca per i dettagli ▾</div>
                       )}
                       {(p.confezione || p.contenuto != null) && (
                         <div className="text-xs font-semibold text-green-900/70">
@@ -279,7 +294,7 @@ export function SchedaImpresaModal({
                       ✨ Prenota / richiedi
                     </button>
                   )}
-                  {b.plan === "gold" && p.foto2 && (
+                  {b.plan === "gold" && p.foto2 && apertoProd === i && (
                     <figure>
                       <div className="h-24 w-full overflow-hidden rounded-lg">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
