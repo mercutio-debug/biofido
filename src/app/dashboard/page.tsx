@@ -97,8 +97,13 @@ export default function DashboardPage() {
     if (!user) return;
     getMyPlan().then((p) => {
       setActivePlan(p);
-      const saved = window.localStorage.getItem("biofido_piano_scelto") as Plan | null;
-      setPianoScelto(p !== "free" ? p : saved && saved in PLAN_MAP ? saved : "free");
+      // Parto SEMPRE dal piano reale (un Free vede selezionato Free, non Gold).
+      setPianoScelto(p);
+      try {
+        window.localStorage.setItem("biofido_piano_scelto", p);
+      } catch {
+        /* ignore */
+      }
     });
   }, [user]);
 
@@ -234,7 +239,7 @@ export default function DashboardPage() {
               Potenzia la tua attività. Guarda la demo di ciascun servizio.
             </p>
             <div className="mt-4">
-              <ServiziExtra showPrices />
+              <ServiziExtra showPrices plan={activePlan} />
             </div>
           </section>
         </>

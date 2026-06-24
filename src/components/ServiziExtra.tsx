@@ -17,6 +17,10 @@ const REQ: Record<string, string> = {
   report: "Servizio acquistabile con l'abbonamento Silver",
   badge: "Servizio acquistabile con l'abbonamento Silver",
 };
+/** Piano minimo richiesto da ciascun servizio + etichetta. */
+const REQ_RANK: Record<string, number> = { onboarding: 2, report: 1, badge: 1 };
+const REQ_LABEL: Record<string, string> = { onboarding: "Gold", report: "Silver", badge: "Silver" };
+const PLAN_RANK: Record<string, number> = { free: 0, silver: 1, gold: 2 };
 
 function formatRimanente(ms: number): string {
   const t = Math.max(0, Math.floor(ms / 1000));
@@ -33,7 +37,16 @@ function formatRimanente(ms: number): string {
  * 365 giorni dall'iscrizione, con countdown prima e messaggio di auguri dopo.
  * Usata sia nella pagina pubblica /servizi-extra sia nella dashboard.
  */
-export function ServiziExtra({ showPrices = false }: { showPrices?: boolean }) {
+export function ServiziExtra({
+  showPrices = false,
+  plan,
+}: {
+  showPrices?: boolean;
+  /** piano dell'azienda loggata (in dashboard): attiva il gating dei servizi.
+   *  Se assente (vetrina pubblica), i servizi sono mostrati senza blocco. */
+  plan?: string;
+}) {
+  const planRank = plan != null ? PLAN_RANK[plan] ?? 0 : null;
   const [demo, setDemo] = useState<{ key: string; nome: string } | null>(null);
   // data di iscrizione (created_at dell'utente) per il countdown del report
   const [iscrizione, setIscrizione] = useState<number | null>(null);
@@ -80,14 +93,31 @@ export function ServiziExtra({ showPrices = false }: { showPrices?: boolean }) {
           // REPORT: gestione speciale del countdown a 365 giorni
           const isReport = s.key === "report";
           const reportBloccato = isReport && reportTarget != null && !reportSbloccato;
+          // GATING per piano: in dashboard (planRank noto) il servizio è bloccato
+          // se il piano dell'azienda è inferiore a quello richiesto.
+          const reqLabel = REQ_LABEL[s.key] ?? "Silver";
+          const planLocked = planRank != null && planRank < (REQ_RANK[s.key] ?? 0);
           return (
-            <div key={s.key} className="card flex flex-col p-5">
+            <div key={s.key} className={`card flex flex-col p-5 ${planLocked ? "opacity-70" : ""}`}>
               <div className="text-2xl">{s.emoji}</div>
               <h3 className="mt-1 font-display text-xl text-green-800">{s.nome}</h3>
               <p className="mt-2 flex-1 text-sm text-green-900/75">{s.desc}</p>
               {showPrices && <div className="mt-3 font-semibold text-green-800">{s.prezzo}</div>}
-              <div className="mt-3 rounded-lg bg-leaf/60 px-3 py-1.5 text-center text-xs font-bold text-green-800">
-                {REQ[s.key] ?? "Servizio extra"}
+              {/* Legenda: con piano noto mostra ATTIVO/BLOCCATO; in vetrina, il requisito */}
+              <div
+                className={`mt-3 rounded-lg px-3 py-1.5 text-center text-xs font-bold ${
+                  planRank == null
+                    ? "bg-leaf/60 text-green-800"
+                    : planLocked
+                      ? "bg-[#f3dada] text-traffic-red"
+                      : "bg-leaf text-green-700"
+                }`}
+              >
+                {planRank == null
+                  ? REQ[s.key] ?? "Servizio extra"
+                  : planLocked
+                    ? `🔒 Disponibile con il piano ${reqLabel}`
+                    : `✓ Attivabile col tuo piano`}
               </div>
               <button
                 type="button"
@@ -97,8 +127,12 @@ export function ServiziExtra({ showPrices = false }: { showPrices?: boolean }) {
                 ▶ Guarda la demo
               </button>
 
-              {/* REPORT bloccato: card inattiva + countdown */}
-              {reportBloccato ? (
+              {/* Azione: priorità → blocco piano → countdown report → auguri → acquista */}
+              {planLocked ? (
+                <Link href="/abbonamenti" className="btn-lime mt-2 justify-center text-sm">
+                  ⬆ Passa al piano {reqLabel}
+                </Link>
+              ) : reportBloccato ? (
                 <div className="mt-2 rounded-xl border border-[#e3eed7] bg-leaf/40 p-3 text-center">
                   <div className="text-xs font-semibold text-green-900/70">
                     Potrai richiedere il tuo report di sostenibilità tra
