@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { CATEGORY_MAP, PLAN_MAP } from "@/lib/categories";
 import { euroCents } from "@/lib/bookings";
 import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
@@ -56,6 +57,16 @@ export function SchedaImpresaModal({
   useEffect(() => {
     if (b.owner) loadCatalogo(b.owner).then(setCatalogo).catch(() => {});
   }, [b.owner]);
+  // Blocca lo scroll della pagina sotto mentre il modale (non-embedded) è aperto:
+  // così su mobile non è la pagina intera a scorrere/zoomare ma solo la scheda.
+  useEffect(() => {
+    if (embedded) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [embedded]);
   // Il catalogo (prodotti in vendita + servizi su prenotazione) è una funzione
   // Gold: sotto quel piano (es. dopo un downgrade) non va mostrato.
   const catalogoVisibile = b.plan === "gold" ? catalogo : [];
@@ -99,7 +110,7 @@ export function SchedaImpresaModal({
     setTimeout(() => setCartMsg(null), 2500);
   };
 
-  return (
+  const contenuto = (
     <div
       className={embedded ? "" : "fixed inset-0 z-[1000] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"}
       onClick={embedded ? undefined : onClose}
@@ -108,7 +119,7 @@ export function SchedaImpresaModal({
         className={
           embedded
             ? "rounded-2xl border border-[#e3eed7] bg-white p-5"
-            : "max-h-[92vh] w-full max-w-lg overflow-auto rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl"
+            : "max-h-[100dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-2xl bg-white p-6 shadow-xl sm:max-h-[92vh] sm:rounded-2xl"
         }
         onClick={(e) => e.stopPropagation()}
       >
@@ -512,4 +523,9 @@ export function SchedaImpresaModal({
       </div>
     </div>
   );
+
+  if (embedded) return contenuto;
+  // Portale su document.body: evita che un antenato con transform (la mappa)
+  // "agganci" il fixed e renda la scheda decentrata o lo sfondo scrollabile/zoomabile.
+  return typeof document !== "undefined" ? createPortal(contenuto, document.body) : null;
 }
