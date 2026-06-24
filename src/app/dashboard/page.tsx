@@ -83,6 +83,11 @@ export default function DashboardPage() {
       router.replace("/accedi");
       return;
     }
+    // La dashboard è l'AREA ATTIVITÀ: un cliente non deve finirci.
+    if ((user.user_metadata as { tipo?: string } | undefined)?.tipo === "cliente") {
+      router.replace("/");
+      return;
+    }
     setLoading(false);
   }, [authLoading, user, router]);
 

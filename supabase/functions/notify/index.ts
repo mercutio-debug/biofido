@@ -127,11 +127,18 @@ Deno.serve(async (req) => {
     console.log(`notify: evento su tabella "${table}"`);
 
     if (table === "users") {
-      // nuova iscrizione (auth.users): avviso l'amministratore via email
+      // nuova iscrizione (auth.users): avviso l'amministratore via email.
+      // Distinguo CLIENTE vs AZIENDA dal metadato salvato alla registrazione.
+      const tipo =
+        rec.raw_user_meta_data?.tipo ?? rec.user_metadata?.tipo ?? "azienda";
+      const chi = tipo === "cliente" ? "un nuovo cliente" : "una nuova azienda";
       await dispatch({
         email: "mauriziocapitelli@yahoo.it",
-        title: "Nuova iscrizione su BioFido / ECO-VISA",
-        body: `Si è iscritta una nuova azienda: ${rec.email ?? "(email non disponibile)"}.`,
+        title:
+          tipo === "cliente"
+            ? "Nuovo cliente su BioFido / ECO-VISA"
+            : "Nuova azienda su BioFido / ECO-VISA",
+        body: `Si è iscritto ${chi}: ${rec.email ?? "(email non disponibile)"}.`,
         url: `${SITE_URL}/admin/`,
         ctaLabel: "Apri l'area admin",
       });

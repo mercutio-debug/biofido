@@ -49,7 +49,18 @@ export default function AccediPage() {
       return;
     }
     const isAdmin = data.user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-    router.push(isAdmin ? "/admin" : "/dashboard");
+    const tipo = (data.user?.user_metadata as { tipo?: string } | undefined)?.tipo;
+    let dest = "";
+    try {
+      dest = sessionStorage.getItem("postLoginRedirect") ?? "";
+      if (dest) sessionStorage.removeItem("postLoginRedirect");
+    } catch {
+      /* ignore */
+    }
+    if (dest) router.push(dest);
+    else if (isAdmin) router.push("/admin");
+    else if (tipo === "cliente") router.push("/"); // i clienti NON vanno nell'area aziende
+    else router.push("/dashboard");
   }
 
   async function inviaRecupero(e: React.FormEvent) {
@@ -71,11 +82,12 @@ export default function AccediPage() {
   return (
     <div className="mx-auto max-w-md px-4 py-16">
       <div className="text-xs font-bold uppercase tracking-wide text-lime-500">
-        Area aziende
+        Il tuo account
       </div>
       <h1 className="title-pangea mt-2 text-4xl text-green-700">Accedi</h1>
       <p className="mt-3 text-green-900/80">
-        Stesse credenziali su BioFido ed ECO-VISA: un solo account per entrambi.
+        Attività e clienti, stesso accesso. Stesse credenziali su BioFido ed
+        ECO-VISA: un solo account per entrambi.
       </p>
 
       <form onSubmit={handleSubmit} className="card mt-8 space-y-4 p-6">
@@ -128,8 +140,12 @@ export default function AccediPage() {
 
         <p className="text-center text-sm text-green-900/70">
           Non hai un account?{" "}
+          <Link href="/registrati?tipo=cliente" className="font-bold text-green-700 hover:text-lime-500">
+            Iscriviti come cliente
+          </Link>{" "}
+          ·{" "}
           <Link href="/registrati" className="font-bold text-green-700 hover:text-lime-500">
-            Iscrivi la tua azienda
+            come attività
           </Link>
         </p>
       </form>

@@ -85,6 +85,8 @@ export function UserMenu() {
     (user.user_metadata?.nome as string | undefined)?.trim() ||
     user.email?.split("@")[0] ||
     "Il mio account";
+  // i CLIENTI non hanno l'area attività: niente dashboard/ordini-ricevuti/prenotazioni-ricevute
+  const isCliente = (user.user_metadata as { tipo?: string } | undefined)?.tipo === "cliente";
 
   async function esci() {
     await supabase.auth.signOut();
@@ -129,31 +131,35 @@ export function UserMenu() {
             <div className="text-xs text-green-900/55">Connesso come</div>
             <div className="truncate text-sm font-semibold text-green-800">{user.email}</div>
           </div>
-          <Link
-            href="/dashboard"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="block px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
-          >
-            🐾 La mia dashboard
-          </Link>
-          <Link
-            href="/dashboard/#messaggi"
-            role="menuitem"
-            onClick={(e) => {
-              setOpen(false);
-              // se sono GIÀ in dashboard, Next non scrolla all'ancora: lo faccio a mano
-              // (endsWith gestisce anche il basePath /biofido di GitHub Pages)
-              if (window.location.pathname.replace(/\/+$/, "").endsWith("/dashboard")) {
-                e.preventDefault();
-                document.getElementById("messaggi")?.scrollIntoView({ behavior: "smooth" });
-                window.history.replaceState(null, "", "#messaggi");
-              }
-            }}
-            className="block px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
-          >
-            💬 Messaggi / chat
-          </Link>
+          {!isCliente && (
+            <Link
+              href="/dashboard"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
+            >
+              🐾 La mia dashboard
+            </Link>
+          )}
+          {!isCliente && (
+            <Link
+              href="/dashboard/#messaggi"
+              role="menuitem"
+              onClick={(e) => {
+                setOpen(false);
+                // se sono GIÀ in dashboard, Next non scrolla all'ancora: lo faccio a mano
+                // (endsWith gestisce anche il basePath /biofido di GitHub Pages)
+                if (window.location.pathname.replace(/\/+$/, "").endsWith("/dashboard")) {
+                  e.preventDefault();
+                  document.getElementById("messaggi")?.scrollIntoView({ behavior: "smooth" });
+                  window.history.replaceState(null, "", "#messaggi");
+                }
+              }}
+              className="block px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
+            >
+              💬 Messaggi / chat
+            </Link>
+          )}
           <Link
             href="/prenotazioni"
             role="menuitem"
@@ -170,31 +176,35 @@ export function UserMenu() {
           >
             📦 I miei ordini
           </Link>
-          <Link
-            href="/ordini-ricevuti"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
-          >
-            🛒 Ordini ricevuti
-            <Badge n={conte.ordini} />
-          </Link>
-          <Link
-            href="/dashboard/#prenotazioni"
-            role="menuitem"
-            onClick={(e) => {
-              setOpen(false);
-              if (window.location.pathname.replace(/\/+$/, "").endsWith("/dashboard")) {
-                e.preventDefault();
-                document.getElementById("prenotazioni")?.scrollIntoView({ behavior: "smooth" });
-                window.history.replaceState(null, "", "#prenotazioni");
-              }
-            }}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
-          >
-            ✅ Prenotazioni ricevute
-            <Badge n={conte.prenotazioni} />
-          </Link>
+          {!isCliente && (
+            <Link
+              href="/ordini-ricevuti"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
+            >
+              🛒 Ordini ricevuti
+              <Badge n={conte.ordini} />
+            </Link>
+          )}
+          {!isCliente && (
+            <Link
+              href="/dashboard/#prenotazioni"
+              role="menuitem"
+              onClick={(e) => {
+                setOpen(false);
+                if (window.location.pathname.replace(/\/+$/, "").endsWith("/dashboard")) {
+                  e.preventDefault();
+                  document.getElementById("prenotazioni")?.scrollIntoView({ behavior: "smooth" });
+                  window.history.replaceState(null, "", "#prenotazioni");
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
+            >
+              ✅ Prenotazioni ricevute
+              <Badge n={conte.prenotazioni} />
+            </Link>
+          )}
           <Link
             href="/account"
             role="menuitem"
