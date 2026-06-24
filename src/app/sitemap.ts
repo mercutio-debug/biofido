@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 import { tutteLeZoneBio, tutteLeRegioniBio } from "@/lib/zone-bio";
 import { elencoBusinessConSlug } from "@/lib/biofido-data";
 
-// Sitemap statica (output: export). BioFido è servito da GitHub Pages nella
-// sottocartella /biofido: gli URL includono quel prefisso.
+// Sitemap statica (output: export). BioFido è servito sul dominio proprio
+// biofido.it (Hostinger): URL assoluti su quel dominio.
 const BASE = "https://biofido.it";
 
 export const dynamic = "force-static";
