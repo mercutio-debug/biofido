@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminListCompanies, adminSetPlan, type Company } from "@/lib/admin";
 import { adminSetStatoOnboarding } from "@/lib/onboarding";
+import { supabase } from "@/lib/supabase";
 import { PLAN_MAP, type Plan } from "@/lib/categories";
+
+type FileOnb = { id: string; nome: string; url: string; created_at: string };
 
 const PIANI: Plan[] = ["free", "silver", "gold"];
 
@@ -76,6 +79,8 @@ export function AziendeAdmin() {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [sel, setSel] = useState<Record<string, Plan>>({});
+  // file onboarding caricati dalle aziende, raggruppati per owner (admin RLS)
+  const [onbFiles, setOnbFiles] = useState<Record<string, FileOnb[]>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -83,6 +88,16 @@ export function AziendeAdmin() {
     const r = await adminListCompanies();
     if (r.error) setError(r.error);
     else setCompanies(r.companies ?? []);
+    // documenti onboarding (admin può leggerli tutti via RLS)
+    const { data: fls } = await supabase
+      .from("onboarding_files")
+      .select("owner, id, nome, url, created_at")
+      .order("created_at", { ascending: false });
+    const grp: Record<string, FileOnb[]> = {};
+    for (const f of (fls as ({ owner: string } & FileOnb)[]) ?? []) {
+      (grp[f.owner] ??= []).push({ id: f.id, nome: f.nome, url: f.url, created_at: f.created_at });
+    }
+    setOnbFiles(grp);
     setLoading(false);
   }, []);
 
@@ -175,7 +190,11 @@ export function AziendeAdmin() {
               "(senza nome)";
             const piano = sel[c.userId] ?? c.plan;
             return (
-              <div key={c.userId} className="rounded-2xl border border-[#e3eed7] bg-white p-5">
+              <div
+                key={c.userId}
+                id={`onb-${c.userId}`}
+                className="scroll-mt-20 rounded-2xl border border-[#e3eed7] bg-white p-5"
+              >
                 {/* intestazione */}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -272,6 +291,32 @@ export function AziendeAdmin() {
                   <span>📦 Prodotti BioFido: {c.prodottiBiofido}</span>
                   {c.planStatus && <span>Stato piano: {c.planStatus}</span>}
                 </div>
+
+                {/* Documenti onboarding caricati dall'azienda (listino/foto) */}
+                {(onbFiles[c.userId]?.length ?? 0) > 0 && (
+                  <div className="mt-3 rounded-xl border border-badge-yellow bg-[#fffbe9] p-3">
+                    <div className="label mb-1">
+                      📎 Documenti onboarding ({onbFiles[c.userId].length})
+                    </div>
+                    <ul className="space-y-1">
+                      {onbFiles[c.userId].map((f) => (
+                        <li key={f.id} className="text-sm">
+                          <a
+                            href={f.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-green-700 hover:underline"
+                          >
+                            📄 {f.nome}
+                          </a>
+                          <span className="ml-2 text-[11px] text-green-900/50">
+                            {new Date(f.created_at).toLocaleDateString("it-IT")}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 {/* Onboarding «Ci pensiamo noi»: chiusura / richiesta integrazioni */}
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">

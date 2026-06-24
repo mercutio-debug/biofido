@@ -233,8 +233,9 @@ Deno.serve(async (req) => {
         email: "mauriziocapitelli@yahoo.it",
         title: "📎 Nuovo materiale onboarding caricato",
         body: `L'azienda ${emailAzienda} ha caricato per «Ci pensiamo noi»: ${rec.nome ?? "(file)"}.`,
-        url: `${SITE_URL}/admin/`,
-        ctaLabel: "Apri l'area admin",
+        // link diretto alla scheda dell'azienda nell'area admin (con i documenti)
+        url: `${SITE_URL}/admin/#onb-${rec.owner}`,
+        ctaLabel: "Vedi i documenti caricati",
       });
       return ok();
     }
