@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminListCompanies, adminSetPlan, type Company } from "@/lib/admin";
+import { adminSetStatoOnboarding } from "@/lib/onboarding";
 import { PLAN_MAP, type Plan } from "@/lib/categories";
 
 const PIANI: Plan[] = ["free", "silver", "gold"];
@@ -270,6 +271,33 @@ export function AziendeAdmin() {
                   <span>🛒 Prodotti ECO-VISA: {c.prodottiEcovisa}</span>
                   <span>📦 Prodotti BioFido: {c.prodottiBiofido}</span>
                   {c.planStatus && <span>Stato piano: {c.planStatus}</span>}
+                </div>
+
+                {/* Onboarding «Ci pensiamo noi»: chiusura / richiesta integrazioni */}
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm("Segnare l'onboarding come COMPLETATO? L'azienda potrà riacquistarlo per un nuovo giro.")) return;
+                      const r = await adminSetStatoOnboarding(c.userId, "completato");
+                      setMsg(r.error ? `Errore: ${r.error}` : `Onboarding completato per ${c.email}`);
+                    }}
+                    className="rounded-full bg-green-700 px-3 py-1 font-bold text-white hover:bg-green-800"
+                  >
+                    ✅ Onboarding completato
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const n = prompt("Cosa serve all'azienda? (le verrà inviato via mail + notifica + mostrato nella sua cornice)");
+                      if (!n) return;
+                      const r = await adminSetStatoOnboarding(c.userId, "integrazioni", n);
+                      setMsg(r.error ? `Errore: ${r.error}` : `Integrazioni richieste a ${c.email}`);
+                    }}
+                    className="rounded-full border border-traffic-red px-3 py-1 font-bold text-traffic-red hover:bg-red-50"
+                  >
+                    📌 Richiedi integrazioni
+                  </button>
                 </div>
               </div>
             );

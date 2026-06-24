@@ -239,6 +239,25 @@ Deno.serve(async (req) => {
       return ok();
     }
 
+    if (table === "onboarding_stato") {
+      // Quando il team chiede INTEGRAZIONI, avviso l'azienda (mail + push).
+      if (rec.stato === "integrazioni") {
+        await dispatch({
+          userId: rec.owner,
+          email: await emailOf(rec.owner),
+          title: "📌 Servono integrazioni per il tuo negozio",
+          body:
+            `Per completare il tuo negozio «Ci pensiamo noi» ci serve altro materiale:\n\n` +
+            `${rec.nota ?? "(dettagli nella tua dashboard)"}\n\n` +
+            `Carica i file mancanti nella cornice «Ci pensiamo noi» della tua dashboard, ` +
+            `poi premi di nuovo «Ho caricato tutto».`,
+          url: `${SITE_URL}/dashboard/`,
+          ctaLabel: "Carica il materiale",
+        });
+      }
+      return ok();
+    }
+
     return ok();
   } catch (e) {
     console.error(e);

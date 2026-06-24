@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SERVIZI_EXTRA } from "@/lib/servizi-extra";
 import { supabase } from "@/lib/supabase";
-import { getMyExtras } from "@/lib/onboarding";
+import { getMyExtras, getStatoOnboarding } from "@/lib/onboarding";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -58,6 +58,8 @@ export function ServiziExtra({
   const [now, setNow] = useState(() => Date.now());
   // servizi extra GIÀ acquistati (così non li si compra due volte)
   const [acquistati, setAcquistati] = useState<string[]>([]);
+  // stato dell'onboarding: finché non è "completato" non lo si può riacquistare
+  const [onbCompletato, setOnbCompletato] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -65,6 +67,7 @@ export function ServiziExtra({
       if (c) setIscrizione(new Date(c).getTime());
     });
     getMyExtras().then(setAcquistati);
+    getStatoOnboarding().then((s) => setOnbCompletato(s?.stato === "completato"));
   }, []);
 
   // ticker per il countdown live (1s) — attivo solo se serve (utente loggato)
@@ -105,7 +108,12 @@ export function ServiziExtra({
           // se il piano dell'azienda è inferiore a quello richiesto.
           const reqLabel = REQ_LABEL[s.key] ?? "Silver";
           const planLocked = planRank != null && planRank < (REQ_RANK[s.key] ?? 0);
-          const giaAcquistato = acquistati.includes(s.key);
+          // onboarding: "bloccato" finché il giro non è completato (poi riacquistabile);
+          // gli altri servizi: bloccati una volta acquistati.
+          const giaAcquistato =
+            s.key === "onboarding"
+              ? acquistati.includes("onboarding") && !onbCompletato
+              : acquistati.includes(s.key);
           // tasto azione: in dashboard (onAcquista) apre il popup; in vetrina, link
           const Azione = ({ label }: { label: string }) =>
             onAcquista ? (

@@ -77,6 +77,51 @@ export async function listaFileOnboarding(): Promise<FileOnboarding[]> {
   return (data as FileOnboarding[]) ?? [];
 }
 
+/* ---- Stato del processo onboarding ----------------------------------------
+ * in_corso     → acquistato, l'azienda sta caricando i file
+ * inviato      → l'azienda ha premuto "ho caricato tutto": tocca a noi
+ * integrazioni → il nostro team ha chiesto altro materiale (nota = cosa serve)
+ * completato   → abbiamo finito: l'onboarding si può riacquistare per un nuovo giro
+ */
+export type StatoOnboarding = "in_corso" | "inviato" | "integrazioni" | "completato";
+
+export async function getStatoOnboarding(): Promise<{ stato: StatoOnboarding; nota: string | null } | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from("onboarding_stato")
+    .select("stato, nota")
+    .eq("owner", user.id)
+    .maybeSingle();
+  return (data as { stato: StatoOnboarding; nota: string | null } | null) ?? null;
+}
+
+/** L'azienda conferma di aver caricato tutto → tocca al nostro team. */
+export async function confermaCaricamentoCompleto(): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sessione scaduta: accedi di nuovo.");
+  const { error } = await supabase
+    .from("onboarding_stato")
+    .upsert({ owner: user.id, stato: "inviato", updated_at: new Date().toISOString() });
+  if (error) throw new Error(error.message);
+}
+
+/** (ADMIN) imposta lo stato dell'onboarding di un'azienda (RLS: solo admin). */
+export async function adminSetStatoOnboarding(
+  owner: string,
+  stato: StatoOnboarding,
+  nota?: string,
+): Promise<{ error?: string }> {
+  const { error } = await supabase
+    .from("onboarding_stato")
+    .upsert({ owner, stato, nota: nota ?? null, updated_at: new Date().toISOString() });
+  return error ? { error: error.message } : {};
+}
+
 /** Rimuove un file caricato (riga + oggetto nello storage). */
 export async function eliminaFileOnboarding(id: string): Promise<void> {
   const { data } = await supabase
