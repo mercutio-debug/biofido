@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import { PLAN_MAP, type Plan } from "@/lib/categories";
 import { SERVIZI_EXTRA } from "@/lib/servizi-extra";
+import { onboardingInCorso } from "@/lib/onboarding";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -190,6 +191,11 @@ export function PianiAbbonamento({
   const [period, setPeriod] = useState<Period>("annual");
   const [, forceExtra] = useState(0);
   useEffect(() => onExtraChange(() => forceExtra((n) => n + 1)), []);
+  // onboarding già in corso (acquistato, non completato): non riacquistabile
+  const [onbInCorso, setOnbInCorso] = useState(false);
+  useEffect(() => {
+    onboardingInCorso().then(setOnbInCorso);
+  }, []);
   // piano di riferimento per il gating dei servizi (dashboard); null = pagina pubblica
   const pianoRif: Plan | null = selectedPlan ?? currentPlan ?? null;
 
@@ -330,7 +336,8 @@ export function PianiAbbonamento({
         </p>
         <ul className="mt-3 space-y-2">
           {SERVIZI_EXTRA.map((s) => {
-            const ok = pianoRif ? SERVIZI_PER_PIANO[pianoRif].includes(s.key) : false;
+            const bloccatoOnb = s.key === "onboarding" && onbInCorso;
+            const ok = pianoRif ? SERVIZI_PER_PIANO[pianoRif].includes(s.key) && !bloccatoOnb : false;
             const on = ok && isExtraScelto(s.key);
             return (
               <li
@@ -356,7 +363,11 @@ export function PianiAbbonamento({
                   </span>
                 )}
                 <span className="text-sm text-green-900/70">{s.prezzo}</span>
-                {!ok && (
+                {bloccatoOnb ? (
+                  <span className="rounded-full bg-[#fff3d4] px-2 py-0.5 text-[11px] font-bold text-[#7a1f00]">
+                    ✓ già in corso — carica il materiale in fondo
+                  </span>
+                ) : !ok && (
                   <span className="rounded-full bg-[#fff3d4] px-2 py-0.5 text-[11px] font-bold text-[#7a5a00]">
                     richiede {REQ_SERVIZIO[s.key]}
                   </span>

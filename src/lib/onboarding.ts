@@ -39,6 +39,16 @@ export async function haiOnboarding(): Promise<boolean> {
   return (await getMyExtras()).includes("onboarding");
 }
 
+/**
+ * true se c'è un onboarding IN CORSO (acquistato e non ancora "completato" dal
+ * nostro team): in questo caso NON va riproposto/riacquistabile da nessuna parte
+ * (checkbox servizi, banner Gold, carrello) finché non lo chiudiamo.
+ */
+export async function onboardingInCorso(): Promise<boolean> {
+  const [extras, stato] = await Promise.all([getMyExtras(), getStatoOnboarding()]);
+  return extras.includes("onboarding") && stato?.stato !== "completato";
+}
+
 /** Carica un file (listino/foto) per l'onboarding e lo registra. */
 export async function caricaFileOnboarding(file: File): Promise<FileOnboarding> {
   if (file.size > MAX_BYTES) throw new Error("File troppo grande (max 25 MB).");

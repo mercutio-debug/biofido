@@ -10,6 +10,7 @@ import {
 } from "@/lib/extra-selezionati";
 import { startCheckout, changePlan } from "@/lib/billing";
 import { caricaDatiFatturazione, datiCompleti } from "@/lib/fatturazione";
+import { onboardingInCorso } from "@/lib/onboarding";
 import { LEGALE } from "@/lib/legale";
 
 /** Consensi obbligatori prima del pagamento dell'abbonamento (qui il venditore
@@ -75,6 +76,11 @@ export function PurchasePopup({
   }, []);
   const [spunte, setSpunte] = useState<Record<string, boolean>>({});
   const consensiOk = CONSENSI_ABBONAMENTO.every((c) => spunte[c.id]);
+  // onboarding già in corso → non riacquistabile dal carrello
+  const [onbInCorso, setOnbInCorso] = useState(false);
+  useEffect(() => {
+    onboardingInCorso().then(setOnbInCorso);
+  }, []);
 
   const ammessi = SERVIZI_PER_PIANO[plan] ?? [];
   const selezionati = SERVIZI_EXTRA.filter(
@@ -176,6 +182,18 @@ export function PurchasePopup({
             </div>
             <div className="mt-2 space-y-2">
               {SERVIZI_EXTRA.filter((s) => ammessi.includes(s.key)).map((s) => {
+                // onboarding già in corso → non riacquistabile: riga informativa
+                if (s.key === "onboarding" && onbInCorso) {
+                  return (
+                    <div
+                      key={s.key}
+                      className="rounded-xl border-2 border-badge-yellow bg-[#fffbe9] p-3 text-sm font-semibold text-[#7a1f00]"
+                    >
+                      🚀 {s.nome}: ✓ già in corso — carica il materiale nella cornice «Ci
+                      pensiamo noi» in fondo alla dashboard.
+                    </div>
+                  );
+                }
                 const on = isExtraScelto(s.key);
                 return (
                   <button

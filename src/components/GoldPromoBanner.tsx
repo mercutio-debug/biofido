@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { isExtraScelto, setExtraScelto, onExtraChange } from "@/lib/extra-selezionati";
+import { onboardingInCorso } from "@/lib/onboarding";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -20,8 +21,14 @@ export function GoldPromoBanner({
 }) {
   const [, force] = useState(0);
   useEffect(() => onExtraChange(() => force((n) => n + 1)), []);
-  // l'onboarding è un servizio GOLD: spuntabile solo col piano Gold
-  const canOnboarding = plan === "gold";
+  // onboarding GIÀ in corso (acquistato, non ancora completato dal team): non
+  // va riacquistato → checkbox disattivata + invito a caricare il materiale.
+  const [inCorso, setInCorso] = useState(false);
+  useEffect(() => {
+    onboardingInCorso().then(setInCorso);
+  }, []);
+  // l'onboarding è un servizio GOLD: spuntabile solo col piano Gold e se non è già in corso
+  const canOnboarding = plan === "gold" && !inCorso;
   const onboarding = canOnboarding && isExtraScelto("onboarding");
   // se non è Gold, non deve restare selezionato (es. dopo un cambio piano)
   useEffect(() => {
@@ -86,7 +93,12 @@ export function GoldPromoBanner({
               <span className="mt-1 block text-sm text-green-900/75">
                 Tu ci mandi listino e foto, noi creiamo il tuo negozio online completo
                 (il servizio «Ci pensiamo noi»).{" "}
-                {!canOnboarding ? (
+                {inCorso ? (
+                  <strong className="text-[#7a1f00]">
+                    ✓ Onboarding già in corso — vai in fondo alla pagina, nella cornice «Ci
+                    pensiamo noi», per caricare il tuo materiale.
+                  </strong>
+                ) : !canOnboarding ? (
                   <strong className="text-[#7a5a00]">🔒 Disponibile con il piano Gold.</strong>
                 ) : onboarding ? (
                   <strong className="text-green-700">Aggiunto: lo paghi col tuo Gold ✓</strong>
