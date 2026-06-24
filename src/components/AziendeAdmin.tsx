@@ -244,6 +244,28 @@ export function AziendeAdmin() {
                   </div>
                 </div>
 
+                {/* Immagini di copertina: controllo contenuti (inappropriati) */}
+                {(() => {
+                  const imgAz = (c.azienda as Record<string, unknown> | null)?.immagine;
+                  const imgBz = (c.business as Record<string, unknown> | null)?.immagine;
+                  if (!imgAz && !imgBz) return null;
+                  return (
+                    <div className="mt-3">
+                      <div className="label mb-1">Immagini (controllo contenuti)</div>
+                      <div className="flex flex-wrap gap-2">
+                        {imgAz && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={String(imgAz)} alt="copertina azienda" className="h-24 w-24 rounded-lg border border-[#e3eed7] object-cover" />
+                        )}
+                        {imgBz && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={String(imgBz)} alt="copertina BioFido" className="h-24 w-24 rounded-lg border border-[#e3eed7] object-cover" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="mt-3 flex flex-wrap gap-4 text-xs font-semibold text-green-900/60">
                   <span>🛒 Prodotti ECO-VISA: {c.prodottiEcovisa}</span>
                   <span>📦 Prodotti BioFido: {c.prodottiBiofido}</span>
