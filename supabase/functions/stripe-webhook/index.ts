@@ -260,9 +260,13 @@ async function setPlan(
 }
 
 type ArtMag = { prodottoId?: string; qta?: number };
+const SCORTA_BASSA = 3; // soglia "in esaurimento"
+type AvvisoScorta = { nome: string; giacenza: number };
+
 /** Fase E magazzino: alla vendita scala la giacenza dei prodotti.
  *  ECO-VISA → tabella `prodotti` (id stabili); BioFido → JSON `products` su
- *  biofido_businesses (best-effort, solo se il prodotto ha id + giacenza). */
+ *  biofido_businesses (best-effort, solo se il prodotto ha id + giacenza).
+ *  In più: avvisa l'azienda quando un prodotto va in esaurimento o esaurito. */
 async function scalaMagazzino(ord: {
   owner: string;
   portale: string | null;
@@ -272,6 +276,7 @@ async function scalaMagazzino(ord: {
   const items =
     ord.controproposta && ord.controproposta.length ? ord.controproposta : ord.articoli ?? [];
   if (!items.length) return;
+  const avvisi: AvvisoScorta[] = [];
   try {
     if (ord.portale === "BioFido") {
       const { data: biz } = await admin
@@ -279,14 +284,16 @@ async function scalaMagazzino(ord: {
         .select("id, products")
         .eq("owner", ord.owner)
         .maybeSingle();
-      const prods = (biz?.products as { id?: string; giacenza?: number }[] | null) ?? null;
+      const prods = (biz?.products as { id?: string; name?: string; giacenza?: number }[] | null) ?? null;
       if (biz && prods) {
         let changed = false;
         const next = prods.map((p) => {
           const art = items.find((a) => a.prodottoId && a.prodottoId === p.id);
           if (art && typeof p.giacenza === "number") {
             changed = true;
-            return { ...p, giacenza: Math.max(0, p.giacenza - (art.qta || 0)) };
+            const g = Math.max(0, p.giacenza - (art.qta || 0));
+            if (g <= SCORTA_BASSA) avvisi.push({ nome: p.name ?? "(prodotto)", giacenza: g });
+            return { ...p, giacenza: g };
           }
           return p;
         });
@@ -297,20 +304,70 @@ async function scalaMagazzino(ord: {
         if (!a.prodottoId) continue;
         const { data: pr } = await admin
           .from("prodotti")
-          .select("giacenza")
+          .select("giacenza, nome")
           .eq("id", a.prodottoId)
           .maybeSingle();
-        const g = (pr as { giacenza?: number | null } | null)?.giacenza;
-        if (typeof g === "number") {
-          await admin
-            .from("prodotti")
-            .update({ giacenza: Math.max(0, g - (a.qta || 0)) })
-            .eq("id", a.prodottoId);
+        const row = pr as { giacenza?: number | null; nome?: string } | null;
+        if (typeof row?.giacenza === "number") {
+          const g = Math.max(0, row.giacenza - (a.qta || 0));
+          await admin.from("prodotti").update({ giacenza: g }).eq("id", a.prodottoId);
+          if (g <= SCORTA_BASSA) avvisi.push({ nome: row.nome ?? "(prodotto)", giacenza: g });
         }
       }
     }
+    if (avvisi.length) await avvisaScorte(ord.owner, avvisi);
   } catch (e) {
     console.error("stripe-webhook: scalaMagazzino errore:", (e as Error).message);
+  }
+}
+
+/** Avvisa l'azienda (email + SMS Gold best-effort) quando un prodotto è in
+ *  esaurimento (≤ soglia) o esaurito (0), così può rifornire o aggiornare lo stock. */
+async function avvisaScorte(owner: string, avvisi: AvvisoScorta[]): Promise<void> {
+  const esauriti = avvisi.filter((a) => a.giacenza === 0);
+  const bassi = avvisi.filter((a) => a.giacenza > 0);
+  const righe = avvisi
+    .map((a) => `• ${a.nome}: ${a.giacenza === 0 ? "ESAURITO" : `rimaste ${a.giacenza}`}`)
+    .join("\n");
+
+  if (RESEND_API_KEY) {
+    const to = await (async () => {
+      const { data } = await admin.auth.admin.getUserById(owner);
+      return data?.user?.email ?? null;
+    })();
+    if (to) {
+      const html = emailLayout({
+        title: esauriti.length ? "⚠️ Prodotti esauriti" : "📉 Scorte in esaurimento",
+        bodyHtml: `<p style="margin:0 0 12px;">Aggiorna il magazzino o rifornisci questi prodotti:</p>
+          <p style="margin:0;white-space:pre-line;">${esc(righe)}</p>`,
+        ctaLabel: SITE_URL ? "Aggiorna il magazzino" : undefined,
+        ctaUrl: SITE_URL ? `${SITE_URL}/dashboard/` : undefined,
+        footerNote: "I clienti non possono ordinare oltre la giacenza disponibile.",
+      });
+      const r = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: NOTIFY_FROM,
+          to,
+          subject: esauriti.length ? "⚠️ Hai prodotti esauriti" : "📉 Scorte in esaurimento",
+          html,
+        }),
+      });
+      if (!r.ok) console.error(`stripe-webhook: Resend scorte ${r.status}: ${await r.text()}`);
+    }
+  }
+  // SMS Gold best-effort (no-op finché il fornitore SMS non è collegato)
+  try {
+    await avvisaAziendaOrdineSms(
+      owner,
+      `${SMS_SENDER}: ${esauriti.length ? "prodotti ESAURITI" : "scorte basse"}. ${bassi
+        .concat(esauriti)
+        .map((a) => `${a.nome} (${a.giacenza})`)
+        .join(", ")}. Aggiorna il magazzino.`,
+    );
+  } catch (e) {
+    console.error("stripe-webhook: SMS scorte errore:", (e as Error).message);
   }
 }
 
