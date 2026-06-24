@@ -304,6 +304,9 @@ Deno.serve(async (req) => {
             status: "active",
             stripe_customer_id: s.customer as string,
             stripe_subscription_id: s.subscription as string,
+            // servizi extra acquistati con l'abbonamento (es. "onboarding,badge"):
+            // serve a "accendere" l'onboarding nella dashboard.
+            ...(s.metadata?.extras ? { extras: s.metadata.extras } : {}),
           });
           // avvisa l'admin con il riepilogo per la fattura (Aruba non ancora collegato)
           await avvisaAdminPagamento(s, userId, plan);

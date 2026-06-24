@@ -32,6 +32,7 @@ import { billingEnabled, startCheckout, openCustomerPortal, changePlan } from "@
 import { getExtraScelti } from "@/lib/extra-selezionati";
 import { PurchasePopup } from "@/components/PurchasePopup";
 import { DashboardPlanHeader } from "@/components/DashboardPlanHeader";
+import { OnboardingCard } from "@/components/OnboardingCard";
 import { DatiFatturazioneForm, type PrefillFatturazione } from "@/components/DatiFatturazioneForm";
 import { SezioneBio } from "@/components/SezioneBio";
 import { SchedaServizi } from "@/components/SchedaServizi";
@@ -200,6 +201,9 @@ export default function DashboardPage() {
       )}
 
       <GoldPromoBanner portale="BioFido" plan={pianoScelto} />
+
+      {/* «Ci pensiamo noi»: compare solo se l'azienda ha acquistato l'onboarding */}
+      <OnboardingCard />
 
       <SchedaServizi piano={pianoScelto} attivo={activePlan} />
 
