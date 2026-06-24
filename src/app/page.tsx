@@ -7,7 +7,7 @@ import { OnboardingPromo } from "@/components/OnboardingPromo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  alternates: { canonical: "https://mercutio-debug.github.io/biofido/" },
+  alternates: { canonical: "https://biofido.it/" },
 };
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";

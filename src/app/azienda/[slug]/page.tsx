@@ -11,7 +11,7 @@ import { SchedaPubblicaClient } from "@/components/SchedaPubblicaClient";
 // geo. Generata al build dalle attività iscritte (fallback dati demo). Diventa
 // di fatto il "mini-sito" del produttore, da condividere su social/mail/carta.
 
-const SITE = "https://mercutio-debug.github.io/biofido";
+const SITE = "https://biofido.it";
 
 export const dynamicParams = false;
 

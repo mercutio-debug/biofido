@@ -26,7 +26,7 @@ export async function generateMetadata({
       `${r.nAttivita} produttori, negozi e ristoranti bio. Spesa a chilometro zero ` +
       `e filiera corta, vicino a te, con BioFido.`,
     alternates: {
-      canonical: `https://mercutio-debug.github.io/biofido/bio/regione/${r.slug}/`,
+      canonical: `https://biofido.it/bio/regione/${r.slug}/`,
     },
   };
 }
@@ -50,7 +50,7 @@ export default async function RegioneBioPage({
     hasPart: r.zone.map((z) => ({
       "@type": "WebPage",
       name: `Attività biologiche a ${z.citta}`,
-      url: `https://mercutio-debug.github.io/biofido/bio/${z.slug}/`,
+      url: `https://biofido.it/bio/${z.slug}/`,
     })),
   };
 

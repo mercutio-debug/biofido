@@ -14,4 +14,4 @@ export const SOLO_BIO = true;
 
 /** URL dell'altro portale (per le proposte di iscrizione incrociata). */
 export const URL_ECOVISA = "https://ecovisa.it";
-export const URL_BIOFIDO = "https://mercutio-debug.github.io/biofido/";
+export const URL_BIOFIDO = "https://biofido.it/";

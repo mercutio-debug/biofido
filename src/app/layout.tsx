@@ -26,13 +26,17 @@ const barlow = Barlow({
 });
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const SITE = "https://mercutio-debug.github.io/biofido";
+const SITE = "https://biofido.it";
+// Il mirror su GitHub Pages (build con GITHUB_PAGES=true) è un DOPPIONE di
+// biofido.it: lo marchiamo noindex così Google indicizza solo il dominio vero.
+const isGitHubPages = process.env.GITHUB_PAGES === "true";
 const TITLE = "BioFido — il segugio del biologico vicino a te";
 const DESCRIPTION =
   "BioFido trova sulla mappa i produttori, i negozi e le attività biologiche vicino alla tua posizione, fino a 70 km (chilometro zero), e ti aiuta a raggiungerli.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
+  robots: isGitHubPages ? { index: false, follow: true } : { index: true, follow: true },
   title: TITLE,
   description: DESCRIPTION,
   applicationName: "BioFido",

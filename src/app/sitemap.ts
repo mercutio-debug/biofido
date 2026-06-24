@@ -4,7 +4,7 @@ import { elencoBusinessConSlug } from "@/lib/biofido-data";
 
 // Sitemap statica (output: export). BioFido è servito da GitHub Pages nella
 // sottocartella /biofido: gli URL includono quel prefisso.
-const BASE = "https://mercutio-debug.github.io/biofido";
+const BASE = "https://biofido.it";
 
 export const dynamic = "force-static";
 

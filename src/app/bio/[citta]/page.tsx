@@ -25,7 +25,7 @@ export async function generateMetadata({
       `${z.attivita.length} attività biologiche a ${z.citta}${cat ? `: ${cat}` : ""}. ` +
       `Trova produttori, negozi e ristoranti bio vicino a te e raggiungili sulla mappa di BioFido.`,
     alternates: {
-      canonical: `https://mercutio-debug.github.io/biofido/bio/${z.slug}/`,
+      canonical: `https://biofido.it/bio/${z.slug}/`,
     },
   };
 }

@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Servizi extra · BioFido",
   description:
     "Potenzia la tua attività bio: «Ci pensiamo noi» (ti mettiamo online noi), report di sostenibilità brandizzato e badge fisico verificato.",
-  alternates: { canonical: "https://mercutio-debug.github.io/biofido/servizi-extra/" },
+  alternates: { canonical: "https://biofido.it/servizi-extra/" },
 };
 
 export default function ServiziExtraPage() {

@@ -5,7 +5,7 @@ export const metadata = {
   title: "Attività biologiche per città: produttori, negozi e ristoranti bio | BioFido",
   description:
     "Scegli la tua città e scopri produttori, negozi e ristoranti biologici vicino a te. Spesa a chilometro zero e filiera corta con BioFido.",
-  alternates: { canonical: "https://mercutio-debug.github.io/biofido/bio/" },
+  alternates: { canonical: "https://biofido.it/bio/" },
 };
 
 export default async function BioIndex() {
