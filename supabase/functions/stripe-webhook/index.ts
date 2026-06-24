@@ -300,14 +300,24 @@ Deno.serve(async (req) => {
         const userId = s.metadata?.user_id ?? s.client_reference_id ?? "";
         const plan = (s.metadata?.plan as "silver" | "gold") ?? "silver";
         if (userId) {
+          // 1) ATTIVA il piano (operazione critica: NON deve dipendere da altro)
           await setPlan(userId, plan, {
             status: "active",
             stripe_customer_id: s.customer as string,
             stripe_subscription_id: s.subscription as string,
-            // servizi extra acquistati con l'abbonamento (es. "onboarding,badge"):
-            // serve a "accendere" l'onboarding nella dashboard.
-            ...(s.metadata?.extras ? { extras: s.metadata.extras } : {}),
           });
+          // 2) salva gli extra acquistati (es. "onboarding,badge") A PARTE e in
+          //    BEST-EFFORT: se la colonna `extras` non esiste, logga e prosegue —
+          //    così una colonna mancante non potrà MAI bloccare l'attivazione.
+          if (s.metadata?.extras) {
+            const { error: exErr } = await admin
+              .from("subscriptions")
+              .update({ extras: s.metadata.extras })
+              .eq("user_id", userId);
+            if (exErr) {
+              console.error("stripe-webhook: extras non salvati (colonna assente?):", exErr.message);
+            }
+          }
           // avvisa l'admin con il riepilogo per la fattura (Aruba non ancora collegato)
           await avvisaAdminPagamento(s, userId, plan);
         }
