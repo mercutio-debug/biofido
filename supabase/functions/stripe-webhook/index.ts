@@ -33,30 +33,47 @@ const NOTIFY_FROM = Deno.env.get("NOTIFY_FROM") ?? "ECO-VISA & BioFido <noreply@
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") ?? "mauriziocapitelli@yahoo.it";
 const SITE_URL = Deno.env.get("SITE_URL") ?? "";
 
-// Notifiche SMS (funzione GOLD) — il fornitore NON è ancora collegato.
-// Quando lo attiveremo basterà: (1) impostare i segreti SMS_API_KEY (+ SMS_SENDER
-// e l'eventuale endpoint) su Edge Functions; (2) completare la fetch dentro
-// sendSms() con l'API del fornitore scelto. Finché SMS_API_KEY è assente, l'SMS
-// viene saltato (loggato), senza errori.
+// Notifiche SMS (funzione GOLD) — fornitore: Smshosting (LINK Mobility), REST API.
+// SEGRETI su Edge Functions: SMS_API_KEY (=AUTH_KEY), SMS_API_SECRET (=AUTH_SECRET),
+// SMS_SENDER (mittente alfanumerico registrato su Smshosting, max 11 caratteri).
+// Finché le chiavi non ci sono, l'SMS viene saltato (loggato), senza errori.
 const SMS_API_KEY = Deno.env.get("SMS_API_KEY");
+const SMS_API_SECRET = Deno.env.get("SMS_API_SECRET");
 const SMS_SENDER = Deno.env.get("SMS_SENDER") ?? "EcoVisa";
 
-/** Invio SMS — STUB pronto da collegare al fornitore. */
+/** Normalizza un numero italiano in formato internazionale (+39…). */
+function normalizzaNumero(n: string): string {
+  let s = (n || "").replace(/[\s.\-()]/g, "");
+  if (s.startsWith("+")) return s;
+  if (s.startsWith("00")) return "+" + s.slice(2);
+  if (s.startsWith("39")) return "+" + s;
+  if (s.startsWith("3")) return "+39" + s; // cellulare IT senza prefisso
+  return s;
+}
+
+/** Invio SMS via Smshosting (REST, Basic auth AUTH_KEY:AUTH_SECRET). */
 async function sendSms(to: string, body: string): Promise<void> {
-  if (!SMS_API_KEY) {
-    console.log(`sms: fornitore non collegato (SMS_API_KEY assente) — SMS a ${to} saltato`);
+  if (!SMS_API_KEY || !SMS_API_SECRET) {
+    console.log(`sms: chiavi Smshosting assenti — SMS a ${to} saltato`);
     return;
   }
   try {
-    // TODO collegare il fornitore SMS qui. Esempio generico:
-    // const r = await fetch("https://api.fornitore-sms.it/v1/messages", {
-    //   method: "POST",
-    //   headers: { Authorization: `Bearer ${SMS_API_KEY}`, "Content-Type": "application/json" },
-    //   body: JSON.stringify({ from: SMS_SENDER, to, text: body }),
-    // });
-    // if (!r.ok) console.error(`sms: fornitore ha risposto ${r.status}: ${await r.text()}`);
-    // else console.log(`sms: inviato a ${to}`);
-    console.log(`sms: (placeholder, fornitore da collegare) invierei a ${to} [${SMS_SENDER}]: ${body}`);
+    const auth = btoa(`${SMS_API_KEY}:${SMS_API_SECRET}`);
+    const params = new URLSearchParams({
+      from: SMS_SENDER,
+      to: normalizzaNumero(to),
+      text: body,
+    });
+    const r = await fetch("https://api.smshosting.it/rest/api/sms/send", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+    });
+    if (!r.ok) console.error(`sms: Smshosting ha risposto ${r.status}: ${await r.text()}`);
+    else console.log(`sms: inviato a ${normalizzaNumero(to)}`);
   } catch (e) {
     console.error("sms: errore invio:", (e as Error).message);
   }
