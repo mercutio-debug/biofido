@@ -1,0 +1,10 @@
+# Redirect 301 di biofido.org → biofido.it (consolida la SEO sul dominio .it).
+# La regola è HOST-CONDIZIONATA: scatta SOLO quando l'host richiesto è
+# biofido.org (o www.biofido.org), quindi NON ha alcun effetto su biofido.it.
+# Vale a patto che biofido.org sia puntato sullo stesso hosting/public_html.
+# (In alternativa, più semplice: usare "Inoltro del dominio" nel pannello Hostinger.)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^(www\.)?biofido\.org$ [NC]
+  RewriteRule ^(.*)$ https://biofido.it/$1 [R=301,L]
+</IfModule>
