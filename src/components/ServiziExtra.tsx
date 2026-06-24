@@ -40,11 +40,15 @@ function formatRimanente(ms: number): string {
 export function ServiziExtra({
   showPrices = false,
   plan,
+  onAcquista,
 }: {
   showPrices?: boolean;
   /** piano dell'azienda loggata (in dashboard): attiva il gating dei servizi.
    *  Se assente (vetrina pubblica), i servizi sono mostrati senza blocco. */
   plan?: string;
+  /** se presente (dashboard), i tasti d'acquisto APRONO IL POPUP carrello invece
+   *  di navigare a /abbonamenti. Riceve la key del servizio. */
+  onAcquista?: (key: string) => void;
 }) {
   const planRank = plan != null ? PLAN_RANK[plan] ?? 0 : null;
   const [demo, setDemo] = useState<{ key: string; nome: string } | null>(null);
@@ -97,6 +101,21 @@ export function ServiziExtra({
           // se il piano dell'azienda è inferiore a quello richiesto.
           const reqLabel = REQ_LABEL[s.key] ?? "Silver";
           const planLocked = planRank != null && planRank < (REQ_RANK[s.key] ?? 0);
+          // tasto azione: in dashboard (onAcquista) apre il popup; in vetrina, link
+          const Azione = ({ label }: { label: string }) =>
+            onAcquista ? (
+              <button
+                type="button"
+                onClick={() => onAcquista(s.key)}
+                className="btn-lime mt-2 justify-center text-sm"
+              >
+                {label}
+              </button>
+            ) : (
+              <Link href="/abbonamenti" className="btn-lime mt-2 justify-center text-sm">
+                {label}
+              </Link>
+            );
           return (
             <div key={s.key} className={`card flex flex-col p-5 ${planLocked ? "opacity-70" : ""}`}>
               <div className="text-2xl">{s.emoji}</div>
@@ -129,9 +148,7 @@ export function ServiziExtra({
 
               {/* Azione: priorità → blocco piano → countdown report → auguri → acquista */}
               {planLocked ? (
-                <Link href="/abbonamenti" className="btn-lime mt-2 justify-center text-sm">
-                  ⬆ Passa al piano {reqLabel}
-                </Link>
+                <Azione label={`⬆ Passa al piano ${reqLabel}`} />
               ) : reportBloccato ? (
                 <div className="mt-2 rounded-xl border border-[#e3eed7] bg-leaf/40 p-3 text-center">
                   <div className="text-xs font-semibold text-green-900/70">
@@ -147,14 +164,10 @@ export function ServiziExtra({
                     🎉 È trascorso un anno dalla tua iscrizione, complimenti! Ora puoi
                     richiedere il tuo report di sostenibilità!!
                   </div>
-                  <Link href="/abbonamenti" className="btn-lime mt-2 justify-center text-sm">
-                    🛒 Richiedi {s.nome}
-                  </Link>
+                  <Azione label={`🛒 Richiedi ${s.nome}`} />
                 </>
               ) : (
-                <Link href="/abbonamenti" className="btn-lime mt-2 justify-center text-sm">
-                  🛒 Acquista {s.nome}
-                </Link>
+                <Azione label={`🛒 Acquista ${s.nome}`} />
               )}
             </div>
           );

@@ -29,7 +29,7 @@ import {
   type PassoKey,
 } from "@/lib/funzioni";
 import { billingEnabled, startCheckout, openCustomerPortal } from "@/lib/billing";
-import { getExtraScelti } from "@/lib/extra-selezionati";
+import { getExtraScelti, setExtraScelto } from "@/lib/extra-selezionati";
 import { PurchasePopup } from "@/components/PurchasePopup";
 import { DashboardPlanHeader } from "@/components/DashboardPlanHeader";
 import { OnboardingCard } from "@/components/OnboardingCard";
@@ -131,6 +131,18 @@ export default function DashboardPage() {
     if (p !== "free") setPopupPag({ plan: p, period: per });
   }
 
+  // Acquisto di un SERVIZIO EXTRA dalla dashboard: apre il popup-carrello sul
+  // piano minimo che lo include (o sul piano attuale), col servizio preselezionato.
+  function acquistaServizio(key: string) {
+    const need = key === "onboarding" ? 2 : 1;
+    const rank: Record<string, number> = { free: 0, silver: 1, gold: 2 };
+    const target: Plan = (rank[activePlan] ?? 0) >= need ? (activePlan as Plan) : need >= 2 ? "gold" : "silver";
+    setExtraScelto(key, true);
+    setPianoScelto(target);
+    setPeriodo(periodo);
+    setPopupPag({ plan: target, period: periodo });
+  }
+
   if (authLoading || loading) {
     return <div className="mx-auto max-w-4xl px-4 py-16 text-green-900/70">Caricamento…</div>;
   }
@@ -210,7 +222,7 @@ export default function DashboardPage() {
               Potenzia la tua attività. Guarda la demo di ciascun servizio.
             </p>
             <div className="mt-4">
-              <ServiziExtra showPrices plan={activePlan} />
+              <ServiziExtra showPrices plan={activePlan} onAcquista={acquistaServizio} />
             </div>
           </section>
         </>
