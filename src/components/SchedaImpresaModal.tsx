@@ -9,6 +9,7 @@ import { loadCatalogo, TIPI_VOCE, type VoceCatalogo } from "@/lib/catalogo";
 import { registraEvento } from "@/lib/statistiche";
 import type { Business, Product } from "@/lib/biofido-data";
 import { OrdineProdottoModal } from "@/components/OrdineProdottoModal";
+import { ProdottoDettaglioBio } from "@/components/ProdottoDettaglioBio";
 import { SegnalaModal } from "@/components/SegnalaModal";
 import { supabase } from "@/lib/supabase";
 import { addToCart } from "@/lib/carrello";
@@ -48,7 +49,7 @@ export function SchedaImpresaModal({
   const dir = `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lon}`;
   const prodotti = (plan.showProducts ? b.products ?? [] : []).slice(0, plan.maxProducts);
   // prodotto "aperto" (espanso): mostra descrizione completa + foto grande
-  const [apertoProd, setApertoProd] = useState<number | null>(null);
+  const [prodottoAperto, setProdottoAperto] = useState<{ p: Product; i: number } | null>(null);
   const sede = { lat: b.lat, lon: b.lon };
   const esperienze = plan.canSell ? b.experiences?.filter((e) => e.attiva) ?? [] : [];
 
@@ -228,14 +229,12 @@ export function SchedaImpresaModal({
                 >
                   <div
                     className="flex cursor-pointer items-center gap-3"
-                    onClick={() => setApertoProd(apertoProd === i ? null : i)}
+                    onClick={() => setProdottoAperto({ p, i })}
                     title="Tocca per vedere i dettagli del prodotto"
                   >
-                    {/* foto: solo Gold (su downgrade sparisce). Grande se aperto. */}
+                    {/* foto: solo Gold (su downgrade sparisce) */}
                     {b.plan === "gold" && p.image && (
-                      <div
-                        className={`${apertoProd === i ? "h-24 w-24" : "h-14 w-14"} shrink-0 overflow-hidden rounded-lg transition-all`}
-                      >
+                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={p.image}
@@ -268,15 +267,9 @@ export function SchedaImpresaModal({
                         )}
                       </div>
                       {p.description && (
-                        <div
-                          className={`text-xs text-green-900/60 ${apertoProd === i ? "whitespace-pre-line" : "truncate"}`}
-                        >
-                          {p.description}
-                        </div>
+                        <div className="truncate text-xs text-green-900/60">{p.description}</div>
                       )}
-                      {p.description && apertoProd !== i && (
-                        <div className="text-[10px] font-semibold text-green-700">tocca per i dettagli ▾</div>
-                      )}
+                      <div className="text-[10px] font-semibold text-green-700">tocca per la scheda ▾</div>
                       {(p.confezione || p.contenuto != null) && (
                         <div className="text-xs font-semibold text-green-900/70">
                           {[
@@ -307,21 +300,6 @@ export function SchedaImpresaModal({
                     >
                       ✨ Prenota / richiedi
                     </button>
-                  )}
-                  {b.plan === "gold" && p.foto2 && apertoProd === i && (
-                    <figure>
-                      <div className="h-24 w-full overflow-hidden rounded-lg">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={p.foto2}
-                          alt={`${p.name} — etichetta`}
-                          className="h-24 w-full object-cover transition-transform duration-300 hover:scale-150"
-                        />
-                      </div>
-                      <figcaption className="mt-1 text-center text-xs font-semibold text-green-900/60">
-                        Etichetta
-                      </figcaption>
-                    </figure>
                   )}
                   {b.plan === "gold" &&
                     p.in_shop &&
@@ -512,6 +490,28 @@ export function SchedaImpresaModal({
             prodottoNome={segnala.nome}
             portale="BioFido"
             onClose={() => setSegnala(null)}
+          />
+        )}
+
+        {prodottoAperto && (
+          <ProdottoDettaglioBio
+            p={prodottoAperto.p}
+            gold={b.plan === "gold"}
+            canSell={plan.canSell}
+            sede={sede}
+            onClose={() => setProdottoAperto(null)}
+            onPrenota={
+              onPrenotaServizio
+                ? () => {
+                    onPrenotaServizio(b, prodottoAperto.p);
+                    setProdottoAperto(null);
+                  }
+                : undefined
+            }
+            onCarrello={() => {
+              aggiungiCarrello(prodottoAperto.p, prodottoAperto.i);
+              setProdottoAperto(null);
+            }}
           />
         )}
 
