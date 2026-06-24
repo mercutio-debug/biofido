@@ -178,7 +178,9 @@ export default function DashboardPage() {
           <OrdiniShopRicevuti />
           <MessaggiCard ownerId={user.id} />
 
-          <PrenotazioniCard ownerId={user.id} />
+          <div id="prenotazioni" className="scroll-mt-20">
+            <PrenotazioniCard ownerId={user.id} />
+          </div>
           <StatisticheCard ownerId={user.id} plan={pianoScelto} />
           <PagamentoFinale ownerId={user.id} scelto={pianoScelto} attivo={activePlan} bioOk={bioOk} />
 

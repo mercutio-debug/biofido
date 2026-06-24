@@ -5,6 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
+import { contaInSospeso } from "@/lib/contatori";
+
+/** badge rosso lampeggiante col numero di cose in attesa (ordini/prenotazioni) */
+function Badge({ n }: { n: number }) {
+  if (!n) return null;
+  return (
+    <span className="ml-auto inline-flex min-w-[20px] animate-pulse items-center justify-center rounded-full bg-traffic-red px-1.5 text-[11px] font-bold leading-5 text-white">
+      {n}
+    </span>
+  );
+}
 
 /**
  * Chip utente in alto a destra. Mentre la sessione è aperta (Supabase la
@@ -16,6 +27,7 @@ export function UserMenu() {
   const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [conte, setConte] = useState({ ordini: 0, prenotazioni: 0 });
   const ref = useRef<HTMLDivElement>(null);
 
   // chiudi il menu cliccando fuori
@@ -26,6 +38,24 @@ export function UserMenu() {
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
+
+  // conteggio ordini/prenotazioni in attesa: al login e ogni 60s (così il
+  // pallino lampeggiante avvisa anche senza aprire il menu)
+  useEffect(() => {
+    if (!user) {
+      setConte({ ordini: 0, prenotazioni: 0 });
+      return;
+    }
+    let vivo = true;
+    const aggiorna = () => contaInSospeso().then((c) => vivo && setConte(c));
+    aggiorna();
+    const t = setInterval(aggiorna, 60000);
+    return () => {
+      vivo = false;
+      clearInterval(t);
+    };
+  }, [user]);
+  const totSospeso = conte.ordini + conte.prenotazioni;
 
   if (loading) {
     // placeholder per evitare lo "sfarfallio" del layout durante il check
@@ -69,8 +99,16 @@ export function UserMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex max-w-[200px] items-center gap-2 rounded-full border border-green-700/40 bg-white px-2.5 py-1.5 text-sm font-semibold text-green-800 shadow-sm hover:border-green-700 hover:bg-leaf/50"
+        className="relative inline-flex max-w-[200px] items-center gap-2 rounded-full border border-green-700/40 bg-white px-2.5 py-1.5 text-sm font-semibold text-green-800 shadow-sm hover:border-green-700 hover:bg-leaf/50"
       >
+        {totSospeso > 0 && (
+          <span
+            aria-label={`${totSospeso} in attesa`}
+            className="absolute -right-1 -top-1 flex h-4 min-w-[16px] animate-pulse items-center justify-center rounded-full bg-traffic-red px-1 text-[10px] font-bold text-white ring-2 ring-white"
+          >
+            {totSospeso}
+          </span>
+        )}
         <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-green-700 text-white">
           <svg width={14} height={14} viewBox="0 0 24 24" aria-hidden fill="currentColor">
             <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.7-8 6v1h16v-1c0-3.3-3.6-6-8-6Z" />
@@ -136,9 +174,26 @@ export function UserMenu() {
             href="/ordini-ricevuti"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="block px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
           >
             🛒 Ordini ricevuti
+            <Badge n={conte.ordini} />
+          </Link>
+          <Link
+            href="/dashboard/#prenotazioni"
+            role="menuitem"
+            onClick={(e) => {
+              setOpen(false);
+              if (window.location.pathname.replace(/\/+$/, "").endsWith("/dashboard")) {
+                e.preventDefault();
+                document.getElementById("prenotazioni")?.scrollIntoView({ behavior: "smooth" });
+                window.history.replaceState(null, "", "#prenotazioni");
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
+          >
+            ✅ Prenotazioni ricevute
+            <Badge n={conte.prenotazioni} />
           </Link>
           <Link
             href="/account"
