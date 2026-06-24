@@ -48,6 +48,8 @@ export type Product = {
   confezione?: string;
   contenuto?: number;
   unita?: string;
+  /** durata dell'attività, se è un servizio speciale (es. "2 ore") */
+  durata?: string;
 };
 
 export type Business = {

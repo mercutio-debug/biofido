@@ -63,6 +63,7 @@ export function ProdottoEditor({
     initial?.contenuto != null ? String(initial.contenuto) : "",
   );
   const [unitaCont, setUnitaCont] = useState(initial?.unita ?? "");
+  const [durata, setDurata] = useState(initial?.durata ?? "");
   const [caricando, setCaricando] = useState(false);
   const [caricando2, setCaricando2] = useState(false);
   const [ingredients, setIngredients] = useState<MateriaPrima[]>(
@@ -116,6 +117,7 @@ export function ProdottoEditor({
       confezione: confezione.trim() || undefined,
       contenuto: contenuto.trim() === "" ? undefined : Number(contenuto),
       unita: unitaCont.trim() || undefined,
+      durata: tipoVoce === "servizio" ? durata.trim() || undefined : undefined,
     });
   }
 
@@ -213,34 +215,55 @@ export function ProdottoEditor({
           </div>
         </div>
 
-        {/* Tipo voce: prodotto ordinario oppure servizio extra prenotabile */}
-        <label className="mt-3 block">
-          <span className="label">Tipo</span>
-          <select
-            className="field mt-1"
-            value={tipoVoce}
-            onChange={(e) => setTipoVoce(e.target.value as "prodotto" | "servizio")}
-          >
-            <option value="prodotto">Prodotto ordinario</option>
-            <option value="servizio">Servizio extra (prenotabile dal cliente)</option>
-          </select>
+        {/* Servizio speciale: spunta + aiuto al passaggio del mouse */}
+        <label className="mt-3 flex items-start gap-2 rounded-xl border-2 border-badge-yellow bg-[#fffbe9] p-3 text-sm">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-5 w-5 accent-[var(--lime-500)]"
+            checked={tipoVoce === "servizio"}
+            onChange={(e) => setTipoVoce(e.target.checked ? "servizio" : "prodotto")}
+          />
+          <span className="text-green-900/85">
+            🎓 Salva come <strong>servizio speciale</strong> prenotabile in azienda
+            <span
+              title="Spuntando questa casella, il prodotto si configura come SERVIZIO EXTRA che si svolge in azienda — visita guidata, laboratorio, attività esperienziale… Il cliente potrà prenotarlo (scegliendo un giorno sul calendario) e, alla conferma, pagarlo online."
+              className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-green-700 text-[10px] font-bold text-white"
+              aria-label="Cos'è un servizio speciale"
+            >
+              ?
+            </span>
+          </span>
         </label>
 
         {tipoVoce === "servizio" && (
-          <label className="mt-2 flex items-start gap-2 rounded-xl border-2 border-badge-yellow bg-[#fffbe9] p-3 text-sm">
-            <input
-              type="checkbox"
-              className="mt-0.5 h-5 w-5 accent-[var(--lime-500)]"
-              checked={accetta}
-              onChange={(e) => setAccetta(e.target.checked)}
-            />
-            <span className="text-green-900/85">
-              <strong>Rendi questo servizio prenotabile dai clienti dal widget</strong>{" "}
-              (visite, laboratori, esperienze). Accetto che i clienti possano inviare
-              una richiesta di prenotazione e, a conferma, pagare online tramite
-              Stripe (BioFido tratterrà la commissione prevista dal piano).
-            </span>
-          </label>
+          <div className="mt-2 space-y-3 rounded-xl border border-badge-yellow bg-[#fffef6] p-3">
+            <label className="block">
+              <span className="label">Durata</span>
+              <input
+                className="field mt-1"
+                value={durata}
+                onChange={(e) => setDurata(e.target.value)}
+                placeholder="Es. 2 ore, mezza giornata…"
+              />
+              <span className="mt-1 block text-[11px] text-green-900/55">
+                La descrizione estesa e la foto extra dell&apos;attività sono i campi
+                «Descrizione» e «Seconda foto» qui sopra.
+              </span>
+            </label>
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-5 w-5 accent-[var(--lime-500)]"
+                checked={accetta}
+                onChange={(e) => setAccetta(e.target.checked)}
+              />
+              <span className="text-green-900/85">
+                <strong>Confermo</strong>: i clienti possono inviare una richiesta e, a
+                conferma, pagare online tramite Stripe (BioFido tratterrà la commissione
+                del piano).
+              </span>
+            </label>
+          </div>
         )}
 
         {tipoVoce === "prodotto" && (

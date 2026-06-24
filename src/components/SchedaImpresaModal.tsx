@@ -276,6 +276,9 @@ export function SchedaImpresaModal({
                             .join(" · ")}
                         </div>
                       )}
+                      {p.durata && (
+                        <div className="text-xs font-semibold text-green-900/70">⏱ Durata: {p.durata}</div>
+                      )}
                     </div>
                     {/* prezzo: solo Gold (su downgrade sparisce) */}
                     {b.plan === "gold" && p.price && (
