@@ -11,6 +11,26 @@ import { supabase } from "./supabase";
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MB per file
 
+/**
+ * Chiama DIRETTAMENTE la Edge Function `notify` (i Database Webhook si sono
+ * rivelati inaffidabili nel consegnare). Best-effort: non blocca né fa fallire
+ * mai l'azione principale. `notify` ha "Verify JWT" OFF → basta la anon key.
+ */
+async function avvisaNotify(table: string, record: Record<string, unknown>): Promise<void> {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return;
+    await fetch(`${url}/functions/v1/notify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: key, Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ table, record }),
+    });
+  } catch {
+    /* notifica best-effort: ignora */
+  }
+}
+
 export type FileOnboarding = {
   id: string;
   nome: string;
@@ -70,6 +90,8 @@ export async function caricaFileOnboarding(file: File): Promise<FileOnboarding> 
     .select("id, nome, url, tipo, created_at")
     .single();
   if (ins.error) throw new Error(ins.error.message);
+  // avvisa l'admin dell'upload (mail + push), senza dipendere dai webhook
+  void avvisaNotify("onboarding_files", { owner: uid, nome: file.name });
   return ins.data as FileOnboarding;
 }
 
@@ -129,6 +151,10 @@ export async function adminSetStatoOnboarding(
   const { error } = await supabase
     .from("onboarding_stato")
     .upsert({ owner, stato, nota: nota ?? null, updated_at: new Date().toISOString() });
+  // se chiediamo integrazioni, avvisa l'azienda (mail + push) senza webhook
+  if (!error && stato === "integrazioni") {
+    void avvisaNotify("onboarding_stato", { owner, stato, nota: nota ?? null });
+  }
   return error ? { error: error.message } : {};
 }
 
