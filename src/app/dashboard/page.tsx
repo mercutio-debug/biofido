@@ -190,9 +190,6 @@ export default function DashboardPage() {
 
       <GoldPromoBanner portale="BioFido" plan={pianoScelto} />
 
-      {/* «Ci pensiamo noi»: compare solo se l'azienda ha acquistato l'onboarding */}
-      <OnboardingCard />
-
       <SchedaServizi piano={pianoScelto} attivo={activePlan} />
 
       {user && <GuidaCard ownerId={user.id} plan={pianoScelto} />}
@@ -225,6 +222,9 @@ export default function DashboardPage() {
               <ServiziExtra showPrices plan={activePlan} onAcquista={acquistaServizio} />
             </div>
           </section>
+
+          {/* «Ci pensiamo noi»: subito sotto i servizi extra, solo se acquistato */}
+          <OnboardingCard />
         </>
       )}
     </div>

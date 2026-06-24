@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SERVIZI_EXTRA } from "@/lib/servizi-extra";
 import { supabase } from "@/lib/supabase";
+import { getMyExtras } from "@/lib/onboarding";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -55,12 +56,15 @@ export function ServiziExtra({
   // data di iscrizione (created_at dell'utente) per il countdown del report
   const [iscrizione, setIscrizione] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  // servizi extra GIÀ acquistati (così non li si compra due volte)
+  const [acquistati, setAcquistati] = useState<string[]>([]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       const c = data.user?.created_at;
       if (c) setIscrizione(new Date(c).getTime());
     });
+    getMyExtras().then(setAcquistati);
   }, []);
 
   // ticker per il countdown live (1s) — attivo solo se serve (utente loggato)
@@ -101,6 +105,7 @@ export function ServiziExtra({
           // se il piano dell'azienda è inferiore a quello richiesto.
           const reqLabel = REQ_LABEL[s.key] ?? "Silver";
           const planLocked = planRank != null && planRank < (REQ_RANK[s.key] ?? 0);
+          const giaAcquistato = acquistati.includes(s.key);
           // tasto azione: in dashboard (onAcquista) apre il popup; in vetrina, link
           const Azione = ({ label }: { label: string }) =>
             onAcquista ? (
@@ -125,18 +130,22 @@ export function ServiziExtra({
               {/* Legenda: con piano noto mostra ATTIVO/BLOCCATO; in vetrina, il requisito */}
               <div
                 className={`mt-3 rounded-lg px-3 py-1.5 text-center text-xs font-bold ${
-                  planRank == null
-                    ? "bg-leaf/60 text-green-800"
-                    : planLocked
-                      ? "bg-[#f3dada] text-traffic-red"
-                      : "bg-leaf text-green-700"
+                  giaAcquistato
+                    ? "bg-badge-yellow text-[#7a1f00]"
+                    : planRank == null
+                      ? "bg-leaf/60 text-green-800"
+                      : planLocked
+                        ? "bg-[#f3dada] text-traffic-red"
+                        : "bg-leaf text-green-700"
                 }`}
               >
-                {planRank == null
-                  ? REQ[s.key] ?? "Servizio extra"
-                  : planLocked
-                    ? `🔒 Disponibile con il piano ${reqLabel}`
-                    : `✓ Attivabile col tuo piano`}
+                {giaAcquistato
+                  ? "✓ Già acquistato"
+                  : planRank == null
+                    ? REQ[s.key] ?? "Servizio extra"
+                    : planLocked
+                      ? `🔒 Disponibile con il piano ${reqLabel}`
+                      : `✓ Attivabile col tuo piano`}
               </div>
               <button
                 type="button"
@@ -147,7 +156,13 @@ export function ServiziExtra({
               </button>
 
               {/* Azione: priorità → blocco piano → countdown report → auguri → acquista */}
-              {planLocked ? (
+              {giaAcquistato ? (
+                <div className="mt-2 rounded-xl border-2 border-badge-yellow bg-[#fffbe9] p-2 text-center text-xs font-bold text-[#7a1f00]">
+                  {s.key === "onboarding"
+                    ? "✓ Attivo — carica i tuoi file qui sotto in «Ci pensiamo noi»"
+                    : "✓ Servizio già attivo"}
+                </div>
+              ) : planLocked ? (
                 <Azione label={`⬆ Passa al piano ${reqLabel}`} />
               ) : reportBloccato ? (
                 <div className="mt-2 rounded-xl border border-[#e3eed7] bg-leaf/40 p-3 text-center">

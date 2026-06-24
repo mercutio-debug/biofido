@@ -224,6 +224,21 @@ Deno.serve(async (req) => {
       return ok();
     }
 
+    if (table === "onboarding_files") {
+      // L'azienda ha caricato un file per «Ci pensiamo noi»: avviso l'admin
+      // (email + push). L'SMS arriverà quando colleghiamo il fornitore SMS.
+      const emailAzienda = rec.owner ? (await emailOf(rec.owner)) ?? "(azienda)" : "(azienda)";
+      await dispatch({
+        userId: rec.owner, // push: best-effort
+        email: "mauriziocapitelli@yahoo.it",
+        title: "📎 Nuovo materiale onboarding caricato",
+        body: `L'azienda ${emailAzienda} ha caricato per «Ci pensiamo noi»: ${rec.nome ?? "(file)"}.`,
+        url: `${SITE_URL}/admin/`,
+        ctaLabel: "Apri l'area admin",
+      });
+      return ok();
+    }
+
     return ok();
   } catch (e) {
     console.error(e);

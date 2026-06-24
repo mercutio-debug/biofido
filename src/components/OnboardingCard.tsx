@@ -58,14 +58,15 @@ export function OnboardingCard() {
     <section className="card mt-6 border-2 border-badge-yellow bg-[#fffbe9] p-6">
       <div className="flex items-center gap-2">
         <span className="rounded-full bg-badge-yellow px-2 py-0.5 text-[11px] font-bold text-[#7a1f00]">
-          ✅ ACQUISTATO
+          ✅ SERVIZIO ACQUISTATO CON SUCCESSO
         </span>
         <h2 className="font-display text-2xl text-green-800">«Ci pensiamo noi» — il tuo negozio chiavi in mano</h2>
       </div>
       <p className="mt-2 text-sm text-green-900/80">
-        Grazie! Hai acquistato l&apos;onboarding. Carica qui il tuo <strong>listino</strong>{" "}
-        (Excel, Word o PDF) e le <strong>foto</strong> dei prodotti/dell&apos;attività: al
-        resto pensiamo noi e costruiamo la tua scheda. Puoi aggiungerne quando vuoi.
+        Carica nella cornice qui sotto il tuo materiale per costruire il tuo shop —
+        formati <strong>.pdf .xls .jpg .png</strong> ecc.: <strong>listino</strong>,
+        <strong> descrizione prodotti</strong> e <strong>immagini</strong>. Al resto
+        pensiamo noi e costruiamo la tua scheda. Puoi aggiungere file quando vuoi.
       </p>
 
       <label className="btn-lime mt-4 inline-flex cursor-pointer">
