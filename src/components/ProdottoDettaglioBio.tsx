@@ -44,11 +44,11 @@ export function ProdottoDettaglioBio({
 
   const contenuto = (
     <div
-      className="fixed inset-0 z-[2000] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-3 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="card max-h-[100dvh] w-full max-w-2xl overflow-y-auto overscroll-contain p-0 sm:max-h-[92vh]"
+        className="card max-h-[88dvh] w-full max-w-2xl overflow-y-auto overscroll-contain p-0 sm:max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* galleria foto (solo Gold) */}

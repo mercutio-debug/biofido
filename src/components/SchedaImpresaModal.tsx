@@ -113,14 +113,14 @@ export function SchedaImpresaModal({
 
   const contenuto = (
     <div
-      className={embedded ? "" : "fixed inset-0 z-[1000] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"}
+      className={embedded ? "" : "fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 p-3 sm:p-4"}
       onClick={embedded ? undefined : onClose}
     >
       <div
         className={
           embedded
             ? "rounded-2xl border border-[#e3eed7] bg-white p-5"
-            : "max-h-[100dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-2xl bg-white p-6 shadow-xl sm:max-h-[92vh] sm:rounded-2xl"
+            : "max-h-[88dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl bg-white p-5 shadow-xl sm:max-h-[92vh] sm:p-6"
         }
         onClick={(e) => e.stopPropagation()}
       >
