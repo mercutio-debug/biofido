@@ -1,4 +1,4 @@
 User-Agent: *
 Allow: /
 
-Sitemap: https://mercutio-debug.github.io/biofido/sitemap.xml
+Sitemap: https://biofido.it/sitemap.xml
