@@ -8,7 +8,7 @@ import {
   getExtraScelti,
   onExtraChange,
 } from "@/lib/extra-selezionati";
-import { startCheckout } from "@/lib/billing";
+import { startCheckout, changePlan } from "@/lib/billing";
 import { caricaDatiFatturazione, datiCompleti } from "@/lib/fatturazione";
 import { LEGALE } from "@/lib/legale";
 
@@ -45,12 +45,16 @@ export function PurchasePopup({
   period,
   planLabel,
   planPrice,
+  activePlan = "free",
   onClose,
 }: {
   plan: "free" | "silver" | "gold";
   period: "monthly" | "annual";
   planLabel: string;
   planPrice: number;
+  /** piano attualmente attivo dell'azienda: se ≠ free e diverso da `plan`, il
+   *  pagamento usa il CAMBIO PIANO con conguaglio invece di un nuovo checkout. */
+  activePlan?: "free" | "silver" | "gold";
   onClose: () => void;
 }) {
   const [, force] = useState(0);
@@ -93,6 +97,37 @@ export function PurchasePopup({
     setPaying(true);
     setErr(null);
     try {
+      // Già abbonato a un piano DIVERSO → cambio piano con conguaglio (upgrade =
+      // differenza subito; downgrade = a fine ciclo), niente nuovo abbonamento.
+      if (activePlan !== "free" && plan !== activePlan) {
+        const r = await changePlan(plan as "silver" | "gold", period);
+        if (r.needsCheckout) {
+          await startCheckout(plan as "silver" | "gold", period, getExtraScelti());
+          return;
+        }
+        if (r.error) {
+          setErr(r.error);
+          setPaying(false);
+          return;
+        }
+        alert(
+          r.mode === "downgrade"
+            ? "Cambio piano programmato ✓ — il downgrade avrà effetto a fine ciclo (mantieni i vantaggi attuali fino alla scadenza)."
+            : "Piano aggiornato ✓ — addebitata solo la differenza.",
+        );
+        onClose();
+        if (typeof window !== "undefined") window.location.reload();
+        return;
+      }
+      // Già abbonato a QUESTO piano → niente doppioni: gestione dal portale Stripe.
+      if (activePlan !== "free" && plan === activePlan) {
+        setErr(
+          "Sei già abbonato a questo piano. Per gestirlo (o aggiungere servizi) usa «Gestisci abbonamento».",
+        );
+        setPaying(false);
+        return;
+      }
+      // Utente Free → nuovo abbonamento via Checkout
       await startCheckout(plan as "silver" | "gold", period, getExtraScelti());
     } catch (e) {
       setErr((e as Error).message);
