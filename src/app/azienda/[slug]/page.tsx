@@ -3,6 +3,7 @@ import Link from "next/link";
 import { elencoBusinessConSlug, businessBySlug } from "@/lib/biofido-data";
 import { CATEGORY_MAP, PLAN_MAP, type Plan } from "@/lib/categories";
 import { citySlug } from "@/lib/zone-bio";
+import { MappaPosizioneWrap } from "@/components/MappaPosizioneWrap";
 
 // Pagina pubblica condivisibile di un'attività bio: URL pulito /azienda/{slug},
 // contenuto nell'HTML (indicizzabile), Open Graph + JSON-LD LocalBusiness con
@@ -156,8 +157,21 @@ export default async function AziendaBioPage({
         </div>
       )}
 
+      {Number.isFinite(b.lat) && Number.isFinite(b.lon) && (
+        <div className="mt-6">
+          <h2 className="font-display text-2xl text-green-800">Dove si trova</h2>
+          <p className="mt-1 text-sm text-green-900/70">
+            {b.address ? `${b.address} · ` : ""}
+            {b.city}
+          </p>
+          <div className="mt-3">
+            <MappaPosizioneWrap lat={b.lat} lon={b.lon} label={b.name} />
+          </div>
+        </div>
+      )}
+
       <Link href="/#mappa" className="btn-lime mt-5 inline-block">
-        📍 Vedi sulla mappa
+        📍 Vedi tutte sulla mappa
       </Link>
 
       {prodotti.length > 0 && (

@@ -28,7 +28,7 @@ import {
   nextPlan,
   type PassoKey,
 } from "@/lib/funzioni";
-import { billingEnabled, startCheckout, openCustomerPortal } from "@/lib/billing";
+import { billingEnabled, startCheckout, openCustomerPortal, changePlan } from "@/lib/billing";
 import { getExtraScelti } from "@/lib/extra-selezionati";
 import { PurchasePopup } from "@/components/PurchasePopup";
 import { DashboardPlanHeader } from "@/components/DashboardPlanHeader";
@@ -96,10 +96,11 @@ export default function DashboardPage() {
     });
   }, [user]);
 
-  function scegliPiano(p: Plan, per: "monthly" | "annual") {
+  async function scegliPiano(p: Plan, per: "monthly" | "annual") {
+    const downgrade = isDowngrade(activePlan, p);
     // Downgrade: avviso che i contenuti/funzioni non inclusi nel piano scelto
     // non saranno più visibili (i dati restano salvati, tornano col re-upgrade).
-    if (isDowngrade(activePlan, p)) {
+    if (downgrade) {
       const perse = perditeDowngrade(activePlan, p);
       const elenco = perse.length ? "\n\n• " + perse.join("\n• ") : "";
       const ok = window.confirm(
@@ -110,6 +111,39 @@ export default function DashboardPage() {
       );
       if (!ok) return;
     }
+
+    // CAMBIO PIANO su abbonamento GIÀ ATTIVO (Silver↔Gold): usa la proration
+    // (upgrade = solo la differenza subito; downgrade = a fine ciclo), NON un
+    // nuovo checkout che creerebbe un secondo abbonamento.
+    if (billingEnabled && p !== "free" && activePlan !== "free" && p !== activePlan) {
+      if (!downgrade) {
+        const ok = window.confirm(
+          `Passaggio a ${PLAN_MAP[p].label}: pagherai SUBITO solo la differenza per i giorni rimanenti dell'abbonamento. Procedere?`,
+        );
+        if (!ok) return;
+      }
+      try {
+        const r = await changePlan(p as "silver" | "gold", per);
+        if (r.needsCheckout) {
+          setPopupPag({ plan: p, period: per });
+          return;
+        }
+        if (r.error) {
+          alert("Errore: " + r.error);
+          return;
+        }
+        alert(
+          r.mode === "downgrade"
+            ? "Downgrade programmato ✓ — avrà effetto a fine ciclo, mantieni i vantaggi attuali fino alla scadenza."
+            : "Piano aggiornato ✓ — addebitata solo la differenza.",
+        );
+        window.localStorage.setItem("biofido_piano_scelto", p);
+      } catch (e) {
+        alert((e as Error).message);
+      }
+      return;
+    }
+
     setPianoScelto(p);
     setPeriodo(per);
     window.localStorage.setItem("biofido_piano_scelto", p);

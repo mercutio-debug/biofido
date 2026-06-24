@@ -56,6 +56,38 @@ export async function startCheckout(
 }
 
 /**
+ * CAMBIO PIANO di un abbonamento già attivo (Silver↔Gold). Upgrade: paga subito
+ * la differenza (proration). Downgrade: scatta a fine ciclo. Ritorna l'esito.
+ * Se non c'è un abbonamento attivo, `needsCheckout` è true → usare startCheckout.
+ */
+export async function changePlan(
+  plan: Plan,
+  period: "monthly" | "annual",
+): Promise<{ ok?: boolean; mode?: "upgrade" | "downgrade"; needsCheckout?: boolean; error?: string }> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Accedi per modificare l'abbonamento.");
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/change-plan`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ plan, period }),
+    },
+  );
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return { error: body.error || "Impossibile cambiare piano.", needsCheckout: body.needsCheckout };
+  }
+  return body;
+}
+
+/**
  * Apre il Portale Clienti Stripe (fatture, metodo di pagamento, disdetta).
  * Reindirizza l'utente; rilancia un errore leggibile se qualcosa non va.
  */
