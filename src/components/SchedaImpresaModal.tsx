@@ -120,7 +120,7 @@ export function SchedaImpresaModal({
         className={
           embedded
             ? "rounded-2xl border border-[#e3eed7] bg-white p-5"
-            : "max-h-[88dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl bg-white p-5 shadow-xl sm:max-h-[92vh] sm:p-6"
+            : "max-h-[88dvh] w-full max-w-lg overflow-y-auto overflow-x-hidden overscroll-contain rounded-2xl bg-white p-5 shadow-xl sm:max-h-[92vh] sm:p-6"
         }
         onClick={(e) => e.stopPropagation()}
       >
@@ -134,10 +134,10 @@ export function SchedaImpresaModal({
           />
         )}
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">{cat.emoji}</span>
-              <h2 className="font-display text-2xl text-green-800">{b.name}</h2>
+              <span className="flex-none text-2xl">{cat.emoji}</span>
+              <h2 className="font-display text-2xl text-green-800 break-words">{b.name}</h2>
             </div>
             <p className="mt-1 text-sm text-green-900/65">
               {cat.label} · {b.city}

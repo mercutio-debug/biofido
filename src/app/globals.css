@@ -60,6 +60,10 @@
 /* niente dark-mode automatico: il brand è chiaro */
 html {
   color-scheme: light;
+  /* Mai scroll orizzontale: se un elemento è più largo del viewport (es. un
+     modale su mobile o un testo che non va a capo) NON deve allargare la pagina
+     né far "incastrare" lo zoom. `clip` non rompe position:sticky. */
+  overflow-x: clip;
 }
 
 body {
