@@ -197,6 +197,12 @@ export function ServiziExtra({
         })}
       </div>
 
+      {showPrices && (
+        <p className="mt-3 text-center text-xs text-green-900/55">
+          I prezzi sono da intendersi al netto dell&apos;IVA.
+        </p>
+      )}
+
       {demo && (
         <div
           className="fixed inset-0 z-[200] flex flex-col bg-black/80"
