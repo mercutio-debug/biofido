@@ -86,8 +86,18 @@ export function PurchasePopup({
   const selezionati = SERVIZI_EXTRA.filter(
     (s) => ammessi.includes(s.key) && isExtraScelto(s.key),
   );
-  const totaleExtra = selezionati.reduce((t, s) => t + (s.prezzoNum || 0), 0);
-  const totale = planPrice + totaleExtra;
+  // Sconti che Stripe applica AL PAGAMENTO — li mostriamo qui per trasparenza,
+  // con le stesse scadenze dei default lato server (create-checkout):
+  //  • Fondatore: −5 € a vita sul GOLD, se ci si abbona entro il 31/12/2026;
+  //  • Lancio onboarding: −10% entro il 31/12/2026.
+  const entroFine2026 = new Date() <= new Date("2026-12-31T23:59:59");
+  const fondatoreAttivo = plan === "gold" && entroFine2026;
+  const planPriceFinale = fondatoreAttivo ? Math.max(0, planPrice - 5) : planPrice;
+  const prezzoExtra = (s: { key: string; prezzoNum: number }) =>
+    s.key === "onboarding" && entroFine2026 ? s.prezzoNum * 0.9 : s.prezzoNum;
+  const totaleExtra = selezionati.reduce((t, s) => t + (prezzoExtra(s) || 0), 0);
+  const totale = planPriceFinale + totaleExtra;
+  const haSconti = fondatoreAttivo || selezionati.some((s) => s.key === "onboarding" && entroFine2026);
 
   async function paga() {
     if (!datiOk) {
@@ -168,11 +178,21 @@ export function PurchasePopup({
           </button>
         </div>
 
-        <div className="mt-4 flex items-center justify-between rounded-xl bg-leaf/50 p-3">
+        <div className="mt-4 flex items-center justify-between gap-2 rounded-xl bg-leaf/50 p-3">
           <span className="font-semibold text-green-800">
             Abbonamento {planLabel} · {period === "annual" ? "annuale" : "mensile"}
+            {fondatoreAttivo && (
+              <span className="mt-0.5 block text-[11px] font-bold text-lime-600">
+                🐾 Prezzo Fondatore: −5 € a vita (se ti abboni entro il 31/12)
+              </span>
+            )}
           </span>
-          <span className="font-display text-lg text-green-700">{euro(planPrice)}</span>
+          <span className="shrink-0 whitespace-nowrap text-right">
+            {fondatoreAttivo && (
+              <span className="mr-1 text-sm text-green-900/45 line-through">{euro(planPrice)}</span>
+            )}
+            <span className="font-display text-lg text-green-700">{euro(planPriceFinale)}</span>
+          </span>
         </div>
 
         {ammessi.length > 0 && (
@@ -209,8 +229,11 @@ export function PurchasePopup({
                       {on ? "✓ " : "+ "}
                       {s.emoji} {s.nome}
                     </span>
-                    <span className="shrink-0 text-sm font-bold text-green-700">
-                      {euro(s.prezzoNum)}
+                    <span className="shrink-0 whitespace-nowrap text-right text-sm font-bold text-green-700">
+                      {s.key === "onboarding" && entroFine2026 && (
+                        <span className="mr-1 font-normal text-green-900/45 line-through">{euro(s.prezzoNum)}</span>
+                      )}
+                      {euro(prezzoExtra(s))}
                     </span>
                   </button>
                 );
@@ -226,6 +249,7 @@ export function PurchasePopup({
         <p className="mt-1 text-[11px] text-green-900/55">
           Abbonamento ricorrente ({period === "annual" ? "annuale" : "mensile"}) + servizi
           extra addebitati una volta sulla prima fattura. IVA esclusa.
+          {haSconti && " Gli sconti mostrati sono applicati automaticamente al pagamento."}
         </p>
 
         {/* Consensi obbligatori prima del pagamento */}
