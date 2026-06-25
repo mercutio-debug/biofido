@@ -257,6 +257,10 @@ async function setPlan(
     .from("subscriptions")
     .upsert({ user_id: userId, plan, updated_at: new Date().toISOString(), ...fields });
   await admin.from("biofido_businesses").update({ plan }).eq("owner", userId);
+  // Acquisto concluso → rimuovo l'eventuale "acquisto in sospeso" (no solleciti).
+  if (plan === "silver" || plan === "gold") {
+    await admin.from("acquisti_sospesi").delete().eq("user_id", userId);
+  }
 }
 
 type ArtMag = { prodottoId?: string; qta?: number };

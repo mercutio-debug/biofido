@@ -167,6 +167,24 @@ Deno.serve(async (req) => {
       tax_id_collection: { enabled: true },
     });
 
+    // Registra l'acquisto in sospeso: se l'utente abbandona Stripe, la funzione
+    // schedulata `solleciti-mail` può sollecitarlo a completare. Viene rimosso dal
+    // webhook a pagamento riuscito. Best-effort: un errore qui non blocca il checkout.
+    try {
+      await supabase.from("acquisti_sospesi").upsert({
+        user_id: user.id,
+        plan,
+        period: period === "annual" ? "annual" : "monthly",
+        extras: extraApplicati.join(","),
+        email: user.email,
+        creato: new Date().toISOString(),
+        solleciti: 0,
+        ultimo_sollecito: null,
+      });
+    } catch (_e) {
+      /* tabella assente o RLS: il checkout prosegue comunque */
+    }
+
     return json({ url: session.url });
   } catch (e) {
     console.error(e);
