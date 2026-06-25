@@ -8,6 +8,7 @@ import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
 import { loadCatalogo, TIPI_VOCE, type VoceCatalogo } from "@/lib/catalogo";
 import { registraEvento } from "@/lib/statistiche";
 import type { Business, Product } from "@/lib/biofido-data";
+import { businessSlug, elencoBusinessConSlug } from "@/lib/biofido-data";
 import { OrdineProdottoModal } from "@/components/OrdineProdottoModal";
 import { ProdottoDettaglioBio } from "@/components/ProdottoDettaglioBio";
 import { SegnalaModal } from "@/components/SegnalaModal";
@@ -52,6 +53,38 @@ export function SchedaImpresaModal({
   const [prodottoAperto, setProdottoAperto] = useState<{ p: Product; i: number } | null>(null);
   const sede = { lat: b.lat, lon: b.lon };
   const esperienze = plan.canSell ? b.experiences?.filter((e) => e.attiva) ?? [] : [];
+
+  // "Condividi scheda": utile soprattutto in app (TWA), dove non c'è la barra
+  // dell'URL da copiare. Condivide l'URL CANONICO /azienda/{slug} (che ha
+  // l'anteprima ricca: nome + copertina), via menu nativo Android o copia link.
+  const [condiviso, setCondiviso] = useState(false);
+  async function condividiScheda() {
+    let slug = businessSlug(b.name);
+    try {
+      const lista = await elencoBusinessConSlug();
+      const found = lista.find((x) => String(x.id) === String(b.id));
+      if (found) slug = found.slug;
+    } catch {
+      /* offline o lista non disponibile: uso lo slug derivato dal nome */
+    }
+    const url = `${window.location.origin}/azienda/${slug}/`;
+    const titolo = `${b.name}${b.city ? ` · ${b.city}` : ""} — su BioFido`;
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: titolo, url });
+        return;
+      }
+    } catch {
+      return; /* l'utente ha annullato il menu di condivisione: nessun errore */
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCondiviso(true);
+      setTimeout(() => setCondiviso(false), 2500);
+    } catch {
+      /* clipboard non disponibile */
+    }
+  }
 
   // Catalogo (funzione Gold): prodotti in vendita + servizi su prenotazione
   const [catalogo, setCatalogo] = useState<VoceCatalogo[]>([]);
@@ -212,6 +245,17 @@ export function SchedaImpresaModal({
             className="mt-3 inline-flex items-center gap-2 rounded-full border border-green-600 px-4 py-1.5 text-sm font-bold text-green-700 hover:bg-leaf"
           >
             ✉️ Contatta l&apos;azienda
+          </button>
+        )}
+
+        {/* condividi scheda: link canonico con anteprima ricca (utile in app) */}
+        {!embedded && (
+          <button
+            type="button"
+            onClick={condividiScheda}
+            className="ml-2 mt-3 inline-flex items-center gap-2 rounded-full border border-green-600 px-4 py-1.5 text-sm font-bold text-green-700 hover:bg-leaf"
+          >
+            🔗 {condiviso ? "Link copiato!" : "Condividi scheda"}
           </button>
         )}
 

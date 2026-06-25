@@ -41,6 +41,8 @@ export async function generateMetadata({
       description: `${cat} biologica a ${b.city}, su BioFido.`,
       url: `${SITE}/azienda/${slug}/`,
       type: "profile",
+      // anteprima link: copertina dell'azienda se presente, altrimenti il default.
+      images: [b.immagine || `${SITE}/demo/onboarding/img/campagna.jpg`],
     },
   };
 }
