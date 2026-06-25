@@ -47,7 +47,9 @@ export default function PrivacyPage() {
             I dati sono trattati su infrastrutture di fornitori che agiscono come responsabili del
             trattamento: <strong>Supabase</strong> (database e autenticazione), <strong>Stripe</strong> (pagamenti),
             <strong> Cloudflare Turnstile</strong> (protezione anti-bot), <strong>OpenStreetMap</strong> (mappe),
-            <strong> Aruba</strong> (email e fatturazione elettronica). Non vendiamo i tuoi dati a terzi.
+            <strong> Resend</strong> (invio delle email di servizio), <strong>Hostinger</strong> (hosting del sito)
+            e <strong> Smshosting</strong> (invio di SMS di notifica, per i piani che ne attivano l&apos;opzione).
+            Non vendiamo i tuoi dati a terzi.
           </p>
         </section>
 
