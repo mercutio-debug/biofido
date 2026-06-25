@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { Plan } from "./categories";
+import { salvaAcquistoSospeso } from "./acquisto-sospeso";
 
 /**
  * Pagamenti dei piani via Stripe Checkout.
@@ -52,6 +53,9 @@ export async function startCheckout(
 
   const { url } = await res.json();
   if (!url) throw new Error("Sessione di pagamento non disponibile.");
+  // Ricorda l'acquisto in sospeso: se l'utente abbandona Stripe e torna indietro,
+  // la dashboard può proporgli di riprendere senza perdere la selezione.
+  salvaAcquistoSospeso({ plan, period, extras });
   window.location.href = url;
 }
 

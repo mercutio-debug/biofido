@@ -30,6 +30,11 @@ import {
 } from "@/lib/funzioni";
 import { billingEnabled, startCheckout, openCustomerPortal } from "@/lib/billing";
 import { getExtraScelti, setExtraScelto } from "@/lib/extra-selezionati";
+import {
+  getAcquistoSospeso,
+  pulisciAcquistoSospeso,
+  type AcquistoSospeso,
+} from "@/lib/acquisto-sospeso";
 import { PurchasePopup } from "@/components/PurchasePopup";
 import { DashboardPlanHeader } from "@/components/DashboardPlanHeader";
 import { OnboardingCard } from "@/components/OnboardingCard";
@@ -77,6 +82,8 @@ export default function DashboardPage() {
   const [popupPag, setPopupPag] = useState<{ plan: Plan; period: "monthly" | "annual" } | null>(null);
   // BioFido è riservato alle aziende bio: la certificazione è obbligatoria
   const [bioOk, setBioOk] = useState(false);
+  // Acquisto in sospeso (pagamento avviato ma non completato): card "Completa".
+  const [sospeso, setSospeso] = useState<AcquistoSospeso | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -106,6 +113,34 @@ export default function DashboardPage() {
       }
     });
   }, [user]);
+
+  // Acquisto in sospeso: al mount leggo il marcatore; se il ritorno è "ok" lo
+  // pulisco, altrimenti mostro la card "Completa il tuo acquisto".
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("abbonamento") === "ok") {
+      pulisciAcquistoSospeso();
+      setSospeso(null);
+      return;
+    }
+    setSospeso(getAcquistoSospeso());
+  }, []);
+
+  // Se il piano in sospeso risulta attivo, l'acquisto è concluso: pulisco.
+  useEffect(() => {
+    if (sospeso && activePlan !== "free" && activePlan === sospeso.plan) {
+      pulisciAcquistoSospeso();
+      setSospeso(null);
+    }
+  }, [activePlan, sospeso]);
+
+  function riprendiAcquisto() {
+    if (!sospeso) return;
+    for (const k of sospeso.extras) setExtraScelto(k, true);
+    setPianoScelto(sospeso.plan as Plan);
+    setPeriodo(sospeso.period);
+    setPopupPag({ plan: sospeso.plan as Plan, period: sospeso.period });
+  }
 
   async function scegliPiano(p: Plan, per: "monthly" | "annual") {
     const downgrade = isDowngrade(activePlan, p);
@@ -170,6 +205,33 @@ export default function DashboardPage() {
       </div>
 
       <DashboardPlanHeader plan={activePlan} />
+
+      {sospeso && activePlan !== sospeso.plan && (
+        <div className="card mb-4 flex flex-col gap-3 border-2 border-badge-yellow bg-[#fffbe9] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="font-display text-lg text-green-800">⏳ Hai un acquisto da completare</div>
+            <p className="text-sm text-green-900/75">
+              Piano {PLAN_MAP[sospeso.plan as Plan]?.label ?? sospeso.plan}
+              {sospeso.extras.length ? ` + ${sospeso.extras.length} servizio/i extra` : ""} — pagamento non concluso.
+            </p>
+          </div>
+          <div className="flex flex-none gap-2">
+            <button type="button" onClick={riprendiAcquisto} className="btn-lime justify-center text-sm">
+              Riprendi e paga
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                pulisciAcquistoSospeso();
+                setSospeso(null);
+              }}
+              className="btn-ghost justify-center text-sm"
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
+      )}
 
       <PianoSelector scelto={pianoScelto} attivo={activePlan} onScegli={scegliPiano} />
 
