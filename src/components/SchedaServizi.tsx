@@ -38,7 +38,7 @@ const SERVIZI: Servizio[] = [
   { icona: "📝", nome: "Descrizione, sito web, contatti", descr: "Scheda più ricca e segnaposto più grande.", min: "silver", ancora: "scheda" },
   { icona: "🔍", nome: "Priorità nei risultati della zona", descr: "Sali nelle ricerche vicino a te.", min: "silver", ancora: "scheda" },
   { icona: "📊", nome: "Statistiche base", descr: "Quante visite riceve la tua scheda.", min: "silver", ancora: "scheda" },
-  { icona: "➕", nome: "Fino a 100 prodotti/semafori", descr: "Sblocca il «+» per caricarne fino a 100.", min: "gold", ancora: "scheda" },
+  { icona: "➕", nome: "Fino a 100 prodotti/semafori e/o servizi extra", descr: "Sblocca il «+» per caricarne fino a 100.", min: "gold", ancora: "scheda" },
   { icona: "💶", nome: "Prezzi e prodotti/servizi in vendita", descr: "Mostra prezzi e vendi (anche visite e laboratori).", min: "gold", ancora: "catalogo" },
   { icona: "🗓️", nome: "Prenotazioni via widget", descr: "I clienti richiedono visite ed esperienze dalla mappa.", min: "gold", ancora: "esperienze" },
   { icona: "📈", nome: "Statistiche avanzate", descr: "Andamento nel tempo e area geografica.", min: "gold", ancora: "scheda" },
@@ -194,7 +194,7 @@ export function SchedaServizi({ piano }: { piano: Plan; attivo?: Plan }) {
             <p className="mt-1 text-xs text-green-900/70">Per vendere e ricevere prenotazioni.</p>
             <ul className="mt-2 space-y-1 text-sm text-green-900/85">
               <li>✓ Tutto il Silver, più:</li>
-              <li>✓ Fino a 100 prodotti</li>
+              <li>✓ Fino a 100 prodotti e/o servizi extra</li>
               <li>✓ Prezzi e prodotti/servizi in vendita</li>
               <li>✓ Prenotazioni via widget</li>
               <li>✓ Statistiche avanzate</li>

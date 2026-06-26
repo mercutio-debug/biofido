@@ -8,6 +8,7 @@ import type { MateriaPrima } from "./biofido-data";
  */
 const R = 6371; // raggio terrestre (km)
 const ROAD_FACTOR = 1.3; // la strada è più lunga della linea d'aria
+const SAME_TOWN_KM = 5; // entro ~5 km in linea d'aria = stesso comune → km0, 0 CO₂
 const CO2_KG_PER_KM = 0.8; // camion in Europa, ~800 g CO₂/km (come ECO-VISA)
 const SHIP_KG_PER_KM = 0.03; // nave per l'extra-UE, ~30 g CO₂/km (come ECO-VISA)
 // porto italiano di sbarco di riferimento per le merci extra-UE
@@ -156,8 +157,14 @@ export function calcolaImpronta(
     if (typeof i.lat !== "number" || typeof i.lon !== "number") continue;
     let km: number;
     let co2: number;
-    if (viaCamion(i.lat, i.lon)) {
-      km = haversineKm(sede.lat, sede.lon, i.lat, i.lon) * ROAD_FACTOR;
+    const dir = haversineKm(sede.lat, sede.lon, i.lat, i.lon);
+    if (dir < SAME_TOWN_KM) {
+      // materia prima nello stesso comune/località dello stabilimento: trasporto
+      // trascurabile → 0 km, 0 CO₂ (così non risulta "1 km" per il km0).
+      km = 0;
+      co2 = 0;
+    } else if (viaCamion(i.lat, i.lon)) {
+      km = dir * ROAD_FACTOR;
       co2 = km * CO2_KG_PER_KM;
     } else {
       const mare = haversineKm(i.lat, i.lon, PORTO_RIF.lat, PORTO_RIF.lon);
