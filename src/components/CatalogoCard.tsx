@@ -13,6 +13,20 @@ import {
 import { ImportoInput } from "./ImportoInput";
 import { formatPrezzo, parseEuro } from "@/lib/prezzo";
 
+/** Lingue selezionabili per un servizio/attività (italiano sempre incluso). */
+export const LINGUE_SERVIZIO: { code: string; label: string; flag: string }[] = [
+  { code: "it", label: "Italiano", flag: "🇮🇹" },
+  { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
+  { code: "pt", label: "Português", flag: "🇵🇹" },
+  { code: "nl", label: "Nederlands", flag: "🇳🇱" },
+  { code: "zh", label: "中文", flag: "🇨🇳" },
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "ar", label: "العربية", flag: "🇸🇦" },
+];
+
 /**
  * Catalogo vendite — funzione GOLD. L'azienda carica prodotti e servizi (con
  * numero, nome, tipo, prezzo, immagine). I clienti li vedranno in anteprima sul
@@ -61,7 +75,7 @@ export function CatalogoCard({ ownerId, gold }: { ownerId: string; gold: boolean
   }
 
   return (
-    <section id="catalogo" className="card mt-6 p-6 scroll-mt-20">
+    <section className="card mt-6 p-6">
       <h2 className="font-display text-2xl text-green-800">
         Catalogo prodotti e servizi{" "}
         <span className="text-sm font-normal text-green-900/60">(Gold)</span>
@@ -149,24 +163,36 @@ function VoceEditor({
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const fileRef2 = useRef<HTMLInputElement>(null);
 
   function set<K extends keyof VoceCatalogo>(k: K, val: VoceCatalogo[K]) {
     setV((p) => ({ ...p, [k]: val }));
   }
 
-  async function scegliFoto(e: React.ChangeEvent<HTMLInputElement>) {
+  async function scegliFoto(e: React.ChangeEvent<HTMLInputElement>, campo: "immagine" | "foto2") {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     setMsg(null);
     try {
       const url = await caricaImmagineCatalogo(ownerId, file);
-      set("immagine", url);
+      set(campo, url);
     } catch (err) {
       setMsg((err as Error).message);
     } finally {
       setUploading(false);
     }
+  }
+
+  // Lingua sempre inclusa: italiano. Si possono aggiungere fino a 8 lingue totali.
+  function toggleLingua(code: string) {
+    const cur = new Set(v.lingue && v.lingue.length ? v.lingue : ["it"]);
+    cur.add("it");
+    if (code !== "it") {
+      if (cur.has(code)) cur.delete(code);
+      else if (cur.size < 8) cur.add(code);
+    }
+    set("lingue", [...cur]);
   }
 
   async function salva() {
@@ -223,6 +249,10 @@ function VoceEditor({
             <span className="label">Descrizione (facoltativa)</span>
             <textarea className="field mt-1 h-20" value={v.descrizione ?? ""} onChange={(e) => set("descrizione", e.target.value)} />
           </label>
+          <label className="block sm:col-span-2">
+            <span className="label">Durata (facoltativa, per i servizi — es. &quot;2 ore&quot;)</span>
+            <input className="field mt-1" value={v.durata ?? ""} onChange={(e) => set("durata", e.target.value)} />
+          </label>
         </div>
 
         {/* immagine con ridimensionamento automatico */}
@@ -237,7 +267,7 @@ function VoceEditor({
                 nessuna
               </span>
             )}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={scegliFoto} />
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => scegliFoto(e, "immagine")} />
             <button type="button" className="btn-ghost text-sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
               {uploading ? "Carico…" : v.immagine ? "Cambia foto" : "Carica foto"}
             </button>
@@ -245,6 +275,58 @@ function VoceEditor({
           <p className="mt-1 text-[11px] text-green-900/50">
             La foto viene ridimensionata e alleggerita in automatico.
           </p>
+        </div>
+
+        {/* seconda foto (i servizi possono averne due) */}
+        <div className="mt-3">
+          <span className="label">Seconda foto (facoltativa — per i servizi)</span>
+          <div className="mt-1 flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {v.foto2 ? (
+              <img src={v.foto2} alt="" className="h-20 w-20 rounded-lg object-cover" />
+            ) : (
+              <span className="flex h-20 w-20 items-center justify-center rounded-lg bg-leaf text-xs text-green-900/50">
+                nessuna
+              </span>
+            )}
+            <input ref={fileRef2} type="file" accept="image/*" className="hidden" onChange={(e) => scegliFoto(e, "foto2")} />
+            <button type="button" className="btn-ghost text-sm" onClick={() => fileRef2.current?.click()} disabled={uploading}>
+              {uploading ? "Carico…" : v.foto2 ? "Cambia foto" : "Carica 2ª foto"}
+            </button>
+            {v.foto2 && (
+              <button type="button" className="text-xs font-bold text-traffic-red hover:underline" onClick={() => set("foto2", null)}>
+                Rimuovi
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* lingue dell'attività (per i turisti stranieri) */}
+        <div className="mt-3">
+          <span className="label">Lingue dell&apos;attività</span>
+          <p className="mt-0.5 text-[11px] text-green-900/50">
+            L&apos;italiano è sempre incluso. Aggiungi fino a 8 lingue in cui puoi svolgere l&apos;attività.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {LINGUE_SERVIZIO.map((l) => {
+              const attive = v.lingue && v.lingue.length ? v.lingue : ["it"];
+              const sel = l.code === "it" || attive.includes(l.code);
+              const pieno = !sel && attive.length >= 8;
+              return (
+                <button
+                  key={l.code}
+                  type="button"
+                  disabled={l.code === "it" || pieno}
+                  onClick={() => toggleLingua(l.code)}
+                  className={`rounded-full border-2 px-3 py-1 text-sm font-semibold transition disabled:opacity-50 ${
+                    sel ? "border-lime-500 bg-leaf text-green-800" : "border-[#e3eed7] bg-white text-green-900/70"
+                  }`}
+                >
+                  {l.flag} {l.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="mt-5 flex items-center gap-3">

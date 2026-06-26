@@ -68,14 +68,24 @@ export default function Home() {
           <div className="mt-7">
             <LegendaSemaforo />
           </div>
-          <div className="mt-6 text-center">
+
+          {/* Com'è fatto il calcolatore (vive su ECO-VISA, il nostro riferimento) */}
+          <div className="mx-auto mt-7 max-w-2xl rounded-2xl border border-[#cde3a8] bg-white/70 p-4 text-sm text-green-900/80">
+            <strong className="text-green-800">Com&apos;è fatto:</strong> inserisci lo
+            stabilimento e le materie prime con la loro origine. Il calcolatore mostra in
+            tempo reale i chilometri, la CO₂ e il <strong>semaforo del prodotto</strong>, con
+            il colore di ogni singolo ingrediente. Lo strumento vive su ECO-VISA — per
+            compilarlo basta un click 👇
+          </div>
+
+          <div className="mt-4 text-center">
             <a
               href="https://ecovisa.it/calcola"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-lime"
             >
-              🚦 Prova il calcolatore del semaforo
+              🚦 Prova il calcolatore su ECO-VISA
             </a>
           </div>
         </div>

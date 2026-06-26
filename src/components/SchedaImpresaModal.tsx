@@ -20,6 +20,13 @@ const euro = (n: number | null) =>
   n == null ? "" : "€ " + n.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const tipoLabel = (t: string) => TIPI_VOCE.find((x) => x.id === t)?.label ?? t;
 
+/** Etichette lingue dei servizi (per i turisti stranieri). */
+const LINGUE_LABEL: Record<string, string> = {
+  it: "🇮🇹 Italiano", en: "🇬🇧 English", fr: "🇫🇷 Français", de: "🇩🇪 Deutsch",
+  es: "🇪🇸 Español", pt: "🇵🇹 Português", nl: "🇳🇱 Nederlands", zh: "🇨🇳 中文",
+  ru: "🇷🇺 Русский", ar: "🇸🇦 العربية",
+};
+
 /**
  * Pagina dell'impresa (in modale) aperta cliccando il segnaposto o la voce in
  * elenco. Mostra le informazioni IN BASE AL PIANO dell'azienda:
@@ -108,6 +115,7 @@ export function SchedaImpresaModal({
   const serviziCat = catalogoVisibile.filter((v) => v.tipo !== "prodotto");
   const [ordina, setOrdina] = useState<VoceCatalogo | null>(null);
   const [segnala, setSegnala] = useState<VoceCatalogo | null>(null);
+  const [servDett, setServDett] = useState<VoceCatalogo | null>(null);
   const [cartMsg, setCartMsg] = useState<string | null>(null);
 
   // 🛒 Aggiungi al carrello (Fase A): ospite → login; loggato → nel carrello.
@@ -163,7 +171,7 @@ export function SchedaImpresaModal({
           <img
             src={b.immagine}
             alt={b.name}
-            className="mb-4 h-40 w-full rounded-xl object-cover"
+            className="mb-4 max-h-[26rem] w-full rounded-xl bg-leaf/30 object-contain"
           />
         )}
         <div className="flex items-start justify-between gap-3">
@@ -449,24 +457,31 @@ export function SchedaImpresaModal({
                       <div className="shrink-0 text-sm font-bold text-green-800">{euro(v.prezzo)}</div>
                     )}
                   </div>
-                  {onPrenotaServizio && (
+                  <div className="mt-2 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() =>
-                        // converto la voce-catalogo in "servizio" (Product): apre
-                        // RichiestaServizioModal che calcola prezzo × persone.
-                        onPrenotaServizio(b, {
-                          voceId: v.id,
-                          name: v.nome,
-                          price: v.prezzo != null ? euro(v.prezzo) : undefined,
-                          description: v.descrizione ?? undefined,
-                        })
-                      }
-                      className="mt-2 rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
+                      onClick={() => setServDett(v)}
+                      className="rounded-full border border-green-600 px-3 py-1 text-xs font-bold text-green-700 hover:bg-leaf"
                     >
-                      ✨ Richiedi prenotazione
+                      🔍 Dettagli e foto
                     </button>
-                  )}
+                    {onPrenotaServizio && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onPrenotaServizio(b, {
+                            voceId: v.id,
+                            name: v.nome,
+                            price: v.prezzo != null ? euro(v.prezzo) : undefined,
+                            description: v.descrizione ?? undefined,
+                          })
+                        }
+                        className="rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
+                      >
+                        ✨ Richiedi prenotazione
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -535,6 +550,82 @@ export function SchedaImpresaModal({
             portale="BioFido"
             onClose={() => setSegnala(null)}
           />
+        )}
+
+        {servDett && (
+          <div
+            className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50 p-3 sm:p-4"
+            onClick={() => setServDett(null)}
+          >
+            <div
+              className="card max-h-[88dvh] w-full max-w-lg overflow-y-auto overscroll-contain p-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {(servDett.immagine || servDett.foto2) && (
+                <div className={`grid gap-1 ${servDett.immagine && servDett.foto2 ? "sm:grid-cols-2" : "grid-cols-1"}`}>
+                  {[servDett.immagine, servDett.foto2].filter(Boolean).map((src, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={i}
+                      src={src as string}
+                      alt={servDett.nome}
+                      className="max-h-72 w-full bg-leaf/30 object-contain first:rounded-tl-2xl last:rounded-tr-2xl"
+                    />
+                  ))}
+                </div>
+              )}
+              <div className="p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold uppercase tracking-wide text-lime-500">{tipoLabel(servDett.tipo)}</div>
+                    <h3 className="font-display text-2xl text-green-800">{servDett.nome}</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setServDett(null)}
+                    aria-label="Chiudi"
+                    className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-leaf text-green-800 hover:bg-leaf/70"
+                  >
+                    ✕
+                  </button>
+                </div>
+                {servDett.prezzo != null && (
+                  <div className="mt-2 text-2xl font-bold text-green-800">{euro(servDett.prezzo)}</div>
+                )}
+                {servDett.durata && (
+                  <p className="mt-1 text-sm font-semibold text-green-900/75">⏱ Durata: {servDett.durata}</p>
+                )}
+                {servDett.lingue && servDett.lingue.length > 0 && (
+                  <p className="mt-1 text-sm font-semibold text-green-900/75">
+                    🗣 Lingue: {servDett.lingue.map((c) => LINGUE_LABEL[c] ?? c).join(" · ")}
+                  </p>
+                )}
+                {servDett.descrizione ? (
+                  <p className="mt-3 whitespace-pre-line text-green-900/80">{servDett.descrizione}</p>
+                ) : (
+                  <p className="mt-3 text-sm text-green-900/45">Nessuna descrizione disponibile.</p>
+                )}
+                {onPrenotaServizio && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const v = servDett;
+                      setServDett(null);
+                      onPrenotaServizio(b, {
+                        voceId: v.id,
+                        name: v.nome,
+                        price: v.prezzo != null ? euro(v.prezzo) : undefined,
+                        description: v.descrizione ?? undefined,
+                      });
+                    }}
+                    className="btn-lime mt-5 w-full justify-center text-sm"
+                  >
+                    ✨ Richiedi prenotazione
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
         {prodottoAperto && (
