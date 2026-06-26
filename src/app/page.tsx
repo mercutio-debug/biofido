@@ -34,7 +34,12 @@ export default function Home() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full border-2 border-lime-500 bg-white px-5 py-2.5 font-bold text-green-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-leaf"
               >
-                <span className="text-xl leading-none">🚦</span>
+                <svg width="15" height="21" viewBox="0 0 15 21" aria-hidden="true" className="flex-none">
+                  <rect x="1.5" y="1" width="12" height="19" rx="4.5" fill="#33402c" />
+                  <circle cx="7.5" cy="6" r="2.3" fill="#e2231a" />
+                  <circle cx="7.5" cy="10.5" r="2.3" fill="#f6c416" />
+                  <circle cx="7.5" cy="15" r="2.3" fill="#45a82f" />
+                </svg>
                 Calcola il tuo semaforo di sostenibilità
               </a>
               <Link href="/registrati" className="btn-ghost">Hai un&apos;attività? Iscriviti</Link>
@@ -95,9 +100,15 @@ export default function Home() {
               href="https://ecovisa.it/calcola"
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-lime"
+              className="btn-lime inline-flex items-center gap-2"
             >
-              🚦 Prova il calcolatore su ECO-VISA
+              <svg width="14" height="20" viewBox="0 0 15 21" aria-hidden="true" className="flex-none">
+                <rect x="1.5" y="1" width="12" height="19" rx="4.5" fill="#33402c" />
+                <circle cx="7.5" cy="6" r="2.3" fill="#e2231a" />
+                <circle cx="7.5" cy="10.5" r="2.3" fill="#f6c416" />
+                <circle cx="7.5" cy="15" r="2.3" fill="#45a82f" />
+              </svg>
+              Prova il calcolatore su ECO-VISA
             </a>
           </div>
         </div>
