@@ -307,14 +307,30 @@ export function SchedaImpresaModal({
                         {p.mostraSemaforo !== false && (p.ingredients?.length ?? 0) > 0 && (() => {
                           const imp = calcolaImpronta(sede, p.ingredients ?? []);
                           const sem = SEMAFORO[imp.level];
+                          // luce accesa: verde (super_green/verde/verde_chiaro), gialla o rossa
+                          const fam = imp.level === "super_green" || imp.level.startsWith("verde")
+                            ? "bottom"
+                            : imp.level.startsWith("giallo")
+                            ? "mid"
+                            : "top";
+                          const off = "#46443f";
                           return (
                             <span
-                              className="inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                              style={{ backgroundColor: `${sem.colore}22`, color: sem.colore }}
+                              className="inline-flex flex-none items-center gap-1.5"
                               title={`Semaforo di sostenibilità: ${sem.testo}`}
                             >
-                              <span className="h-2 w-2 rounded-full" style={{ background: sem.colore }} />
-                              {sem.label}
+                              <svg width="13" height="29" viewBox="0 0 13 29" className="flex-none" aria-hidden="true">
+                                <rect x="0.5" y="0.5" width="12" height="28" rx="4" fill="#33402c" />
+                                <circle cx="6.5" cy="7" r="3.1" fill={fam === "top" ? sem.colore : off} />
+                                <circle cx="6.5" cy="14.5" r="3.1" fill={fam === "mid" ? sem.colore : off} />
+                                <circle cx="6.5" cy="22" r="3.1" fill={fam === "bottom" ? sem.colore : off} />
+                              </svg>
+                              <span
+                                className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                                style={{ backgroundColor: `${sem.colore}22`, color: sem.colore }}
+                              >
+                                {sem.label}
+                              </span>
                             </span>
                           );
                         })()}
