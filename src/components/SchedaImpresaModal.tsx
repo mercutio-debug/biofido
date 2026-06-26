@@ -119,25 +119,33 @@ export function SchedaImpresaModal({
   const [cartMsg, setCartMsg] = useState<string | null>(null);
 
   // 🛒 Aggiungi al carrello (Fase A): ospite → login; loggato → nel carrello.
-  const aggiungiCarrello = async (p: Product, i: number) => {
+  // Gate login per ordinare un PRODOTTO: l'azienda deve sapere chi ha ordinato.
+  // I servizi extra restano aperti agli ospiti (richiesta prenotazione).
+  async function gateLoginOrdine(): Promise<boolean> {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
       if (typeof window !== "undefined") {
         try {
-          sessionStorage.setItem(
-            "postLoginRedirect",
-            window.location.pathname + window.location.search,
-          );
+          sessionStorage.setItem("postLoginRedirect", window.location.pathname + window.location.search);
         } catch {
           /* ignore */
         }
-        alert("Per ordinare questo prodotto devi registrarti o accedere.");
+        alert("Per ordinare un prodotto devi registrarti o accedere.");
         window.location.href = "/accedi";
       }
-      return;
+      return false;
     }
+    return true;
+  }
+
+  const ordinaProdotto = async (v: VoceCatalogo) => {
+    if (await gateLoginOrdine()) setOrdina(v);
+  };
+
+  const aggiungiCarrello = async (p: Product, i: number) => {
+    if (!(await gateLoginOrdine())) return;
     addToCart({
       prodottoId: p.id ?? `${b.id}-${i}`,
       nome: p.name,
@@ -171,7 +179,7 @@ export function SchedaImpresaModal({
           <img
             src={b.immagine}
             alt={b.name}
-            className="mb-4 max-h-[26rem] w-full rounded-xl bg-leaf/30 object-contain"
+            className="mb-4 h-40 w-full rounded-xl object-cover object-top"
           />
         )}
         <div className="flex items-start justify-between gap-3">
@@ -409,7 +417,7 @@ export function SchedaImpresaModal({
                   {b.owner && v.id && (
                     <button
                       type="button"
-                      onClick={() => setOrdina(v)}
+                      onClick={() => ordinaProdotto(v)}
                       className="self-start rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
                     >
                       🛒 Ordina
