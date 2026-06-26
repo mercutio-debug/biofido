@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { adminListCompanies, adminSetPlan, type Company } from "@/lib/admin";
+import { adminListCompanies, adminSetPlan, adminResyncBiofido, type Company } from "@/lib/admin";
 import { adminSetStatoOnboarding } from "@/lib/onboarding";
 import { supabase } from "@/lib/supabase";
 import { PLAN_MAP, type Plan } from "@/lib/categories";
@@ -398,11 +398,36 @@ function SchedaDettaglio({
   const imgAz = (c.azienda as Record<string, unknown> | null)?.immagine as string | undefined;
   const imgBz = (c.business as Record<string, unknown> | null)?.immagine as string | undefined;
 
+  const [resyncing, setResyncing] = useState(false);
+  async function resyncBiofido() {
+    setResyncing(true);
+    const r = await adminResyncBiofido(c.userId);
+    setResyncing(false);
+    onAdmin(
+      r.error
+        ? `Re-sync BioFido non riuscito: ${r.error}`
+        : `✅ Scheda BioFido ri-sincronizzata (${r.prodotti ?? 0} prodotti). Semaforo e carrello ora allineati.`,
+    );
+  }
+
   return (
     <div className="mt-4">
-      <button onClick={onIndietro} className="btn-ghost text-sm">
-        ← Torna all&apos;elenco
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button onClick={onIndietro} className="btn-ghost text-sm">
+          ← Torna all&apos;elenco
+        </button>
+        {c.tipo !== "cliente" && (
+          <button
+            type="button"
+            onClick={resyncBiofido}
+            disabled={resyncing}
+            className="btn-ghost text-sm"
+            title="Ricopia prodotti, ingredienti (semaforo) e dati carrello su BioFido"
+          >
+            {resyncing ? "Ri-sincronizzo…" : "🔄 Re-sincronizza BioFido"}
+          </button>
+        )}
+      </div>
 
       {/* intestazione */}
       <div className="mt-3 flex flex-wrap items-start justify-between gap-3">

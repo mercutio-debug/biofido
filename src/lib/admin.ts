@@ -74,3 +74,33 @@ export async function adminSetPlan(
   if (!res.ok) return { error: data.error || "Operazione non riuscita" };
   return { ok: true, email: data.email };
 }
+
+/**
+ * Forza la ri-sincronizzazione della scheda BioFido di un'azienda (per owner):
+ * ricopia prodotti+ingredienti(geocodificati)+in_shop ecc. su biofido_businesses,
+ * così semaforo e carrello compaiono anche su BioFido senza che il titolare debba
+ * riaprire la sua dashboard. Verifica i permessi admin lato server.
+ */
+export async function adminResyncBiofido(
+  owner: string,
+): Promise<{ ok?: boolean; error?: string; prodotti?: number }> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return { error: "Non autenticato" };
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/admin-resync-biofido`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ owner }),
+    },
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) return { error: data.error || "Re-sync non riuscito" };
+  return { ok: true, prodotti: data.prodotti };
+}
