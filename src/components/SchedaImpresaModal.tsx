@@ -179,7 +179,7 @@ export function SchedaImpresaModal({
           <img
             src={b.immagine}
             alt={b.name}
-            className="mb-4 h-40 w-full rounded-xl object-cover object-top"
+            className="mb-4 aspect-[16/9] w-full rounded-xl object-cover object-top"
           />
         )}
         <div className="flex items-start justify-between gap-3">
