@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { Business, Product } from "@/lib/biofido-data";
+import { useEffect, useState } from "react";
+import { type Business, type Product, businessByOwnerLive } from "@/lib/biofido-data";
 import { SchedaImpresaModal } from "./SchedaImpresaModal";
 import { PrenotaModal } from "./PrenotaModal";
 import { RichiestaServizioModal } from "./RichiestaServizioModal";
@@ -23,11 +23,21 @@ export function SchedaPubblicaClient({
   const [prenota, setPrenota] = useState<Business | null>(null);
   const [prenotaServizio, setPrenotaServizio] = useState<{ business: Business; servizio: Product } | null>(null);
   const [contatta, setContatta] = useState<Business | null>(null);
+  // il prop è lo snapshot al build (per SEO); aggiorno alla versione LIVE del DB
+  // così prodotti/ingredienti/semaforo sono sempre l'ultima versione.
+  const [biz, setBiz] = useState<Business>(business);
+  useEffect(() => {
+    if (business.owner) {
+      businessByOwnerLive(business.owner).then((live) => {
+        if (live) setBiz(live);
+      });
+    }
+  }, [business.owner]);
 
   return (
     <>
       <SchedaImpresaModal
-        business={business}
+        business={biz}
         embedded
         onClose={() => {}}
         onPrenota={(b) => setPrenota(b)}

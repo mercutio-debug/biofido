@@ -224,6 +224,42 @@ function fromRow(r: Row): Business {
 }
 
 /**
+ * Ricarica LIVE una singola scheda dal DB (per la pagina statica /azienda/[slug]:
+ * il prop è lo snapshot al build, mentre prodotti/ingredienti/semaforo cambiano
+ * dopo — es. col re-sync. Qui prendiamo sempre l'ultima versione dal database).
+ */
+export async function businessByOwnerLive(owner: string): Promise<Business | null> {
+  if (!owner) return null;
+  try {
+    const { data } = await supabase
+      .from("biofido_businesses")
+      .select("*")
+      .eq("owner", owner)
+      .maybeSingle();
+    if (!data) return null;
+    const b = fromRow(data as Row);
+    // posizione precisa dall'anagrafica (come in loadBusinesses)
+    try {
+      const { data: az } = await supabase
+        .from("aziende_pubbliche")
+        .select("lat, lon")
+        .eq("owner", owner)
+        .maybeSingle();
+      const a = az as { lat?: number | null; lon?: number | null } | null;
+      if (a?.lat != null && a?.lon != null) {
+        b.lat = Number(a.lat);
+        b.lon = Number(a.lon);
+      }
+    } catch {
+      /* anagrafica non leggibile: tengo le coordinate del business */
+    }
+    return b;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Carica le attività dal database Supabase condiviso.
  * Ritorna sempre un elenco: in caso di errore o tabella vuota usa i dati DEMO.
  */
