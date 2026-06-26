@@ -78,8 +78,16 @@ Deno.serve(async (req) => {
       return json({ error: "Riservato all'amministratore" }, 403);
     }
 
-    const { owner } = await req.json();
+    const { owner, geocache } = await req.json();
     if (!owner) return json({ error: "owner mancante" }, 400);
+
+    // coordinate già geocodificate dal BROWSER dell'admin (affidabili): le uso come
+    // sorgente primaria, evitando Nominatim lato server (spesso bloccato da datacenter).
+    if (geocache && typeof geocache === "object") {
+      for (const [k, v] of Object.entries(geocache as Record<string, { lat: number; lon: number }>)) {
+        if (v && typeof v.lat === "number" && typeof v.lon === "number") geoCache.set(k, v);
+      }
+    }
 
     const { data: a } = await admin
       .from("aziende")

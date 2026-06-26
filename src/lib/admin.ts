@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { Plan } from "./categories";
+import { geocode } from "./geo";
 
 /** Azienda iscritta con tutti i suoi dati (per la schermata admin). */
 export type Company = {
@@ -83,11 +84,61 @@ export async function adminSetPlan(
  */
 export async function adminResyncBiofido(
   owner: string,
+  aziendaId?: string,
 ): Promise<{ ok?: boolean; error?: string; prodotti?: number }> {
   const {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session) return { error: "Non autenticato" };
+
+  // Geocodifico le origini degli ingredienti NEL BROWSER (DB città + fallback OSM):
+  // Nominatim lato server (datacenter Supabase) spesso fallisce → senza coordinate
+  // niente semaforo. Passo le coordinate pronte alla funzione (geocache).
+  const geo = async (name: string): Promise<{ lat: number; lon: number } | null> => {
+    const local = geocode(name);
+    if (local) return { lat: local.lat, lon: local.lon };
+    try {
+      const url =
+        "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=it&q=" +
+        encodeURIComponent(name);
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      const arr = (await res.json()) as { lat?: string; lon?: string }[];
+      const hit = Array.isArray(arr) ? arr[0] : null;
+      return hit?.lat ? { lat: parseFloat(hit.lat), lon: parseFloat(hit.lon as string) } : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const geocache: Record<string, { lat: number; lon: number }> = {};
+  if (aziendaId) {
+    try {
+      const { data: pr } = await supabase
+        .from("prodotti")
+        .select("id")
+        .eq("azienda_id", aziendaId);
+      const ids = ((pr as { id: string }[]) ?? []).map((p) => p.id);
+      if (ids.length) {
+        const { data: ing } = await supabase
+          .from("ingredienti")
+          .select("origine")
+          .in("prodotto_id", ids);
+        const origini = Array.from(
+          new Set(
+            ((ing as { origine: string }[]) ?? [])
+              .map((r) => (r.origine ?? "").trim())
+              .filter(Boolean),
+          ),
+        );
+        for (const o of origini) {
+          const g = await geo(o);
+          if (g) geocache[o.toLowerCase()] = g;
+        }
+      }
+    } catch {
+      /* best-effort: se fallisce, la funzione riprova lato server */
+    }
+  }
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/admin-resync-biofido`,
@@ -97,7 +148,7 @@ export async function adminResyncBiofido(
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({ owner }),
+      body: JSON.stringify({ owner, geocache }),
     },
   );
   const data = await res.json().catch(() => ({}));

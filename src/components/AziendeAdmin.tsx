@@ -401,7 +401,7 @@ function SchedaDettaglio({
   const [resyncing, setResyncing] = useState(false);
   async function resyncBiofido() {
     setResyncing(true);
-    const r = await adminResyncBiofido(c.userId);
+    const r = await adminResyncBiofido(c.userId, (c.azienda as { id?: string } | null)?.id);
     setResyncing(false);
     onAdmin(
       r.error
