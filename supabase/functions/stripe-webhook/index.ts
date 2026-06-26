@@ -15,6 +15,7 @@
 import Stripe from "npm:stripe@16.12.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { emailLayout, esc } from "../_shared/email.ts";
+import { sendPush } from "../_shared/push.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2024-06-20",
@@ -341,6 +342,13 @@ async function avvisaOrdineShop(ordineId: string) {
   });
   await post(ADMIN_EMAIL, "🛒 Nuovo ordine shop", htmlAdmin, "admin");
 
+  // notifica PUSH all'azienda (best-effort)
+  await sendPush(o.owner, {
+    title: "🛒 Nuovo ordine pagato",
+    body: `${o.cliente_nome ?? "Un cliente"} ha ordinato${importo ? ` (${importo})` : ""}. Prepara e spedisci.`,
+    url: SITE_URL ? `${SITE_URL}/dashboard/` : undefined,
+  });
+
   // SMS azienda best-effort (Gold + spunta)
   try {
     await avvisaAziendaOrdineSms(
@@ -371,13 +379,26 @@ async function setPlan(
 }
 
 type ArtMag = { prodottoId?: string; qta?: number };
-const SCORTA_BASSA = 3; // soglia "in esaurimento"
-type AvvisoScorta = { nome: string; giacenza: number };
+type Livello = "meta" | "terzo" | "esaurito";
+type AvvisoScorta = { nome: string; giacenza: number; livello: Livello };
+
+/** Livello del reminder al passaggio da `prev` a `g`, rispetto alla scorta piena
+ *  `iniziale`: scatta SOLO quando si attraversa la soglia (metà, un terzo, zero),
+ *  non a ogni vendita. Esaurito ha priorità, poi un terzo, poi metà. */
+function livelloScorta(prev: number, g: number, iniziale: number): Livello | null {
+  if (g <= 0) return "esaurito";
+  if (!iniziale || iniziale <= 0) return null;
+  const terzo = Math.ceil(iniziale / 3);
+  const meta = Math.ceil(iniziale / 2);
+  if (prev > terzo && g <= terzo) return "terzo";
+  if (prev > meta && g <= meta) return "meta";
+  return null;
+}
 
 /** Fase E magazzino: alla vendita scala la giacenza dei prodotti.
  *  ECO-VISA → tabella `prodotti` (id stabili); BioFido → JSON `products` su
  *  biofido_businesses (best-effort, solo se il prodotto ha id + giacenza).
- *  In più: avvisa l'azienda quando un prodotto va in esaurimento o esaurito. */
+ *  In più: avvisa l'azienda quando la scorta scende a metà / un terzo / esaurito. */
 async function scalaMagazzino(ord: {
   owner: string;
   portale: string | null;
@@ -395,7 +416,10 @@ async function scalaMagazzino(ord: {
         .select("id, products")
         .eq("owner", ord.owner)
         .maybeSingle();
-      const prods = (biz?.products as { id?: string; name?: string; giacenza?: number }[] | null) ?? null;
+      const prods =
+        (biz?.products as
+          | { id?: string; name?: string; giacenza?: number; giacenza_iniziale?: number }[]
+          | null) ?? null;
       if (biz && prods) {
         let changed = false;
         const next = prods.map((p) => {
@@ -403,7 +427,8 @@ async function scalaMagazzino(ord: {
           if (art && typeof p.giacenza === "number") {
             changed = true;
             const g = Math.max(0, p.giacenza - (art.qta || 0));
-            if (g <= SCORTA_BASSA) avvisi.push({ nome: p.name ?? "(prodotto)", giacenza: g });
+            const liv = livelloScorta(p.giacenza, g, p.giacenza_iniziale ?? p.giacenza);
+            if (liv) avvisi.push({ nome: p.name ?? "(prodotto)", giacenza: g, livello: liv });
             return { ...p, giacenza: g };
           }
           return p;
@@ -415,14 +440,15 @@ async function scalaMagazzino(ord: {
         if (!a.prodottoId) continue;
         const { data: pr } = await admin
           .from("prodotti")
-          .select("giacenza, nome")
+          .select("giacenza, giacenza_iniziale, nome")
           .eq("id", a.prodottoId)
           .maybeSingle();
-        const row = pr as { giacenza?: number | null; nome?: string } | null;
+        const row = pr as { giacenza?: number | null; giacenza_iniziale?: number | null; nome?: string } | null;
         if (typeof row?.giacenza === "number") {
           const g = Math.max(0, row.giacenza - (a.qta || 0));
           await admin.from("prodotti").update({ giacenza: g }).eq("id", a.prodottoId);
-          if (g <= SCORTA_BASSA) avvisi.push({ nome: row.nome ?? "(prodotto)", giacenza: g });
+          const liv = livelloScorta(row.giacenza, g, row.giacenza_iniziale ?? row.giacenza);
+          if (liv) avvisi.push({ nome: row.nome ?? "(prodotto)", giacenza: g, livello: liv });
         }
       }
     }
@@ -435,11 +461,18 @@ async function scalaMagazzino(ord: {
 /** Avvisa l'azienda (email + SMS Gold best-effort) quando un prodotto è in
  *  esaurimento (≤ soglia) o esaurito (0), così può rifornire o aggiornare lo stock. */
 async function avvisaScorte(owner: string, avvisi: AvvisoScorta[]): Promise<void> {
-  const esauriti = avvisi.filter((a) => a.giacenza === 0);
-  const bassi = avvisi.filter((a) => a.giacenza > 0);
+  const etich = (l: Livello) =>
+    l === "esaurito" ? "ESAURITO" : l === "terzo" ? "sotto 1/3" : "sotto metà";
+  const esauriti = avvisi.some((a) => a.livello === "esaurito");
+  const terzi = avvisi.some((a) => a.livello === "terzo");
   const righe = avvisi
-    .map((a) => `• ${a.nome}: ${a.giacenza === 0 ? "ESAURITO" : `rimaste ${a.giacenza}`}`)
+    .map((a) => `• ${a.nome}: ${a.livello === "esaurito" ? "ESAURITO" : `rimaste ${a.giacenza}`} (${etich(a.livello)})`)
     .join("\n");
+  const titolo = esauriti
+    ? "⚠️ Prodotti esauriti"
+    : terzi
+    ? "📉 Scorte sotto un terzo"
+    : "📉 Scorte sotto metà";
 
   if (RESEND_API_KEY) {
     const to = await (async () => {
@@ -448,33 +481,35 @@ async function avvisaScorte(owner: string, avvisi: AvvisoScorta[]): Promise<void
     })();
     if (to) {
       const html = emailLayout({
-        title: esauriti.length ? "⚠️ Prodotti esauriti" : "📉 Scorte in esaurimento",
-        bodyHtml: `<p style="margin:0 0 12px;">Aggiorna il magazzino o rifornisci questi prodotti:</p>
+        title: titolo,
+        bodyHtml: `<p style="margin:0 0 12px;">Le scorte di questi prodotti stanno calando — rifornisci o aggiorna il magazzino:</p>
           <p style="margin:0;white-space:pre-line;">${esc(righe)}</p>`,
         ctaLabel: SITE_URL ? "Aggiorna il magazzino" : undefined,
         ctaUrl: SITE_URL ? `${SITE_URL}/dashboard/` : undefined,
-        footerNote: "I clienti non possono ordinare oltre la giacenza disponibile.",
+        footerNote: "I clienti non possono ordinare oltre la giacenza disponibile: evita che il negozio resti vuoto.",
       });
       const r = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: NOTIFY_FROM,
-          to,
-          subject: esauriti.length ? "⚠️ Hai prodotti esauriti" : "📉 Scorte in esaurimento",
-          html,
-        }),
+        body: JSON.stringify({ from: NOTIFY_FROM, to, subject: titolo, html }),
       });
       if (!r.ok) console.error(`stripe-webhook: Resend scorte ${r.status}: ${await r.text()}`);
     }
   }
+
+  // notifica PUSH all'azienda (best-effort)
+  await sendPush(owner, {
+    title: titolo,
+    body: avvisi.map((a) => `${a.nome}: ${etich(a.livello)}`).join(" · "),
+    url: SITE_URL ? `${SITE_URL}/dashboard/` : undefined,
+  });
+
   // SMS Gold best-effort (no-op finché il fornitore SMS non è collegato)
   try {
     await avvisaAziendaOrdineSms(
       owner,
-      `${SMS_SENDER}: ${esauriti.length ? "prodotti ESAURITI" : "scorte basse"}. ${bassi
-        .concat(esauriti)
-        .map((a) => `${a.nome} (${a.giacenza})`)
+      `${SMS_SENDER}: ${esauriti ? "prodotti ESAURITI" : "scorte in calo"}. ${avvisi
+        .map((a) => `${a.nome} (${etich(a.livello)})`)
         .join(", ")}. Aggiorna il magazzino.`,
     );
   } catch (e) {

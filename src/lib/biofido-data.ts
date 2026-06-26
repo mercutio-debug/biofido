@@ -44,6 +44,8 @@ export type Product = {
   foto2?: string;
   /** giacenza a magazzino (Gold); assente = non gestita / illimitata */
   giacenza?: number;
+  /** scorta piena di riferimento per i reminder (metà / un terzo / esaurito) */
+  giacenza_iniziale?: number;
   /** confezione (flacone, barattolo…), contenuto e relativa unità (gr/kg/l/ml…) */
   confezione?: string;
   contenuto?: number;

@@ -114,6 +114,11 @@ export function ProdottoEditor({
         tipoVoce === "prodotto" && inShop && giacenza.trim() !== ""
           ? Math.max(0, Math.floor(Number(giacenza)) || 0)
           : undefined,
+      // scorta piena di riferimento per i reminder (metà / un terzo / esaurito)
+      giacenza_iniziale:
+        tipoVoce === "prodotto" && inShop && giacenza.trim() !== ""
+          ? Math.max(0, Math.floor(Number(giacenza)) || 0)
+          : undefined,
       confezione: confezione.trim() || undefined,
       contenuto: contenuto.trim() === "" ? undefined : Number(contenuto),
       unita: unitaCont.trim() || undefined,

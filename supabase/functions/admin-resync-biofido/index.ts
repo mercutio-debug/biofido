@@ -127,6 +127,7 @@ Deno.serve(async (req) => {
           ...(ingredients && ingredients.length ? { ingredients } : {}),
           ...(p.in_shop ? { in_shop: true } : {}),
           ...(p.giacenza != null ? { giacenza: p.giacenza } : {}),
+          ...(p.giacenza_iniziale != null ? { giacenza_iniziale: p.giacenza_iniziale } : {}),
           ...(p.foto2 ? { foto2: p.foto2 } : {}),
           ...(p.descrizione ? { description: p.descrizione } : {}),
           ...(p.categoria ? { category: p.categoria } : {}),

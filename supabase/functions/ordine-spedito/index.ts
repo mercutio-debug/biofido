@@ -8,6 +8,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { emailLayout, esc } from "../_shared/email.ts";
+import { sendPush } from "../_shared/push.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const NOTIFY_FROM = Deno.env.get("NOTIFY_FROM") ?? "ECO-VISA & BioFido <noreply@ecovisa.it>";
@@ -53,7 +54,7 @@ Deno.serve(async (req) => {
     const { data: o } = await admin
       .from("ordini_shop")
       .select(
-        "owner, cliente_nome, cliente_email, azienda_nome, articoli, controproposta, indirizzo_spedizione, stato, created_at",
+        "owner, cliente_user_id, cliente_nome, cliente_email, azienda_nome, articoli, controproposta, indirizzo_spedizione, stato, created_at",
       )
       .eq("id", ordineId)
       .maybeSingle();
@@ -89,6 +90,12 @@ Deno.serve(async (req) => {
       });
       await post(o.cliente_email, "📦 Il tuo ordine è stato spedito", html, "cliente");
     }
+
+    // notifica PUSH al cliente (best-effort)
+    await sendPush(o.cliente_user_id as string | null, {
+      title: "📦 Ordine spedito",
+      body: `${o.azienda_nome ?? "L'azienda"} ha spedito il tuo ordine.`,
+    });
 
     // notifica all'ADMIN con il tempo di risposta (statistiche)
     if (RESEND_API_KEY) {
