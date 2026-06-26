@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { createOrdineShop } from "@/lib/ordini-shop";
+import { createOrdineShop, pagaOrdineShop } from "@/lib/ordini-shop";
 import {
   getCart,
   setQty,
   removeItem,
-  clearGroup,
   type CartItem,
 } from "@/lib/carrello";
 
@@ -63,21 +62,25 @@ export function CartDrawer({ portale }: { portale: string }) {
       prezzo: it.prezzo,
       qta: it.qta,
     }));
-    const { error } = await createOrdineShop({
+    const { id, error } = await createOrdineShop({
       owner,
       aziendaNome: gruppo[0].aziendaNome,
       portale,
       articoli,
     });
-    setSending(null);
-    if (error) {
-      setMsg("Invio non riuscito: " + error);
+    if (error || !id) {
+      setSending(null);
+      setMsg("Ordine non riuscito: " + (error ?? "riprova"));
       return;
     }
-    clearGroup(aziendaId);
-    refresh();
-    setMsg("Ordine inviato! Ti arriverà un messaggio dall'azienda per confermare l'invio.");
-    setTimeout(() => setMsg(null), 5000);
+    // Addebito immediato: vai SUBITO a Stripe. In caso di successo pagaOrdineShop
+    // reindirizza alla pagina di pagamento (il codice sotto non viene eseguito).
+    const pay = await pagaOrdineShop(id);
+    setSending(null);
+    if (pay.error) {
+      setMsg(pay.error);
+      return;
+    }
   }
 
   return (
@@ -185,8 +188,8 @@ export function CartDrawer({ portale }: { portale: string }) {
             </div>
 
             <p className="border-t border-[#e3eed7] px-5 py-3 text-center text-[11px] text-green-900/55">
-              Inviando l&apos;ordine, ti arriverà un messaggio dall&apos;azienda per
-              confermarti l&apos;invio dei prodotti.
+              Procedendo vai subito al pagamento sicuro (Stripe). L&apos;azienda
+              riceve l&apos;ordine pagato e ti spedisce i prodotti.
             </p>
           </div>
         </div>

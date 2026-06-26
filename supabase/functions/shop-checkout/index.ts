@@ -46,8 +46,10 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!o) return json({ error: "Ordine non trovato" }, 404);
     if (o.cliente_user_id !== user.id) return json({ error: "Non autorizzato" }, 403);
-    if (o.stato !== "confermato" && o.stato !== "accettato") {
-      return json({ error: "L'ordine non è pronto per il pagamento." }, 400);
+    // Addebito immediato: si paga subito dal carrello (ordine appena creato =
+    // "richiesto"). Restano validi anche gli stati del vecchio flusso con conferma.
+    if (!["richiesto", "confermato", "accettato"].includes(o.stato)) {
+      return json({ error: "L'ordine non è pagabile in questo stato." }, 400);
     }
 
     // importo autorevole dal DB: lista concordata (controproposta o originale)

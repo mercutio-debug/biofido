@@ -247,6 +247,78 @@ async function avvisaAziendaOrdine(ordineId: string) {
   }
 }
 
+/** Ordine SHOP pagato (addebito immediato dal carrello): avvisa l'AZIENDA del
+ *  nuovo ordine già pagato e manda la conferma al CLIENTE. */
+async function avvisaOrdineShop(ordineId: string) {
+  if (!RESEND_API_KEY) {
+    console.error("stripe-webhook: RESEND_API_KEY mancante — email ordine shop saltata");
+    return;
+  }
+  const { data: o } = await admin
+    .from("ordini_shop")
+    .select("owner, cliente_nome, cliente_email, azienda_nome, articoli, controproposta, portale")
+    .eq("id", ordineId)
+    .maybeSingle();
+  if (!o) return;
+
+  const lista = ((o.controproposta ?? o.articoli) ?? []) as {
+    nome?: string;
+    prezzo?: string;
+    qta?: number;
+  }[];
+  const righe = lista
+    .map((a) => `• ${a.nome ?? "(prodotto)"} × ${a.qta ?? 1}${a.prezzo ? ` — ${a.prezzo}` : ""}`)
+    .join("\n");
+  const post = (to: string, subject: string, html: string, tag: string) =>
+    fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: NOTIFY_FROM, to, subject, html }),
+    }).then(async (r) => {
+      if (!r.ok) console.error(`stripe-webhook: Resend ordine shop (${tag}) ${r.status}: ${await r.text()}`);
+    });
+
+  // mail all'AZIENDA: ordine già pagato, da preparare e spedire
+  const { data: u } = await admin.auth.admin.getUserById(o.owner);
+  const toAzienda = u?.user?.email;
+  if (toAzienda) {
+    const html = emailLayout({
+      title: "🛒 Nuovo ordine pagato",
+      bodyHtml: `<p style="margin:0 0 12px;">Hai ricevuto un ordine <strong>già pagato</strong> da
+        ${esc(o.cliente_nome ?? "un cliente")} (${esc(o.cliente_email ?? "—")})${
+        o.portale ? ` · ${esc(o.portale)}` : ""
+      }:</p>
+        <p style="margin:0;white-space:pre-line;">${esc(righe)}</p>
+        <p style="margin:12px 0 0;">Prepara e spedisci i prodotti al cliente.</p>`,
+      ctaLabel: SITE_URL ? "Vai agli ordini ricevuti" : undefined,
+      ctaUrl: SITE_URL ? `${SITE_URL}/dashboard/` : undefined,
+    });
+    await post(toAzienda, "🛒 Nuovo ordine pagato", html, "azienda");
+  }
+
+  // mail di conferma al CLIENTE
+  if (o.cliente_email) {
+    const html = emailLayout({
+      title: "✅ Ordine confermato",
+      bodyHtml: `<p style="margin:0 0 12px;">Grazie! Il tuo ordine a
+        <strong>${esc(o.azienda_nome ?? "l'azienda")}</strong> è stato pagato:</p>
+        <p style="margin:0;white-space:pre-line;">${esc(righe)}</p>
+        <p style="margin:12px 0 0;">Sarà l'azienda a spedirti i prodotti e a contattarti per la consegna.</p>`,
+    });
+    await post(o.cliente_email, "✅ Il tuo ordine è confermato", html, "cliente");
+  }
+
+  // SMS azienda best-effort (Gold + spunta)
+  try {
+    await avvisaAziendaOrdineSms(
+      o.owner,
+      `Nuovo ordine pagato su ${SMS_SENDER} da ${o.cliente_nome ?? "cliente"}. Vedi "Ordini ricevuti".`,
+    );
+  } catch (e) {
+    console.error("stripe-webhook: SMS ordine shop errore:", (e as Error).message);
+  }
+}
+
 /** Aggiorna l'abbonamento e allinea il piano delle schede dell'utente. */
 async function setPlan(
   userId: string,
@@ -422,6 +494,8 @@ Deno.serve(async (req) => {
               .update({ stato: "pagato", updated_at: new Date().toISOString() })
               .eq("id", ordineId);
             if (ord) await scalaMagazzino(ord);
+            // mail all'azienda (ordine pagato) + conferma al cliente
+            await avvisaOrdineShop(ordineId);
           }
           break;
         }
