@@ -82,6 +82,8 @@ export default function DashboardPage() {
   const [popupPag, setPopupPag] = useState<{ plan: Plan; period: "monthly" | "annual" } | null>(null);
   // BioFido è riservato alle aziende bio: la certificazione è obbligatoria
   const [bioOk, setBioOk] = useState(false);
+  // "pagina prodotti": vista dedicata a scheda + prodotti + servizi extra
+  const [vistaProdotti, setVistaProdotti] = useState(false);
   // Acquisto in sospeso (pagamento avviato ma non completato): card "Completa".
   const [sospeso, setSospeso] = useState<AcquistoSospeso | null>(null);
 
@@ -182,6 +184,24 @@ export default function DashboardPage() {
     return <div className="mx-auto max-w-4xl px-4 py-16 text-green-900/70">Caricamento…</div>;
   }
 
+  // PAGINA dedicata: scheda, prodotti e servizi extra, a tutto schermo, per tenere
+  // ordinata la dashboard principale.
+  if (vistaProdotti && user) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <button onClick={() => setVistaProdotti(false)} className="btn-ghost text-sm">
+          ← Torna alla dashboard
+        </button>
+        <h1 className="title-pangea mt-3 text-3xl text-green-700 md:text-4xl">
+          Scheda, prodotti e servizi
+        </h1>
+        <SchedaMappaCard ownerId={user.id} plan={pianoScelto} activePlan={activePlan} />
+        <AnteprimaScheda ownerId={user.id} />
+        <CatalogoCard ownerId={user.id} gold={pianoScelto === "gold"} />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
       <div className="flex items-center justify-between">
@@ -260,9 +280,20 @@ export default function DashboardPage() {
       {user && (
         <>
           <SezioneBio ownerId={user.id} onValid={setBioOk} />
-          <SchedaMappaCard ownerId={user.id} plan={pianoScelto} activePlan={activePlan} />
-          <AnteprimaScheda ownerId={user.id} />
-          <CatalogoCard ownerId={user.id} gold={pianoScelto === "gold"} />
+          {/* scheda + prodotti + servizi in una PAGINA dedicata, per tenere ordinata la dashboard */}
+          <button
+            type="button"
+            onClick={() => setVistaProdotti(true)}
+            className="card mt-6 flex w-full items-center justify-between gap-4 p-6 text-left hover:bg-leaf/30"
+          >
+            <span>
+              <span className="font-display text-2xl text-green-800">📦 Scheda, prodotti e servizi</span>
+              <span className="mt-1 block text-sm text-green-900/70">
+                Configura la scheda sulla mappa, aggiungi prodotti (col semaforo) e servizi extra.
+              </span>
+            </span>
+            <span className="font-display text-3xl text-green-700">→</span>
+          </button>
           <PagamentiCard ownerId={user.id} plan={pianoScelto} />
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
           <OrdiniShopRicevuti />
