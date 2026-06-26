@@ -6,6 +6,7 @@ import {
   confermaOrdineShop,
   rifiutaOrdineShop,
   controproponiOrdineShop,
+  segnaOrdineSpedito,
   type OrdineShop,
   type ArticoloOrdine,
 } from "@/lib/ordini-shop";
@@ -17,7 +18,8 @@ const STATO: Record<string, { label: string; cls: string }> = {
   accettato: { label: "Accettato dal cliente", cls: "bg-leaf text-green-800" },
   rifiutato: { label: "Rifiutato", cls: "bg-[#f3dada] text-traffic-red" },
   annullato: { label: "Annullato", cls: "bg-[#eee] text-green-900/60" },
-  pagato: { label: "Pagato", cls: "bg-green-700 text-white" },
+  pagato: { label: "Pagato · da spedire", cls: "bg-green-700 text-white" },
+  spedito: { label: "Spedito ✓", cls: "bg-green-800 text-white" },
 };
 
 /** Card dashboard: ordini ricevuti dallo shop, con conferma/controproposta/rifiuto. */
@@ -116,6 +118,19 @@ export function OrdiniShopRicevuti() {
                       onClick={() => azione(() => rifiutaOrdineShop(o.id), o.id)}
                     >
                       Rifiuta
+                    </button>
+                  </div>
+                )}
+
+                {/* ordine pagato: l'azienda lo segna come spedito → avvisa il cliente */}
+                {o.stato === "pagato" && (
+                  <div className="mt-3">
+                    <button
+                      className="btn-lime text-sm"
+                      disabled={busy === o.id}
+                      onClick={() => azione(() => segnaOrdineSpedito(o.id), o.id)}
+                    >
+                      📦 Segna come spedito
                     </button>
                   </div>
                 )}

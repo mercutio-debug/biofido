@@ -256,7 +256,9 @@ async function avvisaOrdineShop(ordineId: string) {
   }
   const { data: o } = await admin
     .from("ordini_shop")
-    .select("owner, cliente_nome, cliente_email, azienda_nome, articoli, controproposta, portale")
+    .select(
+      "owner, cliente_nome, cliente_email, azienda_nome, articoli, controproposta, portale, indirizzo_spedizione, telefono, totale_cents",
+    )
     .eq("id", ordineId)
     .maybeSingle();
   if (!o) return;
@@ -269,6 +271,13 @@ async function avvisaOrdineShop(ordineId: string) {
   const righe = lista
     .map((a) => `• ${a.nome ?? "(prodotto)"} × ${a.qta ?? 1}${a.prezzo ? ` — ${a.prezzo}` : ""}`)
     .join("\n");
+  const importo =
+    o.totale_cents != null
+      ? (Number(o.totale_cents) / 100).toLocaleString("it-IT", { style: "currency", currency: "EUR" })
+      : null;
+  const spediz = o.indirizzo_spedizione
+    ? `${esc(o.indirizzo_spedizione)}${o.telefono ? ` · tel. ${esc(o.telefono)}` : ""}`
+    : "—";
   const post = (to: string, subject: string, html: string, tag: string) =>
     fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -278,22 +287,31 @@ async function avvisaOrdineShop(ordineId: string) {
       if (!r.ok) console.error(`stripe-webhook: Resend ordine shop (${tag}) ${r.status}: ${await r.text()}`);
     });
 
-  // mail all'AZIENDA: ordine già pagato, da preparare e spedire
+  // blocco "dati per fattura + spedizione" (riusato in azienda e admin)
+  const datiCliente = `<div style="border-top:1px solid #e3eed7;margin:14px 0;"></div>
+    <p style="margin:0 0 4px;"><strong>Dati cliente (per fattura e spedizione):</strong></p>
+    <p style="margin:0;">
+      ${esc(o.cliente_nome ?? "—")}<br/>
+      ${esc(o.cliente_email ?? "—")}<br/>
+      Spedire a: ${spediz}
+    </p>${importo ? `<p style="margin:10px 0 0;"><strong>Incassato:</strong> ${esc(importo)}</p>` : ""}`;
+
+  // mail all'AZIENDA: ordine già pagato, dati per fattura + dove spedire
   const { data: u } = await admin.auth.admin.getUserById(o.owner);
   const toAzienda = u?.user?.email;
   if (toAzienda) {
     const html = emailLayout({
       title: "🛒 Nuovo ordine pagato",
-      bodyHtml: `<p style="margin:0 0 12px;">Hai ricevuto un ordine <strong>già pagato</strong> da
-        ${esc(o.cliente_nome ?? "un cliente")} (${esc(o.cliente_email ?? "—")})${
+      bodyHtml: `<p style="margin:0 0 12px;">Hai ricevuto un ordine <strong>già pagato</strong>${
         o.portale ? ` · ${esc(o.portale)}` : ""
-      }:</p>
+      }. Emetti fattura, prepara e <strong>spedisci</strong>:</p>
         <p style="margin:0;white-space:pre-line;">${esc(righe)}</p>
-        <p style="margin:12px 0 0;">Prepara e spedisci i prodotti al cliente.</p>`,
+        ${datiCliente}`,
       ctaLabel: SITE_URL ? "Vai agli ordini ricevuti" : undefined,
       ctaUrl: SITE_URL ? `${SITE_URL}/dashboard/` : undefined,
+      footerNote: "Quando spedisci, premi “Ordine spedito” negli Ordini ricevuti: avvisa il cliente.",
     });
-    await post(toAzienda, "🛒 Nuovo ordine pagato", html, "azienda");
+    await post(toAzienda, "🛒 Nuovo ordine pagato — da spedire", html, "azienda");
   }
 
   // mail di conferma al CLIENTE
@@ -301,18 +319,35 @@ async function avvisaOrdineShop(ordineId: string) {
     const html = emailLayout({
       title: "✅ Ordine confermato",
       bodyHtml: `<p style="margin:0 0 12px;">Grazie! Il tuo ordine a
-        <strong>${esc(o.azienda_nome ?? "l'azienda")}</strong> è stato pagato:</p>
+        <strong>${esc(o.azienda_nome ?? "l'azienda")}</strong> è stato <strong>pagato</strong>${
+        importo ? ` (${esc(importo)})` : ""
+      }:</p>
         <p style="margin:0;white-space:pre-line;">${esc(righe)}</p>
-        <p style="margin:12px 0 0;">Sarà l'azienda a spedirti i prodotti e a contattarti per la consegna.</p>`,
+        <p style="margin:12px 0 0;">Sarà l'azienda a spedirti i prodotti${
+          o.indirizzo_spedizione ? ` a: ${esc(o.indirizzo_spedizione)}` : ""
+        }. Ti avviseremo alla spedizione.</p>`,
     });
     await post(o.cliente_email, "✅ Il tuo ordine è confermato", html, "cliente");
   }
+
+  // notifica all'ADMIN (riepilogo ordine)
+  const htmlAdmin = emailLayout({
+    title: "🛒 Nuovo ordine sullo shop",
+    bodyHtml: `<p style="margin:0 0 8px;"><strong>${esc(o.azienda_nome ?? "Azienda")}</strong>${
+      o.portale ? ` · ${esc(o.portale)}` : ""
+    }${importo ? ` · ${esc(importo)}` : ""}</p>
+      <p style="margin:0;white-space:pre-line;">${esc(righe)}</p>
+      ${datiCliente}`,
+  });
+  await post(ADMIN_EMAIL, "🛒 Nuovo ordine shop", htmlAdmin, "admin");
 
   // SMS azienda best-effort (Gold + spunta)
   try {
     await avvisaAziendaOrdineSms(
       o.owner,
-      `Nuovo ordine pagato su ${SMS_SENDER} da ${o.cliente_nome ?? "cliente"}. Vedi "Ordini ricevuti".`,
+      `Nuovo ordine pagato su ${SMS_SENDER}${importo ? ` (${importo})` : ""} da ${
+        o.cliente_nome ?? "cliente"
+      }. Vedi "Ordini ricevuti".`,
     );
   } catch (e) {
     console.error("stripe-webhook: SMS ordine shop errore:", (e as Error).message);
@@ -489,12 +524,28 @@ Deno.serve(async (req) => {
               .select("owner, portale, articoli, controproposta")
               .eq("id", ordineId)
               .maybeSingle();
+            // dati di spedizione/fatturazione raccolti da Stripe Checkout
+            const det = (s as { shipping_details?: { address?: Record<string, string>; name?: string }; customer_details?: { address?: Record<string, string>; phone?: string } });
+            const addr = det.shipping_details?.address ?? det.customer_details?.address ?? null;
+            const indirizzo = addr
+              ? [addr.line1, addr.line2, [addr.postal_code, addr.city].filter(Boolean).join(" "), addr.state, addr.country]
+                  .filter(Boolean)
+                  .join(", ")
+              : null;
             await admin
               .from("ordini_shop")
-              .update({ stato: "pagato", updated_at: new Date().toISOString() })
+              .update({
+                stato: "pagato",
+                totale_cents: s.amount_total ?? null,
+                indirizzo_spedizione: indirizzo,
+                telefono: det.customer_details?.phone ?? null,
+                stripe_session_id: s.id,
+                updated_at: new Date().toISOString(),
+              })
               .eq("id", ordineId);
             if (ord) await scalaMagazzino(ord);
-            // mail all'azienda (ordine pagato) + conferma al cliente
+            // mail all'azienda (ordine pagato + dati cliente/fattura/spedizione),
+            // conferma al cliente e notifica all'admin
             await avvisaOrdineShop(ordineId);
           }
           break;

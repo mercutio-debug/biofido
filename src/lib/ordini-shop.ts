@@ -21,7 +21,8 @@ export type StatoOrdineShop =
   | "accettato"
   | "rifiutato"
   | "annullato"
-  | "pagato";
+  | "pagato"
+  | "spedito";
 
 export type OrdineShop = {
   id: string;
@@ -167,6 +168,32 @@ export async function pagaOrdineShop(ordineId: string): Promise<{ error?: string
       return {};
     }
     return { error: "Sessione di pagamento non creata." };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** L'azienda segna un ordine pagato come SPEDITO: avvisa il cliente (mail) e
+ *  notifica l'admin con il tempo di risposta. Verifica i permessi lato server. */
+export async function segnaOrdineSpedito(ordineId: string): Promise<{ error?: string }> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return { error: "Accedi per continuare." };
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return { error: "Configurazione mancante." };
+  try {
+    const res = await fetch(`${base}/functions/v1/ordine-spedito`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ ordineId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) return { error: data.error || "Operazione non riuscita." };
+    return {};
   } catch (e) {
     return { error: (e as Error).message };
   }

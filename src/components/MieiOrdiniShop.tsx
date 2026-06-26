@@ -18,6 +18,7 @@ const STATO: Record<string, { label: string; cls: string }> = {
   rifiutato: { label: "Rifiutato", cls: "bg-[#f3dada] text-traffic-red" },
   annullato: { label: "Annullato", cls: "bg-[#eee] text-green-900/60" },
   pagato: { label: "Pagato", cls: "bg-green-700 text-white" },
+  spedito: { label: "Spedito 📦", cls: "bg-green-800 text-white" },
 };
 
 /** Sezione cliente: i propri ordini shop, con accetta/rifiuta della controproposta. */
