@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import type { Business, Product } from "@/lib/biofido-data";
 import { createServizioBooking, euroCents } from "@/lib/bookings";
 
@@ -84,7 +85,8 @@ export function RichiestaServizioModal({
     else setDone(true);
   }
 
-  return (
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div
       className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-3 sm:p-4"
       onClick={onClose}
@@ -188,6 +190,7 @@ export function RichiestaServizioModal({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

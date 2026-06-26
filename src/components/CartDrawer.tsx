@@ -53,7 +53,7 @@ export function CartDrawer({ portale }: { portale: string }) {
     } = await supabase.auth.getUser();
     if (!user) {
       setSending(null);
-      window.location.href = "/accedi";
+      window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/accedi";
       return;
     }
     const articoli = gruppo.map((it) => ({

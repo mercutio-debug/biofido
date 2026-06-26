@@ -131,7 +131,8 @@ export function SchedaImpresaModal({
           /* ignore */
         }
         alert("Per ordinare un prodotto devi registrarti o accedere.");
-        window.location.href = "/accedi";
+        // su GitHub Pages il sito è servito sotto /biofido: senza basePath → 404
+        window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/accedi";
       }
       return false;
     }
