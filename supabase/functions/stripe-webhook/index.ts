@@ -617,6 +617,15 @@ Deno.serve(async (req) => {
             if (exErr) {
               console.error("stripe-webhook: extras non salvati (colonna assente?):", exErr.message);
             }
+            // "Ci pensiamo noi": prepariamo NOI il negozio → lo shop resta NASCOSTO
+            // finché l'azienda non lo approva (con manleva). Gate ON, best-effort.
+            if (String(s.metadata.extras).includes("onboarding")) {
+              await admin.from("aziende").update({ shop_approvato: false }).eq("owner", userId);
+              await admin
+                .from("biofido_businesses")
+                .update({ shop_approvato: false })
+                .eq("owner", userId);
+            }
           }
           // avvisa l'admin con il riepilogo per la fattura (Aruba non ancora collegato)
           await avvisaAdminPagamento(s, userId, plan);

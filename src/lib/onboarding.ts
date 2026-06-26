@@ -113,21 +113,32 @@ export async function listaFileOnboarding(): Promise<FileOnboarding[]> {
  * in_corso     → acquistato, l'azienda sta caricando i file
  * inviato      → l'azienda ha premuto "ho caricato tutto": tocca a noi
  * integrazioni → il nostro team ha chiesto altro materiale (nota = cosa serve)
+ * pronto       → il negozio è pronto: l'azienda deve APPROVARLO (manleva) per pubblicarlo
  * completato   → abbiamo finito: l'onboarding si può riacquistare per un nuovo giro
  */
-export type StatoOnboarding = "in_corso" | "inviato" | "integrazioni" | "completato";
+export type StatoOnboarding =
+  | "in_corso"
+  | "inviato"
+  | "integrazioni"
+  | "pronto"
+  | "completato";
 
-export async function getStatoOnboarding(): Promise<{ stato: StatoOnboarding; nota: string | null } | null> {
+export async function getStatoOnboarding(): Promise<{
+  stato: StatoOnboarding;
+  nota: string | null;
+  note_scorte?: string | null;
+} | null> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
+  // select("*"): note_scorte può non esistere ancora → evito errori se manca
   const { data } = await supabase
     .from("onboarding_stato")
-    .select("stato, nota")
+    .select("*")
     .eq("owner", user.id)
     .maybeSingle();
-  return (data as { stato: StatoOnboarding; nota: string | null } | null) ?? null;
+  return (data as { stato: StatoOnboarding; nota: string | null; note_scorte?: string | null } | null) ?? null;
 }
 
 /** L'azienda conferma di aver caricato tutto → tocca al nostro team. */
@@ -151,10 +162,44 @@ export async function adminSetStatoOnboarding(
   const { error } = await supabase
     .from("onboarding_stato")
     .upsert({ owner, stato, nota: nota ?? null, updated_at: new Date().toISOString() });
-  // se chiediamo integrazioni, avvisa l'azienda (mail + push) senza webhook
-  if (!error && stato === "integrazioni") {
+  // se chiediamo integrazioni o il negozio è PRONTO, avvisa l'azienda (mail + push)
+  if (!error && (stato === "integrazioni" || stato === "pronto")) {
     void avvisaNotify("onboarding_stato", { owner, stato, nota: nota ?? null });
   }
+  return error ? { error: error.message } : {};
+}
+
+/** L'azienda APPROVA il negozio preparato (con manleva) → lo shop diventa pubblico:
+ *  i prodotti in vendita tornano visibili sulle schede (ECO-VISA + BioFido). */
+export async function approveShop(): Promise<{ error?: string }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessione scaduta: accedi di nuovo." };
+  const { error } = await supabase
+    .from("aziende")
+    .update({ shop_approvato: true })
+    .eq("owner", user.id);
+  // gemello BioFido (best-effort: la riga può non esistere)
+  await supabase.from("biofido_businesses").update({ shop_approvato: true }).eq("owner", user.id);
+  // onboarding concluso
+  await supabase
+    .from("onboarding_stato")
+    .upsert({ owner: user.id, stato: "completato", updated_at: new Date().toISOString() });
+  return error ? { error: error.message } : {};
+}
+
+/** L'azienda indica quante unità ha a magazzino (testo libero), salvato con
+ *  l'onboarding così il team imposta le giacenze quando crea i prodotti. */
+export async function salvaNoteScorte(note: string): Promise<{ error?: string }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessione scaduta." };
+  const { error } = await supabase
+    .from("onboarding_stato")
+    .update({ note_scorte: note, updated_at: new Date().toISOString() })
+    .eq("owner", user.id);
   return error ? { error: error.message } : {};
 }
 

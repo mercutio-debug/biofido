@@ -54,7 +54,11 @@ export function SchedaImpresaModal({
   const cat = CATEGORY_MAP[b.category];
   const plan = PLAN_MAP[b.plan];
   const dir = `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lon}`;
-  const prodotti = (plan.showProducts ? b.products ?? [] : []).slice(0, plan.maxProducts);
+  // Gate "Ci pensiamo noi": se lo shop non è approvato (shop_approvato === false),
+  // i prodotti in vendita (in_shop) non compaiono al pubblico.
+  const prodotti = (plan.showProducts ? b.products ?? [] : [])
+    .filter((p) => b.shop_approvato !== false || !p.in_shop)
+    .slice(0, plan.maxProducts);
   // prodotto "aperto" (espanso): mostra descrizione completa + foto grande
   const [prodottoAperto, setProdottoAperto] = useState<{ p: Product; i: number } | null>(null);
   const sede = { lat: b.lat, lon: b.lon };

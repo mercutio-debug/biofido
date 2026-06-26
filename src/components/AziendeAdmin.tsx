@@ -532,6 +532,17 @@ function SchedaDettaglio({
         <button
           type="button"
           onClick={async () => {
+            if (!confirm("Segnalare il negozio come PRONTO? L'azienda riceve mail+notifica e dovrà approvarlo (con manleva) per pubblicarlo.")) return;
+            const r = await adminSetStatoOnboarding(c.userId, "pronto");
+            onAdmin(r.error ? `Errore: ${r.error}` : `Negozio segnalato come pronto a ${c.email}: deve approvarlo.`);
+          }}
+          className="rounded-full bg-green-600 px-3 py-1 font-bold text-white hover:bg-green-700"
+        >
+          🛍️ Negozio pronto (da approvare)
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
             if (!confirm("Segnare l'onboarding come COMPLETATO? L'azienda potrà riacquistarlo per un nuovo giro.")) return;
             const r = await adminSetStatoOnboarding(c.userId, "completato");
             onAdmin(r.error ? `Errore: ${r.error}` : `Onboarding completato per ${c.email}`);

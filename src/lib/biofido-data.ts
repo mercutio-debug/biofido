@@ -71,6 +71,8 @@ export type Business = {
   immagine?: string;
   /** prodotti con foto e prezzi (solo piano Gold) */
   products?: Product[];
+  /** false = shop in attesa di approvazione (prodotti in_shop nascosti al pubblico) */
+  shop_approvato?: boolean | null;
   /** id utente proprietario della scheda (per legare le esperienze) */
   owner?: string;
   /** esperienze prenotabili del produttore (caricate a parte o demo) */
@@ -198,6 +200,7 @@ type Row = {
   immagine?: string | null;
   products?: Product[] | null;
   owner?: string | null;
+  shop_approvato?: boolean | null;
 };
 
 function fromRow(r: Row): Business {
@@ -216,6 +219,7 @@ function fromRow(r: Row): Business {
     immagine: r.immagine ?? undefined,
     products: r.products ?? undefined,
     owner: r.owner ?? undefined,
+    shop_approvato: r.shop_approvato ?? undefined,
   };
 }
 

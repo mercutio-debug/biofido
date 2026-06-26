@@ -247,6 +247,22 @@ Deno.serve(async (req) => {
     }
 
     if (table === "onboarding_stato") {
+      // Quando il negozio è PRONTO, avviso l'azienda di approvarlo (mail + push).
+      if (rec.stato === "pronto") {
+        await dispatch({
+          userId: rec.owner,
+          email: await emailOf(rec.owner),
+          title: "🛍️ Il tuo negozio è pronto!",
+          body:
+            `Abbiamo preparato il tuo negozio online «Ci pensiamo noi». ` +
+            `Aprilo dalla dashboard, controlla prodotti, prezzi, foto e giacenze, ` +
+            `poi premi «Approva e pubblica» (con la spunta di manleva) per renderlo ` +
+            `visibile al pubblico e iniziare a vendere.`,
+          url: `${SITE_URL}/dashboard/`,
+          ctaLabel: "Apri e approva il negozio",
+        });
+        return ok();
+      }
       // Quando il team chiede INTEGRAZIONI, avviso l'azienda (mail + push).
       if (rec.stato === "integrazioni") {
         await dispatch({
