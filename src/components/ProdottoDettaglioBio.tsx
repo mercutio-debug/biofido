@@ -3,7 +3,9 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Product } from "@/lib/biofido-data";
-import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
+import { calcolaImpronta } from "@/lib/impronta";
+import { SemaforoGrande, SemaforoIngrediente } from "@/components/SemaforoRicco";
+import { AlberiCompensazione } from "@/components/AlberiCompensazione";
 
 /**
  * Scheda prodotto "aperta" (BioFido): foto grandi (prodotto + etichetta),
@@ -96,39 +98,41 @@ export function ProdottoDettaglioBio({
           )}
 
           {imp && (
-            <div className="mt-2">
-              <span
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold"
-                style={{ backgroundColor: `${SEMAFORO[imp.level].colore}22`, color: SEMAFORO[imp.level].colore }}
-              >
-                <span className="h-2 w-2 rounded-full" style={{ background: SEMAFORO[imp.level].colore }} />
-                Semaforo: {SEMAFORO[imp.level].label}
-              </span>
-              {imp.tiers.length > 0 && (
-                <div className="mt-2">
-                  <div className="flex flex-wrap items-center gap-1">
-                    {imp.tiers.map((t, i) => (
-                      <span
-                        key={i}
-                        title={SEMAFORO[t].label}
-                        className="h-3.5 w-3.5 rounded-full"
-                        style={{ background: SEMAFORO[t].colore, boxShadow: `0 0 5px ${SEMAFORO[t].colore}` }}
-                      />
-                    ))}
-                  </div>
-                  <p className="mt-1 text-[11px] text-green-900/60">
-                    Giudizio <strong>qualitativo della composizione</strong> (ogni materia
-                    prima ha il suo colore, sopra), non una somma di CO₂ — vedi la legenda
-                    sotto la mappa.
-                  </p>
-                </div>
-              )}
-              {imp.consigli.length > 0 && (
-                <div className="mt-2 space-y-2">
-                  {imp.consigli.map((c, i) => (
-                    <div key={i} className="flex items-start gap-2 rounded-xl border border-lime-500/40 bg-leaf/40 p-2">
-                      <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-lime-500 text-sm font-bold text-white">💡</span>
-                      <p className="text-xs text-green-900/80">{c}</p>
+            <div className="mt-3 rounded-2xl border border-[#e3eed7] bg-white p-4">
+              {/* il semaforo è protagonista: grande, con punteggio e consigli */}
+              <SemaforoGrande level={imp.level} score={imp.score} consigli={imp.consigli} />
+
+              <p className="mt-2 text-[11px] text-green-900/60">
+                Giudizio <strong>qualitativo della composizione</strong> (ogni materia prima ha
+                il suo colore, qui sotto), non una somma di CO₂.
+              </p>
+
+              {/* impronta di trasporto + alberi per compensare */}
+              <div className="mt-3 flex items-center justify-between border-t border-[#e3eed7] pt-3">
+                <span className="text-sm font-semibold text-green-800">Impronta di trasporto</span>
+                <span className="text-right">
+                  <span className="font-display text-2xl text-green-800">
+                    {imp.co2Kg.toLocaleString("it-IT")} kg
+                  </span>
+                  <span className="block text-[11px] text-green-900/60">
+                    CO₂ · {imp.totalKm.toLocaleString("it-IT")} km
+                  </span>
+                </span>
+              </div>
+              <AlberiCompensazione co2Kg={imp.co2Kg} />
+
+              {/* dettaglio per materia prima: mini-semaforo + nome + km */}
+              {imp.dettaglio.length > 0 && (
+                <div className="mt-3 space-y-1.5 border-t border-[#e3eed7] pt-3">
+                  {imp.dettaglio.map((d, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 text-xs">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <SemaforoIngrediente tier={d.tier} />
+                        <span className="truncate text-green-900/85">{d.nome}</span>
+                      </span>
+                      <span className="flex-none text-green-900/55">
+                        {d.km.toLocaleString("it-IT")} km
+                      </span>
                     </div>
                   ))}
                 </div>

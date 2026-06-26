@@ -136,6 +136,8 @@ export type Impronta = {
   conteggio: number;
   /** tonalità di ogni materia prima valida, nell'ordine */
   tiers: TierIng[];
+  /** dettaglio per materia prima valida: nome, tonalità e km percorsi */
+  dettaglio: { nome: string; tier: TierIng; km: number }[];
   /** suggerimenti contestuali per le materie prime lontane */
   consigli: string[];
 };
@@ -145,11 +147,11 @@ export function calcolaImpronta(
   ingredienti: MateriaPrima[],
 ): Impronta {
   if (!sede)
-    return { totalKm: 0, co2Kg: 0, level: "verde_chiaro", score: 82, conteggio: 0, tiers: [], consigli: [] };
+    return { totalKm: 0, co2Kg: 0, level: "verde_chiaro", score: 82, conteggio: 0, tiers: [], dettaglio: [], consigli: [] };
   let totalKm = 0;
   let co2Kg = 0;
   const tiers: TierIng[] = [];
-  const validi: { nome: string; tier: TierIng }[] = [];
+  const validi: { nome: string; tier: TierIng; km: number }[] = [];
   for (const i of ingredienti) {
     if (typeof i.lat !== "number" || typeof i.lon !== "number") continue;
     let km: number;
@@ -168,7 +170,7 @@ export function calcolaImpronta(
     co2Kg += co2;
     const t = tierIngrediente(km, regioneDi(i.lat, i.lon));
     tiers.push(t);
-    validi.push({ nome: i.nome, tier: t });
+    validi.push({ nome: i.nome, tier: t, km: Math.round(km) });
   }
   const { level, score } = giudizioProdotto(tiers);
   return {
@@ -178,6 +180,7 @@ export function calcolaImpronta(
     score,
     conteggio: tiers.length,
     tiers,
+    dettaglio: validi,
     consigli: consigliIngredienti(validi),
   };
 }
