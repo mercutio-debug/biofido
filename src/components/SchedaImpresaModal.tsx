@@ -9,7 +9,6 @@ import { loadCatalogo, TIPI_VOCE, type VoceCatalogo } from "@/lib/catalogo";
 import { registraEvento } from "@/lib/statistiche";
 import type { Business, Product } from "@/lib/biofido-data";
 import { businessSlug, elencoBusinessConSlug } from "@/lib/biofido-data";
-import { OrdineProdottoModal } from "@/components/OrdineProdottoModal";
 import { ProdottoDettaglioBio } from "@/components/ProdottoDettaglioBio";
 import { SegnalaModal } from "@/components/SegnalaModal";
 import { supabase } from "@/lib/supabase";
@@ -113,7 +112,6 @@ export function SchedaImpresaModal({
   const catalogoVisibile = b.plan === "gold" ? catalogo : [];
   const prodottiCat = catalogoVisibile.filter((v) => v.tipo === "prodotto");
   const serviziCat = catalogoVisibile.filter((v) => v.tipo !== "prodotto");
-  const [ordina, setOrdina] = useState<VoceCatalogo | null>(null);
   const [segnala, setSegnala] = useState<VoceCatalogo | null>(null);
   const [servDett, setServDett] = useState<VoceCatalogo | null>(null);
   const [cartMsg, setCartMsg] = useState<string | null>(null);
@@ -139,10 +137,6 @@ export function SchedaImpresaModal({
     }
     return true;
   }
-
-  const ordinaProdotto = async (v: VoceCatalogo) => {
-    if (await gateLoginOrdine()) setOrdina(v);
-  };
 
   const aggiungiCarrello = async (p: Product, i: number) => {
     if (!(await gateLoginOrdine())) return;
@@ -414,15 +408,6 @@ export function SchedaImpresaModal({
                       </div>
                     )}
                   </div>
-                  {b.owner && v.id && (
-                    <button
-                      type="button"
-                      onClick={() => ordinaProdotto(v)}
-                      className="self-start rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
-                    >
-                      🛒 Ordina
-                    </button>
-                  )}
                   {v.id && (
                     <button
                       type="button"
@@ -538,18 +523,6 @@ export function SchedaImpresaModal({
         >
           🐾 Raggiungila
         </a>
-
-        {ordina && b.owner && (
-          <OrdineProdottoModal
-            prodottoId={ordina.id!}
-            owner={b.owner}
-            prodottoNome={ordina.nome}
-            prezzo={ordina.prezzo != null ? euro(ordina.prezzo) : null}
-            aziendaNome={b.name}
-            portale="BioFido"
-            onClose={() => setOrdina(null)}
-          />
-        )}
 
         {segnala && segnala.id && (
           <SegnalaModal
