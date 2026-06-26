@@ -98,12 +98,22 @@ export function ProdottoDettaglioBio({
           {imp && (
             <div className="mt-2">
               <span
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold capitalize"
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold"
                 style={{ backgroundColor: `${SEMAFORO[imp.level].colore}22`, color: SEMAFORO[imp.level].colore }}
               >
                 <span className="h-2 w-2 rounded-full" style={{ background: SEMAFORO[imp.level].colore }} />
-                Semaforo: {imp.level}
+                Semaforo: {SEMAFORO[imp.level].label}
               </span>
+              {imp.consigli.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  {imp.consigli.map((c, i) => (
+                    <div key={i} className="flex items-start gap-2 rounded-xl border border-lime-500/40 bg-leaf/40 p-2">
+                      <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-lime-500 text-sm font-bold text-white">💡</span>
+                      <p className="text-xs text-green-900/80">{c}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

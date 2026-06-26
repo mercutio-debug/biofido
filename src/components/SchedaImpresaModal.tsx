@@ -294,12 +294,12 @@ export function SchedaImpresaModal({
                           const sem = SEMAFORO[imp.level];
                           return (
                             <span
-                              className="inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold capitalize"
+                              className="inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
                               style={{ backgroundColor: `${sem.colore}22`, color: sem.colore }}
                               title={`Semaforo di sostenibilità: ${sem.testo}`}
                             >
                               <span className="h-2 w-2 rounded-full" style={{ background: sem.colore }} />
-                              {imp.level}
+                              {sem.label}
                             </span>
                           );
                         })()}

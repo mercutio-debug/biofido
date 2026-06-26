@@ -4,6 +4,7 @@ import { MapExperience } from "@/components/MapExperience";
 import { BioFidoLogo } from "@/components/Logo";
 import { GoldPromoBanner } from "@/components/GoldPromoBanner";
 import { OnboardingPromo } from "@/components/OnboardingPromo";
+import { LegendaSemaforo } from "@/components/LegendaSemaforo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -53,6 +54,21 @@ export default function Home() {
 
       {/* Banner Gold: invito alle aziende (sotto la mappa) */}
       <GoldPromoBanner portale="BioFido" />
+
+      {/* Semaforo di sostenibilità: cosa ci distingue (stesso criterio di ECO-VISA) */}
+      <section className="mx-auto mt-12 max-w-6xl px-4">
+        <h2 className="font-display text-2xl text-green-800 sm:text-3xl">
+          Il semaforo di sostenibilità
+        </h2>
+        <p className="mt-2 max-w-2xl text-green-900/80">
+          Ogni prodotto bio ha un semaforo che misura quanto le sue materie prime
+          arrivano da vicino — è la caratteristica che ci distingue. Ecco una scheda
+          d&apos;esempio per ogni tonalità, dal verde a km0 fino alle filiere più lunghe.
+        </p>
+        <div className="mt-5">
+          <LegendaSemaforo />
+        </div>
+      </section>
     </div>
   );
 }
