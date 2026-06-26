@@ -3,6 +3,8 @@
  * prodotti dello stesso produttore; il carrello vive in localStorage finché non
  * costruiamo il drawer + checkout (Fase B). Gemello ECO-VISA / BioFido.
  */
+import { supabase } from "./supabase";
+
 export type CartItem = {
   prodottoId: string;
   nome: string;
@@ -34,6 +36,35 @@ function save(c: CartItem[]) {
     window.dispatchEvent(new Event("carrello-cambiato"));
   } catch {
     /* storage non disponibile */
+  }
+  // Best-effort: i clienti loggati salvano il carrello anche lato server, così la
+  // funzione `solleciti-mail` può ricordare "il tuo carrello ti aspetta".
+  void sincronizzaCarrelloServer(c);
+}
+
+/** Salva (o cancella) il carrello del cliente loggato su Supabase. Silenzioso. */
+async function sincronizzaCarrelloServer(items: CartItem[]): Promise<void> {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const tipo = (user.user_metadata as { tipo?: string } | undefined)?.tipo;
+    if (tipo !== "cliente") return; // il carrello shop è dei clienti finali
+    if (!items.length) {
+      await supabase.from("carrelli_clienti").delete().eq("user_id", user.id);
+      return;
+    }
+    await supabase.from("carrelli_clienti").upsert({
+      user_id: user.id,
+      items: items.map((i) => ({ nome: i.nome, qta: i.qta, azienda: i.aziendaNome })),
+      email: user.email,
+      aggiornato: new Date().toISOString(),
+      solleciti: 0,
+      ultimo_sollecito: null,
+    });
+  } catch {
+    /* offline / non loggato / tabella assente: pazienza */
   }
 }
 

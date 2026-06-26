@@ -164,6 +164,45 @@ async function completaAcquisto(): Promise<number> {
   return inviati;
 }
 
+/** Carrello cliente abbandonato → "il tuo carrello ti aspetta, termina i tuoi acquisti :)". */
+async function carrelloCliente(): Promise<number> {
+  let inviati = 0;
+  const soglia = new Date(Date.now() - 24 * 3_600_000).toISOString();
+  const { data: carrelli } = await admin
+    .from("carrelli_clienti")
+    .select("user_id, email, items, solleciti, aggiornato")
+    .lt("aggiornato", soglia);
+
+  for (const c of carrelli ?? []) {
+    const items = Array.isArray(c.items) ? c.items : [];
+    if (items.length === 0) continue;
+    if ((c.solleciti ?? 0) >= 2) continue;
+    if (!(await puoInviare(c.user_id, "carrello_cliente", 2))) continue;
+    const email = c.email ?? (await emailOf(c.user_id));
+    if (!email) continue;
+    const n = items.reduce((s: number, it: { qta?: number }) => s + (it.qta ?? 1), 0);
+    const html = emailLayout({
+      title: "Il tuo carrello ti aspetta 🛒",
+      bodyHtml:
+        imgTag +
+        `<p>Ciao! Hai lasciato ${n > 1 ? `${n} prodotti bio` : "un prodotto bio"} nel carrello.</p>` +
+        `<p><b>Termina i tuoi acquisti :)</b> — i produttori locali ti aspettano.</p>`,
+      ctaLabel: "Completa l'ordine",
+      ctaUrl: `${SITE}/`,
+      footerNote: "Se hai già completato l'ordine, ignora pure questa email.",
+    });
+    if (await sendEmail(email, "Il tuo carrello ti aspetta — termina i tuoi acquisti :)", html)) {
+      await admin
+        .from("carrelli_clienti")
+        .update({ solleciti: (c.solleciti ?? 0) + 1, ultimo_sollecito: new Date().toISOString() })
+        .eq("user_id", c.user_id);
+      await segnaInviato(c.user_id, "carrello_cliente");
+      inviati++;
+    }
+  }
+  return inviati;
+}
+
 Deno.serve(async (req) => {
   // Sicurezza opzionale: se CRON_SECRET è impostato, va passato nell'header.
   if (CRON_SECRET && req.headers.get("x-cron-secret") !== CRON_SECRET) {
@@ -172,9 +211,11 @@ Deno.serve(async (req) => {
   try {
     const invito = await invitoSemaforo();
     const completa = await completaAcquisto();
-    return new Response(JSON.stringify({ invito_semaforo: invito, completa_acquisto: completa }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    const carrello = await carrelloCliente();
+    return new Response(
+      JSON.stringify({ invito_semaforo: invito, completa_acquisto: completa, carrello_cliente: carrello }),
+      { headers: { "Content-Type": "application/json" } },
+    );
   } catch (e) {
     console.error("solleciti-mail: errore", e);
     return new Response(JSON.stringify({ error: String(e) }), {
