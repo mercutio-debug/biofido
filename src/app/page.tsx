@@ -49,26 +49,43 @@ export default function Home() {
         <MapExperience />
       </section>
 
+      {/* SEMAFORO — il nostro elemento distintivo, subito sotto la mappa */}
+      <section id="semaforo" className="mx-auto mt-8 max-w-6xl px-4 scroll-mt-20">
+        <div className="rounded-3xl border-2 border-lime-500 bg-leaf/40 p-6 md:p-8">
+          <div className="text-center">
+            <span className="inline-block rounded-full bg-lime-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+              Il nostro elemento distintivo
+            </span>
+            <h2 className="title-pangea mt-3 text-3xl text-green-700 md:text-4xl">
+              Che semaforo ha il tuo prodotto?
+            </h2>
+            <p className="mx-auto mt-2 max-w-2xl text-green-900/80">
+              Ogni prodotto bio ha un semaforo di sostenibilità che misura quanto le sue
+              materie prime arrivano da vicino — non una somma di CO₂, ma un giudizio
+              qualitativo della composizione. Ecco una scheda d&apos;esempio per ogni tonalità.
+            </p>
+          </div>
+          <div className="mt-7">
+            <LegendaSemaforo />
+          </div>
+          <div className="mt-6 text-center">
+            <a
+              href="https://ecovisa.it/calcola"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-lime"
+            >
+              🚦 Prova il calcolatore del semaforo
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Riquadro promozionale: demo onboarding incorporata, sotto la mappa */}
       <OnboardingPromo />
 
       {/* Banner Gold: invito alle aziende (sotto la mappa) */}
       <GoldPromoBanner portale="BioFido" />
-
-      {/* Semaforo di sostenibilità: cosa ci distingue (stesso criterio di ECO-VISA) */}
-      <section className="mx-auto mt-12 max-w-6xl px-4">
-        <h2 className="font-display text-2xl text-green-800 sm:text-3xl">
-          Il semaforo di sostenibilità
-        </h2>
-        <p className="mt-2 max-w-2xl text-green-900/80">
-          Ogni prodotto bio ha un semaforo che misura quanto le sue materie prime
-          arrivano da vicino — è la caratteristica che ci distingue. Ecco una scheda
-          d&apos;esempio per ogni tonalità, dal verde a km0 fino alle filiere più lunghe.
-        </p>
-        <div className="mt-5">
-          <LegendaSemaforo />
-        </div>
-      </section>
     </div>
   );
 }
