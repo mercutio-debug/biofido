@@ -28,7 +28,16 @@ export default function Home() {
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <a href="#mappa" className="btn-lime">🐾 Cerca bio vicino a me</a>
-              <Link href="/registrati" className="btn-ghost">Sei un&apos;attività? Iscriviti</Link>
+              <a
+                href="https://ecovisa.it/calcola"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-lime-500 bg-white px-5 py-2.5 font-bold text-green-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-leaf"
+              >
+                <span className="text-xl leading-none">🚦</span>
+                Calcola il tuo semaforo di sostenibilità
+              </a>
+              <Link href="/registrati" className="btn-ghost">Hai un&apos;attività? Iscriviti</Link>
             </div>
           </div>
           <div className="relative mx-auto w-full max-w-sm overflow-hidden rounded-3xl border-4 border-cape-red shadow-lg">
@@ -48,6 +57,9 @@ export default function Home() {
       <section id="mappa" className="mt-6 scroll-mt-20">
         <MapExperience />
       </section>
+
+      {/* «Ci pensiamo noi»: invito alle attività, SOPRA la cornice semaforo (ritmo promo) */}
+      <OnboardingPromo />
 
       {/* SEMAFORO — il nostro elemento distintivo, subito sotto la mappa */}
       <section id="semaforo" className="mx-auto mt-8 max-w-6xl px-4 scroll-mt-20">
@@ -90,9 +102,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Riquadro promozionale: demo onboarding incorporata, sotto la mappa */}
-      <OnboardingPromo />
 
       {/* Banner Gold: invito alle aziende (sotto la mappa) */}
       <GoldPromoBanner portale="BioFido" />
