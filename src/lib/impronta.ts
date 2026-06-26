@@ -190,5 +190,5 @@ export const SEMAFORO: Record<Giudizio, { colore: string; testo: string; label: 
   giallo_scuro: { colore: "#d99a00", label: "Giallo scuro", testo: "Giallo scuro — oltre 1000 km e fuori Italia" },
   rosso_chiaro: { colore: "#ef5350", label: "Rosso chiaro", testo: "Rosso chiaro — oltre 2000 km, in Europa" },
   rosso_scuro: { colore: "#c62828", label: "Rosso scuro", testo: "Rosso scuro — fuori Europa (America/Africa)" },
-  rosso_scurissimo: { colore: "#7b1fa2", label: "Rosso scurissimo", testo: "Rosso scurissimo — materie prime dall'Asia" },
+  rosso_scurissimo: { colore: "#9c0604", label: "Rosso scurissimo", testo: "Rosso scurissimo — materie prime dall'Asia" },
 };
