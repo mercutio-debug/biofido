@@ -104,6 +104,25 @@ export function ProdottoDettaglioBio({
                 <span className="h-2 w-2 rounded-full" style={{ background: SEMAFORO[imp.level].colore }} />
                 Semaforo: {SEMAFORO[imp.level].label}
               </span>
+              {imp.tiers.length > 0 && (
+                <div className="mt-2">
+                  <div className="flex flex-wrap items-center gap-1">
+                    {imp.tiers.map((t, i) => (
+                      <span
+                        key={i}
+                        title={SEMAFORO[t].label}
+                        className="h-3.5 w-3.5 rounded-full"
+                        style={{ background: SEMAFORO[t].colore, boxShadow: `0 0 5px ${SEMAFORO[t].colore}` }}
+                      />
+                    ))}
+                  </div>
+                  <p className="mt-1 text-[11px] text-green-900/60">
+                    Giudizio <strong>qualitativo della composizione</strong> (ogni materia
+                    prima ha il suo colore, sopra), non una somma di CO₂ — vedi la legenda
+                    sotto la mappa.
+                  </p>
+                </div>
+              )}
               {imp.consigli.length > 0 && (
                 <div className="mt-2 space-y-2">
                   {imp.consigli.map((c, i) => (
