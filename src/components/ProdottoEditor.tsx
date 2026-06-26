@@ -302,10 +302,12 @@ export function ProdottoEditor({
 
         <label className="mt-3 block">
           <span className="label">Descrizione</span>
-          <textarea className="field mt-1" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Racconta il prodotto: cos'è, come nasce, stagionalità…" />
+          <textarea className="field mt-1" rows={2} maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Racconta il prodotto: cos'è, come nasce, stagionalità…" />
+          <span className="text-[11px] text-green-900/45">{description.length}/2000</span>
         </label>
 
-        {/* confezione + contenuto: es. olio essenziale · flacone · 10 ml */}
+        {/* confezione + contenuto: solo prodotti (i servizi non ne hanno) */}
+        {tipoVoce === "prodotto" && (
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <label className="block">
             <span className="label">Confezione</span>
@@ -338,6 +340,7 @@ export function ProdottoEditor({
             </select>
           </label>
         </div>
+        )}
 
         <div className="mt-3">
           <span className="label">2ª foto (es. l&apos;etichetta) — opzionale</span>
@@ -379,7 +382,8 @@ export function ProdottoEditor({
           </div>
         </div>
 
-        {/* materie prime */}
+        {/* materie prime (il semaforo): solo prodotti, i servizi speciali NON hanno semaforo */}
+        {tipoVoce === "prodotto" && (
         <div className="mt-4">
           <div className="flex items-center justify-between">
             <span className="label">Materie prime e loro origine</span>
@@ -413,6 +417,7 @@ export function ProdottoEditor({
             + Aggiungi materia prima
           </button>
         </div>
+        )}
 
         {/* certificazioni */}
         <div className="mt-4">
@@ -435,7 +440,9 @@ export function ProdottoEditor({
           </div>
         </div>
 
-        {/* anteprima impronta */}
+        {/* anteprima impronta + flag semaforo: solo prodotti */}
+        {tipoVoce === "prodotto" && (
+        <>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-leaf p-3">
           <div className="flex items-center gap-3">
             <span className="h-4 w-4 rounded-full" style={{ background: sem.colore }} />
@@ -465,6 +472,8 @@ export function ProdottoEditor({
             Togli la spunta se vuoi tenerlo solo in vetrina, senza semaforo.
           </span>
         </label>
+        </>
+        )}
 
         {err && <p className="mt-3 text-sm font-semibold text-traffic-red">{err}</p>}
 
