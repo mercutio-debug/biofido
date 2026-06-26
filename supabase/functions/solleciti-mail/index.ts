@@ -102,16 +102,16 @@ async function invitoSemaforo(): Promise<number> {
     const email = await emailOf(a.owner);
     if (!email) continue;
     const html = emailLayout({
-      title: "Fai vedere quanto sei speciale 🌿",
+      title: "Ricordati di completare la tua iscrizione 🌿",
       bodyHtml:
         imgTag +
-        `<p>Ciao${a.nome ? " " + esc(a.nome) : ""}! Ti sei iscritto ma non hai ancora pubblicato il tuo primo <b>semaforo di sostenibilità</b>.</p>` +
-        `<p>Per pagare c'è sempre tempo: <b>prima fai vedere quanto tu e i tuoi prodotti siete speciali!</b> Bastano pochi minuti — carichi un prodotto e ottieni subito il suo semaforo da mostrare a clienti e partner.</p>`,
-      ctaLabel: "Pubblica il mio primo semaforo",
+        `<p>Ciao${a.nome ? " " + esc(a.nome) : ""}! Ti sei iscritto ma non hai ancora completato la tua scheda: manca il tuo primo prodotto con il <b>semaforo di sostenibilità</b>.</p>` +
+        `<p><b>Il mondo ti aspetta!</b> Bastano pochi minuti per pubblicare la tua attività e farti trovare — poi fai vedere quanto tu e i tuoi prodotti siete speciali.</p>`,
+      ctaLabel: "Completa la mia iscrizione",
       ctaUrl: `${SITE}/dashboard/`,
-      footerNote: "Se hai già caricato un prodotto, ignora pure questa email.",
+      footerNote: "Se hai già completato la tua scheda, ignora pure questa email.",
     });
-    if (await sendEmail(email, "🚦 Pubblica il tuo primo semaforo di sostenibilità", html)) {
+    if (await sendEmail(email, "Completa la tua iscrizione — il mondo ti aspetta! 🌿", html)) {
       await segnaInviato(a.owner, "invito_semaforo");
       inviati++;
     }
