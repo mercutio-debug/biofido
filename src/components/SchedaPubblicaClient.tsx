@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type Business, type Product, businessByOwnerLive } from "@/lib/biofido-data";
+import { registraVisita } from "@/lib/statistiche";
 import { SchedaImpresaModal } from "./SchedaImpresaModal";
 import { PrenotaModal } from "./PrenotaModal";
 import { RichiestaServizioModal } from "./RichiestaServizioModal";
@@ -26,11 +27,17 @@ export function SchedaPubblicaClient({
   // il prop è lo snapshot al build (per SEO); aggiorno alla versione LIVE del DB
   // così prodotti/ingredienti/semaforo sono sempre l'ultima versione.
   const [biz, setBiz] = useState<Business>(business);
+  const vistaContata = useRef(false);
   useEffect(() => {
     if (business.owner) {
       businessByOwnerLive(business.owner).then((live) => {
         if (live) setBiz(live);
       });
+      // conta una VISITA alla scheda condivisibile (una sola volta per apertura)
+      if (!vistaContata.current) {
+        vistaContata.current = true;
+        registraVisita(business.owner);
+      }
     }
   }, [business.owner]);
 
