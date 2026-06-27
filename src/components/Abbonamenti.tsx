@@ -72,12 +72,17 @@ const FEATURES: Record<Plan, string[]> = {
     "Statistiche base: quante visite riceve la tua scheda",
   ],
   gold: [
-    "Una scheda cliente che vale come un sito personale con URL dedicata: prodotti e servizi acquistabili da chiunque, un vero negozio online",
-    "Massima visibilità + slot «in evidenza»",
-    "Fino a 100 prodotti o servizi extra",
-    "Esperienze prenotabili illimitate",
+    "Una scheda-sito con URL dedicata: un vero negozio online, prodotti e servizi acquistabili da chiunque",
+    "Semaforo di sostenibilità su ogni prodotto",
+    "Fino a 100 prodotti, con foto + 2ª foto etichetta",
+    "Descrizione, sito web e contatti: scheda ricca",
+    "Magazzino intelligente: stock anti-overselling",
+    "Prenotazioni via widget: visite ed esperienze illimitate",
+    "Priorità e «in evidenza» nella vetrina pubblica",
+    "Statistiche avanzate (visite, area geografica)",
+    "Pagamenti sicuri: l'ordine arriva già pagato",
     "Commissione ridotta (8%)",
-    "Statistiche avanzate: andamento nel tempo e area geografica",
+    "Onboarding «Ci pensiamo noi»: lo shop lo carichiamo noi",
   ],
 };
 

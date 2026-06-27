@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PLAN_MAP, type Plan } from "@/lib/categories";
 import { FUNZIONI, planAllows } from "@/lib/funzioni";
+import { ConfrontoCosti } from "./ConfrontoCosti";
 
 const ORDINE: Plan[] = ["free", "silver", "gold"];
 
@@ -26,6 +27,7 @@ export function LegendaPianiSlider({
   onboardingAttivo?: boolean;
 }) {
   const [sel, setSel] = useState<Plan>(activePlan);
+  const [info, setInfo] = useState<string | null>(null); // funzione col «?» aperto
   const superiore = ORDINE.indexOf(sel) > ORDINE.indexOf(activePlan);
 
   return (
@@ -58,33 +60,60 @@ export function LegendaPianiSlider({
           ? "Gratis"
           : `${PLAN_MAP[sel].monthlyPrice}€ +IVA/mese · ${PLAN_MAP[sel].annualPrice}€/anno`}
       </div>
+      {/* richiamo d'upsell sempre visibile: Gold vs Shopify */}
+      <div className="mt-2 flex justify-center">
+        <ConfrontoCosti />
+      </div>
 
-      {/* legenda funzioni, accese/spente in base al piano del cursore */}
+      {/* legenda funzioni, accese/spente in base al piano del cursore. Ogni voce
+          ha un «?» che spiega la funzione (ripresa dalla presentazione). */}
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {FUNZIONI.map((f) => {
           const ok = planAllows(sel, f.minPlan);
+          const aperto = info === f.label;
           return (
             <div
               key={f.label}
-              className={`flex items-start gap-2 rounded-xl border p-2.5 transition ${
+              className={`rounded-xl border p-2.5 transition ${
                 ok ? "border-[#cfe3b4] bg-leaf/30" : "border-[#ece9df] bg-[#f7f7f3] opacity-75"
               }`}
             >
-              <span
-                className={`mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full text-[11px] font-bold ${
-                  ok ? "bg-green-600 text-white" : "bg-[#e0ddd2] text-[#8a8778]"
-                }`}
-              >
-                {ok ? "✓" : "🔒"}
-              </span>
-              <div className="min-w-0">
-                <div className={`text-sm font-semibold ${ok ? "text-green-800" : "text-green-900/45"}`}>
-                  {f.label}
+              <div className="flex items-start gap-2">
+                <span
+                  className={`mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full text-[11px] font-bold ${
+                    ok ? "bg-green-600 text-white" : "bg-[#e0ddd2] text-[#8a8778]"
+                  }`}
+                >
+                  {ok ? "✓" : "🔒"}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className={`text-sm font-semibold ${ok ? "text-green-800" : "text-green-900/45"}`}>
+                    {f.label}
+                  </div>
+                  <div className={`text-xs ${ok ? "text-green-900/65" : "text-green-900/40"}`}>
+                    {ok ? f.descr : `Si sblocca con ${PLAN_MAP[f.minPlan].label}`}
+                  </div>
                 </div>
-                <div className={`text-xs ${ok ? "text-green-900/65" : "text-green-900/40"}`}>
-                  {ok ? f.descr : `Si sblocca con ${PLAN_MAP[f.minPlan].label}`}
-                </div>
+                {f.info && (
+                  <button
+                    type="button"
+                    aria-label={`Cos'è: ${f.label}`}
+                    onClick={() => setInfo(aperto ? null : f.label)}
+                    className={`flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[11px] font-bold transition ${
+                      aperto
+                        ? "border-green-600 bg-green-600 text-white"
+                        : "border-green-600/40 text-green-700 hover:bg-leaf"
+                    }`}
+                  >
+                    ?
+                  </button>
+                )}
               </div>
+              {aperto && f.info && (
+                <p className="mt-2 rounded-lg bg-white p-2.5 text-xs leading-relaxed text-green-900/80">
+                  {f.info}
+                </p>
+              )}
             </div>
           );
         })}
