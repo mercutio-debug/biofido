@@ -220,20 +220,8 @@ export function SchedaImpresaModal({
           <p className="mt-3 text-sm text-green-900/85">{b.description}</p>
         )}
 
-        {/* contatti */}
+        {/* contatti (il telefono dell'azienda non si mostra più, per sicurezza) */}
         <div className="mt-3 space-y-1 text-sm">
-          {b.phone && (
-            <div>
-              📞{" "}
-              <a
-                href={`tel:${b.phone}`}
-                onClick={() => b.owner && registraEvento(b.owner, "contatto")}
-                className="font-semibold text-green-700 hover:text-lime-500"
-              >
-                {b.phone}
-              </a>
-            </div>
-          )}
           {plan.showWebsite && b.website && (
             <div>
               🌐{" "}

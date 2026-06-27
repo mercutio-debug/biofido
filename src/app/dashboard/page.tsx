@@ -71,6 +71,9 @@ import { pushConfigured } from "@/lib/push";
 import { DashboardShell, BarraTendine, vaiAlPannello, type DashPanel } from "@/components/DashboardShell";
 import { LegendaPianiSlider } from "@/components/LegendaPianiSlider";
 import { PromoTimer } from "@/components/PromoTimer";
+import { CrossPortalBanner } from "@/components/CrossPortalBanner";
+import { URL_ECOVISA } from "@/lib/portale";
+import { businessSlug } from "@/lib/biofido-data";
 import { contaInSospeso } from "@/lib/contatori";
 import { getMyExtras, getStatoOnboarding } from "@/lib/onboarding";
 
@@ -1185,10 +1188,6 @@ function SchedaMappaCard({
                 </p>
               </div>
             )}
-            <label className="block">
-              <span className="label">Telefono</span>
-              <input className="field mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            </label>
             {PLAN_MAP[plan].showWebsite && (
               <label className="block md:col-span-2">
                 <span className="label">Sito web</span>
@@ -1374,6 +1373,14 @@ function SchedaMappaCard({
               </div>
             );
           })()}
+
+          {vista !== "dati" && (
+            <CrossPortalBanner
+              attiva={pubblicaEcovisa}
+              url={`${URL_ECOVISA}/azienda/${businessSlug(name || "")}/`}
+              altroPortale="ECO-VISA"
+            />
+          )}
 
           <div className="mt-4 flex items-center gap-3">
             <button className="btn-lime" onClick={save} disabled={saving || !name.trim()}>
