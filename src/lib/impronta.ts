@@ -2,7 +2,7 @@ import type { MateriaPrima } from "./biofido-data";
 
 /**
  * Impronta di trasporto di un prodotto. Criterio CONDIVISO con ECO-VISA:
- * scala a 8 tonalità (distanza + geografia) e GIUDIZIO a punteggio pesato
+ * scala a 9 tonalità (distanza + geografia) e GIUDIZIO a punteggio pesato
  * (non la somma), così i prodotti con tanti ingredienti non sono penalizzati e
  * un singolo ingrediente esotico non rovina tutto.
  */
