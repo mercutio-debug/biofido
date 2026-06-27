@@ -323,7 +323,7 @@ export default function DashboardPage() {
       id: "bio",
       section: "Lavoro",
       icon: "bio",
-      label: "Certificazione bio",
+      label: "La mia certificazione bio",
       content: <SezioneBio ownerId={user.id} onValid={setBioOk} />,
     },
     {
@@ -398,6 +398,14 @@ export default function DashboardPage() {
       tone: "giallo",
       label: "Ci pensiamo noi",
       content: <OnboardingCard />,
+    },
+    {
+      id: "spedizioni",
+      section: "Servizi extra",
+      icon: "spedizioni",
+      tone: "giallo",
+      label: "Spedizioni",
+      content: <ServizioInAttivazione titolo="Spedizioni" testo="Presto potrai prenotare e gestire le spedizioni dei tuoi ordini direttamente da qui, via corriere integrato. Stiamo collegando il servizio." />,
     },
     {
       id: "attivi",
@@ -476,7 +484,7 @@ function StartPanel({
           className="rounded-2xl border-2 border-badge-yellow bg-[#fdf7e6] p-5 text-left transition hover:-translate-y-0.5"
         >
           <div className="text-3xl">✨</div>
-          <div className="mt-1 font-display text-lg text-[#7a5b00]">Carica i SERVIZI EXTRA</div>
+          <div className="mt-1 font-display text-lg text-[#7a5b00]">Carica le ESPERIENZE in azienda</div>
           <div className="text-xs text-[#8a6f2e]">Visite, laboratori, degustazioni prenotabili.</div>
         </button>
       </div>
@@ -544,6 +552,21 @@ function PromoOnboarding() {
         <span className="block truncate text-xs text-[#8a6f2e]">Ci pensiamo noi · guarda la demo</span>
       </span>
     </button>
+  );
+}
+
+/** Placeholder per un servizio non ancora attivo (es. Spedizioni, Fatture ricevute). */
+function ServizioInAttivazione({ titolo, testo }: { titolo: string; testo: string }) {
+  return (
+    <section className="card p-5 md:p-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="font-display text-2xl text-green-800">{titolo}</h2>
+        <span className="rounded-full bg-badge-yellow/40 px-3 py-1 text-xs font-bold text-[#7a5b00]">
+          Servizio in attivazione
+        </span>
+      </div>
+      <p className="mt-3 rounded-xl bg-[#fffbe9] p-4 text-sm text-green-900/80">{testo}</p>
+    </section>
   );
 }
 

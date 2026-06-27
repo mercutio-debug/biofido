@@ -171,15 +171,30 @@ export default function AccountPage() {
         </form>
       </section>
 
-      {/* Dati di fatturazione (sempre modificabili) */}
+      {/* Anagrafica impresa (dati fiscali, sempre modificabili) */}
       <section id="fatturazione" className="mt-6 scroll-mt-20">
-        <h2 className="font-display text-2xl text-green-800">Dati di fatturazione</h2>
+        <h2 className="font-display text-2xl text-green-800">Anagrafica impresa</h2>
         <p className="mt-1 text-sm text-green-900/70">
-          Servono per la fattura dell&apos;abbonamento. Puoi correggerli quando vuoi.
+          Dati fiscali per la fattura dell&apos;abbonamento (ragione sociale, P.IVA, SDI/PEC).
+          Puoi correggerli quando vuoi.
         </p>
         <div className="mt-3">
           <DatiFatturazioneForm ownerId={user.id} />
         </div>
+      </section>
+
+      {/* Fatture ricevute (servizio in attivazione) */}
+      <section id="fatture-ricevute" className="card mt-6 p-6 scroll-mt-20">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="font-display text-2xl text-green-800">Fatture ricevute</h2>
+          <span className="rounded-full bg-badge-yellow/40 px-3 py-1 text-xs font-bold text-[#7a5b00]">
+            Servizio in attivazione
+          </span>
+        </div>
+        <p className="mt-3 rounded-xl bg-[#fffbe9] p-4 text-sm text-green-900/80">
+          Presto troverai qui tutte le fatture dei tuoi abbonamenti e servizi, scaricabili in
+          PDF: stiamo attivando la fatturazione automatica.
+        </p>
       </section>
 
       {/* Notifiche */}

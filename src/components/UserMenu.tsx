@@ -20,6 +20,7 @@ const ICO: Record<string, ReactNode> = {
   pin: <><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>,
   bell: <><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6" /><path d="M10 20a2 2 0 0 0 4 0" /></>,
   shield: <path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z" />,
+  cert: <><circle cx="12" cy="9" r="5.5" /><path d="M9.5 9l2 2 3.5-3.5" /><path d="M8 13l-1.5 7 5.5-3 5.5 3L16 13" /></>,
   trash: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />,
   settings: <><circle cx="12" cy="12" r="3.2" /><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" /></>,
   logout: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />,
@@ -192,6 +193,10 @@ export function UserMenu() {
             <span className={iconMuted}><Ico k="box" /></span>
             <span className="flex-1 truncate">I miei ordini</span>
           </Link>
+          <Link href="/account#fatture-ricevute" role="menuitem" onClick={() => setOpen(false)} className={base}>
+            <span className={iconMuted}><Ico k="card" /></span>
+            <span className="flex-1 truncate">Fatture ricevute</span>
+          </Link>
           <Link href="/prenotazioni" role="menuitem" onClick={() => setOpen(false)} className={base}>
             <span className={iconMuted}><Ico k="calendar" /></span>
             <span className="flex-1 truncate">Le mie prenotazioni</span>
@@ -200,9 +205,18 @@ export function UserMenu() {
           <div className="my-1 border-t border-[#eef3e6]" />
 
           {/* account */}
+          <Link href="/account" role="menuitem" onClick={() => setOpen(false)} className={base}>
+            <span className={iconMuted}><Ico k="user" /></span>
+            <span className="flex-1 truncate">Credenziali di accesso</span>
+          </Link>
+          {!isCliente && (
+            <Link href="/dashboard?p=bio" role="menuitem" onClick={(e) => vaiPannello(e, "bio")} className={base}>
+              <span className={iconMuted}><Ico k="cert" /></span>
+              <span className="flex-1 truncate">La mia certificazione bio</span>
+            </Link>
+          )}
           {[
-            { href: "/account", icon: "user", label: "Informazioni account" },
-            { href: "/account#fatturazione", icon: "card", label: "Fatturazione" },
+            { href: "/account#fatturazione", icon: "card", label: "Anagrafica impresa" },
             { href: "/account#geolocalizzazione", icon: "pin", label: "Geolocalizzazione" },
             { href: "/account#notifiche", icon: "bell", label: "Notifiche" },
             { href: "/account#privacy", icon: "shield", label: "Termini e privacy" },

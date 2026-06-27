@@ -220,26 +220,8 @@ export function ProdottoEditor({
           </div>
         </div>
 
-        {/* Servizio speciale: spunta + aiuto al passaggio del mouse */}
-        <label className="mt-3 flex items-start gap-2 rounded-xl border-2 border-badge-yellow bg-[#fffbe9] p-3 text-sm">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-5 w-5 accent-[var(--lime-500)]"
-            checked={tipoVoce === "servizio"}
-            onChange={(e) => setTipoVoce(e.target.checked ? "servizio" : "prodotto")}
-          />
-          <span className="text-green-900/85">
-            🎓 Salva come <strong>servizio speciale</strong> prenotabile in azienda
-            <span
-              title="Spuntando questa casella, il prodotto si configura come SERVIZIO EXTRA che si svolge in azienda — visita guidata, laboratorio, attività esperienziale… Il cliente potrà prenotarlo (scegliendo un giorno sul calendario) e, alla conferma, pagarlo online."
-              className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-green-700 text-[10px] font-bold text-white"
-              aria-label="Cos'è un servizio speciale"
-            >
-              ?
-            </span>
-          </span>
-        </label>
-
+        {/* Le ESPERIENZE in azienda prenotabili si caricano dalla sezione dedicata
+            "Catalogo & esperienze": qui si caricano solo i PRODOTTI. */}
         {tipoVoce === "servizio" && (
           <div className="mt-2 space-y-3 rounded-xl border border-badge-yellow bg-[#fffef6] p-3">
             <label className="block">

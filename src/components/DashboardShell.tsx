@@ -14,7 +14,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 export type IconKey =
   | "start" | "piano" | "prodotti" | "catalogo" | "dati" | "bio" | "anteprima"
   | "messaggi" | "prenotazioni" | "ordini" | "statistiche" | "incassi"
-  | "extra" | "onboarding" | "attivi";
+  | "extra" | "onboarding" | "attivi" | "spedizioni";
 
 export type DashPanel = {
   id: string;
@@ -48,6 +48,7 @@ const ICON: Record<IconKey, ReactNode> = {
   extra: <><rect x="3" y="9" width="18" height="11" rx="1.5" /><path d="M3 13h18M12 9v11M12 9s-1.2-5-4-5-2.2 5 4 5zM12 9s1.2-5 4-5 2.2 5-4 5z" /></>,
   onboarding: <path d="M5 19l9-9M13 4.5l2 2M18 8l1.5 1.5M15.5 3l.6.6M9.5 5l.6.6" />,
   attivi: <><path d="M4 6h10M4 12h10M4 18h7" /><path d="M16 16.5l2 2 4-4" /></>,
+  spedizioni: <><path d="M3 6h11v9H3zM14 9h4l3 3v3h-7z" /><circle cx="7.5" cy="18" r="1.6" /><circle cx="17" cy="18" r="1.6" /></>,
 };
 
 function Icona({ k }: { k: IconKey }) {
