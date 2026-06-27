@@ -30,6 +30,9 @@ export type OrdineShop = {
   clienteUserId: string;
   clienteNome: string | null;
   clienteEmail: string | null;
+  /** indirizzo di spedizione + telefono raccolti al checkout (per fattura e spedizione) */
+  indirizzoSpedizione: string | null;
+  telefono: string | null;
   aziendaNome: string | null;
   portale: string | null;
   articoli: ArticoloOrdine[];
@@ -45,6 +48,8 @@ type Row = {
   cliente_user_id: string;
   cliente_nome: string | null;
   cliente_email: string | null;
+  indirizzo_spedizione: string | null;
+  telefono: string | null;
   azienda_nome: string | null;
   portale: string | null;
   articoli: ArticoloOrdine[] | null;
@@ -60,6 +65,8 @@ const fromRow = (r: Row): OrdineShop => ({
   clienteUserId: r.cliente_user_id,
   clienteNome: r.cliente_nome,
   clienteEmail: r.cliente_email,
+  indirizzoSpedizione: r.indirizzo_spedizione ?? null,
+  telefono: r.telefono ?? null,
   aziendaNome: r.azienda_nome,
   portale: r.portale,
   articoli: r.articoli ?? [],

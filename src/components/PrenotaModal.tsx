@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { Business } from "@/lib/biofido-data";
 import { createBookingRequest, euroCents } from "@/lib/bookings";
 
@@ -35,6 +36,15 @@ export function PrenotaModal({
   const [done, setDone] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // blocca lo scroll di sfondo finché il modale è aperto (no shift di pagina su mobile)
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   const totaleCents = exp ? exp.prezzoCents * persone : 0;
 
   async function submit() {
@@ -67,13 +77,14 @@ export function PrenotaModal({
     else setDone(true);
   }
 
-  return (
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div
       className="fixed inset-0 z-[2000] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="card max-h-[92vh] w-full max-w-lg overflow-y-auto p-6"
+        className="card max-h-[92dvh] w-full max-w-lg overflow-y-auto overflow-x-hidden overscroll-contain p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
@@ -220,6 +231,7 @@ export function PrenotaModal({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -13,7 +13,7 @@ const NOI = [
   "Semaforo di sostenibilità incluso",
   "Visibilità sulla mappa bio",
   "Prenotazioni, badge e statistiche",
-  "Onboarding: lo shop lo carichiamo noi",
+  "Onboarding: lo shop lo carichiamo noi *",
 ];
 const SHOP = [
   "Solo il negozio online",
@@ -60,7 +60,11 @@ function Card() {
       <div className="mt-3 rounded-xl bg-green-700 px-4 py-2 text-center text-sm font-semibold text-white">
         Meno della metà del prezzo — e molto più di un semplice negozio.
       </div>
-      <p className="mt-2 text-[11px] text-green-900/45">
+      <p className="mt-2 text-[11px] text-green-900/55">
+        * Il servizio «Onboarding – Ci pensiamo noi» è un servizio extra acquistabile con il piano
+        Gold: costi e modalità nella scheda «Servizi extra».
+      </p>
+      <p className="mt-1 text-[11px] text-green-900/45">
         Gold €14/mese, prezzo Fondatori (listino €19) · Shopify Basic €28/mese + commissioni e app a parte. Fonte: shopify.com, 2026.
       </p>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Business, Product } from "@/lib/biofido-data";
 import { createServizioBooking, euroCents } from "@/lib/bookings";
@@ -51,6 +51,16 @@ export function RichiestaServizioModal({
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // Blocca lo scroll della pagina di sfondo mentre il modale è aperto: su mobile
+  // (PWA + tastiera) evita che la pagina dietro si sposti e "sballi" la formattazione.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
 
   const totaleCents = prezzoCents * Math.max(1, persone);
 

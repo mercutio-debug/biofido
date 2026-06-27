@@ -86,6 +86,19 @@ export function OrdiniShopRicevuti() {
                   ))}
                 </ul>
 
+                {/* dati del cliente: servono all'azienda per emettere fattura e spedire */}
+                <div className="mt-3 rounded-xl bg-leaf/40 p-3 text-xs text-green-900/85">
+                  <div className="font-bold uppercase tracking-wide text-green-700">
+                    Dati cliente — per fattura e spedizione
+                  </div>
+                  <div className="mt-1 space-y-0.5">
+                    <div>👤 {o.clienteNome || "—"}</div>
+                    <div>✉️ {o.clienteEmail || "—"}</div>
+                    <div>📞 {o.telefono || "— (non fornito)"}</div>
+                    <div>📍 {o.indirizzoSpedizione || "— (indirizzo non fornito)"}</div>
+                  </div>
+                </div>
+
                 {o.controproposta && (
                   <div className="mt-2 rounded-xl bg-[#fff8e6] p-2 text-xs text-[#7a5a00]">
                     Controproposta inviata:{" "}
