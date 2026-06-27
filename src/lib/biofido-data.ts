@@ -204,6 +204,7 @@ type Row = {
   owner?: string | null;
   shop_approvato?: boolean | null;
   pubblica_ecovisa?: boolean | null;
+  archiviato_il?: string | null;
 };
 
 function fromRow(r: Row): Business {
@@ -241,6 +242,7 @@ export async function businessByOwnerLive(owner: string): Promise<Business | nul
       .eq("owner", owner)
       .maybeSingle();
     if (!data) return null;
+    if ((data as Row).archiviato_il) return null; // scheda archiviata: non più pubblica
     const b = fromRow(data as Row);
     // posizione precisa dall'anagrafica (come in loadBusinesses)
     try {
@@ -274,7 +276,9 @@ export async function loadBusinesses(): Promise<{ items: Business[]; source: "su
     const { data, error } = await supabase.from("biofido_businesses").select("*");
     if (error) throw error;
     if (data && data.length > 0) {
-      const items = (data as Row[]).map(fromRow);
+      // le schede ARCHIVIATE (account cancellato) spariscono dalla mappa pubblica.
+      // Filtro in codice: se la colonna non esiste ancora, archiviato_il è undefined.
+      const items = (data as Row[]).filter((r) => !r.archiviato_il).map(fromRow);
       // La posizione VERA è quella che l'azienda salva col pin in anagrafica
       // (tabella aziende). biofido_businesses.lat/lon può essere stantio: lo
       // sovrascrivo con le coordinate precise di aziende, se presenti.

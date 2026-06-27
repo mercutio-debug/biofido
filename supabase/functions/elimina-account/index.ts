@@ -1,9 +1,12 @@
-// Edge Function "elimina-account": l'utente cancella DEFINITIVAMENTE il proprio
-// profilo. Prima di eliminarlo, salviamo uno snapshot in "profili_cancellati"
-// (lo vede solo l'Admin), poi rimuoviamo l'utente da Auth (le righe legate con
-// FK on delete cascade spariscono con lui).
+// Edge Function "elimina-account": l'utente "cancella" il proprio profilo, ma in
+// realtà lo ARCHIVIA (soft-delete recuperabile):
+//   • la scheda azienda viene NASCOSTA dal pubblico (archiviato_il = ora) — sparisce
+//     da mappa e vetrina, ma TUTTI i dati restano intatti nel database;
+//   • l'accesso viene BLOCCATO (utente bannato) — non può più entrare;
+//   • niente viene cancellato: l'Admin trova la scheda completa nell'archivio e può
+//     RIATTIVARLA su richiesta speciale del cliente.
 //
-// Sicurezza: cancella SOLO il proprio account (identificato dal JWT). service-role.
+// Sicurezza: agisce SOLO sul proprio account (identificato dal JWT). service-role.
 // Deploy: npx supabase functions deploy elimina-account --project-ref kvpxnxsjiyiixqksinzr
 
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -35,31 +38,16 @@ Deno.serve(async (req) => {
     const { conferma } = await req.json().catch(() => ({}));
     if (conferma !== "CANCELLA") return json({ error: "conferma mancante" }, 400);
 
-    // 1) snapshot dei dati chiave PRIMA di cancellare
-    const [aziende, biz, fatt] = await Promise.all([
-      admin.from("aziende").select("*").eq("owner", uid),
-      admin.from("biofido_businesses").select("*").eq("owner", uid),
-      admin.from("dati_fatturazione").select("*").eq("user_id", uid),
-    ]);
-    await admin.from("profili_cancellati").insert({
-      user_id: uid,
-      email: user.email ?? null,
-      nome: (user.user_metadata as { nome?: string } | null)?.nome ?? null,
-      user_metadata: user.user_metadata ?? null,
-      aziende: aziende.data ?? null,
-      biofido_businesses: biz.data ?? null,
-      dati_fatturazione: fatt.data ?? null,
+    const ora = new Date().toISOString();
+
+    // 1) ARCHIVIA: nascondi la scheda dal pubblico (i dati NON vengono cancellati)
+    await admin.from("aziende").update({ archiviato_il: ora }).eq("owner", uid);
+    await admin.from("biofido_businesses").update({ archiviato_il: ora }).eq("owner", uid);
+
+    // 2) BLOCCA l'accesso: l'utente non può più entrare (riattivabile dall'Admin)
+    const { error } = await admin.auth.admin.updateUserById(uid, {
+      ban_duration: "876000h", // ~100 anni
     });
-
-    // 2) rimuovi i dati pubblici legati (così l'azienda sparisce SUBITO dalla
-    //    mappa e dalla vetrina). prodotti/ingredienti vanno via in cascata con
-    //    l'azienda se le FK hanno on delete cascade.
-    await admin.from("biofido_businesses").delete().eq("owner", uid);
-    await admin.from("aziende").delete().eq("owner", uid);
-    await admin.from("dati_fatturazione").delete().eq("user_id", uid);
-
-    // 3) elimina l'utente da Auth
-    const { error } = await admin.auth.admin.deleteUser(uid);
     if (error) return json({ error: error.message }, 500);
 
     return json({ ok: true });
