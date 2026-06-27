@@ -141,6 +141,26 @@ export function UserMenu() {
               🐾 La mia dashboard
             </Link>
           )}
+          {!isCliente &&
+            (["dati", "prodotti"] as const).map((v) => (
+              <Link
+                key={v}
+                href={`/dashboard?v=${v}`}
+                role="menuitem"
+                onClick={(e) => {
+                  setOpen(false);
+                  // se sono GIÀ in dashboard, cambio vista senza ricaricare la pagina
+                  if (window.location.pathname.replace(/\/+$/, "").endsWith("/dashboard")) {
+                    e.preventDefault();
+                    window.dispatchEvent(new CustomEvent("biofido:vista", { detail: v }));
+                    window.history.replaceState(null, "", `?v=${v}`);
+                  }
+                }}
+                className="block px-4 py-2 pl-9 text-sm font-semibold text-green-800/90 hover:bg-leaf/50"
+              >
+                {v === "dati" ? "🏢 Dati aziendali" : "🥫 I tuoi prodotti"}
+              </Link>
+            ))}
           {!isCliente && (
             <Link
               href="/dashboard/#messaggi"

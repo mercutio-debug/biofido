@@ -82,8 +82,22 @@ export default function DashboardPage() {
   const [popupPag, setPopupPag] = useState<{ plan: Plan; period: "monthly" | "annual" } | null>(null);
   // BioFido è riservato alle aziende bio: la certificazione è obbligatoria
   const [bioOk, setBioOk] = useState(false);
-  // "pagina prodotti": vista dedicata a scheda + prodotti + servizi extra
-  const [vistaProdotti, setVistaProdotti] = useState(false);
+  // Vista dashboard: "home" (cruscotto), "dati" (anagrafica/fiscali/posizione),
+  // "prodotti" (prodotti + servizi). Deep-link via ?v=… e dai link del menù in alto.
+  const [vista, setVista] = useState<"home" | "dati" | "prodotti">("home");
+  useEffect(() => {
+    const v = new URLSearchParams(window.location.search).get("v");
+    if (v === "dati" || v === "prodotti") setVista(v);
+    const onVista = (e: Event) => {
+      const d = (e as CustomEvent).detail;
+      if (d === "dati" || d === "prodotti" || d === "home") {
+        setVista(d);
+        window.scrollTo({ top: 0 });
+      }
+    };
+    window.addEventListener("biofido:vista", onVista);
+    return () => window.removeEventListener("biofido:vista", onVista);
+  }, []);
   // Acquisto in sospeso (pagamento avviato ma non completato): card "Completa".
   const [sospeso, setSospeso] = useState<AcquistoSospeso | null>(null);
 
@@ -184,20 +198,50 @@ export default function DashboardPage() {
     return <div className="mx-auto max-w-4xl px-4 py-16 text-green-900/70">Caricamento…</div>;
   }
 
-  // PAGINA dedicata: scheda, prodotti e servizi extra, a tutto schermo, per tenere
-  // ordinata la dashboard principale.
-  if (vistaProdotti && user) {
+  // PAGINE dedicate (a tutto schermo) per tenere ordinata la dashboard:
+  //  • "dati"     → anagrafica, dati fiscali, posizione sulla mappa
+  //  • "prodotti" → inserimento prodotti (col semaforo) e servizi extra
+  if (vista !== "home" && user) {
+    const tabBtn = (v: "dati" | "prodotti", label: string) => (
+      <button
+        onClick={() => setVista(v)}
+        className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+          vista === v
+            ? "bg-green-700 text-white shadow"
+            : "border border-green-700/30 bg-white text-green-800 hover:bg-leaf/50"
+        }`}
+      >
+        {label}
+      </button>
+    );
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
-        <button onClick={() => setVistaProdotti(false)} className="btn-ghost text-sm">
+        <button onClick={() => setVista("home")} className="btn-ghost text-sm">
           ← Torna alla dashboard
         </button>
-        <h1 className="title-pangea mt-3 text-3xl text-green-700 md:text-4xl">
-          Scheda, prodotti e servizi
-        </h1>
-        <SchedaMappaCard ownerId={user.id} plan={pianoScelto} activePlan={activePlan} />
-        <AnteprimaScheda ownerId={user.id} />
-        <CatalogoCard ownerId={user.id} gold={pianoScelto === "gold"} />
+        <div className="mt-3 flex flex-wrap gap-2">
+          {tabBtn("dati", "🏢 Dati aziendali e posizione")}
+          {tabBtn("prodotti", "🥫 I tuoi prodotti e servizi")}
+        </div>
+
+        {vista === "dati" ? (
+          <>
+            <h1 className="title-pangea mt-4 text-3xl text-green-700 md:text-4xl">
+              Dati aziendali, fiscali e posizione
+            </h1>
+            <SchedaMappaCard ownerId={user.id} plan={pianoScelto} activePlan={activePlan} vista="dati" />
+            <DatiFatturazioneForm ownerId={user.id} />
+          </>
+        ) : (
+          <>
+            <h1 className="title-pangea mt-4 text-3xl text-green-700 md:text-4xl">
+              I tuoi prodotti e servizi
+            </h1>
+            <SchedaMappaCard ownerId={user.id} plan={pianoScelto} activePlan={activePlan} vista="prodotti" />
+            <CatalogoCard ownerId={user.id} gold={pianoScelto === "gold"} />
+            <AnteprimaScheda ownerId={user.id} />
+          </>
+        )}
       </div>
     );
   }
@@ -280,19 +324,25 @@ export default function DashboardPage() {
       {user && (
         <>
           <SezioneBio ownerId={user.id} onValid={setBioOk} />
-          {/* scheda + prodotti + servizi in una PAGINA dedicata, per tenere ordinata la dashboard */}
+
+          {/* AZIONE PRINCIPALE: grande tasto verde ben visibile per inserire prodotti/servizi */}
           <button
             type="button"
-            onClick={() => setVistaProdotti(true)}
-            className="card mt-6 flex w-full items-center justify-between gap-4 p-6 text-left hover:bg-leaf/30"
+            onClick={() => setVista("prodotti")}
+            className="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl bg-green-600 px-6 py-6 text-center shadow-lg ring-1 ring-green-700/20 transition hover:-translate-y-0.5 hover:bg-green-700"
           >
-            <span>
-              <span className="font-display text-2xl text-green-800">📦 Scheda, prodotti e servizi</span>
-              <span className="mt-1 block text-sm text-green-900/70">
-                Configura la scheda sulla mappa, aggiungi prodotti (col semaforo) e servizi extra.
-              </span>
+            <span className="text-3xl">📦</span>
+            <span className="font-display text-xl text-white md:text-2xl">
+              Inserisci i tuoi prodotti e servizi extra
             </span>
-            <span className="font-display text-3xl text-green-700">→</span>
+            <span className="text-3xl text-white">→</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setVista("dati")}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-green-700/30 bg-white px-4 py-3 text-sm font-semibold text-green-800 hover:bg-leaf/50"
+          >
+            🏢 Dati aziendali, fiscali e posizione sulla mappa
           </button>
           <PagamentiCard ownerId={user.id} plan={pianoScelto} />
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
@@ -691,10 +741,13 @@ function SchedaMappaCard({
   ownerId,
   plan,
   activePlan,
+  vista = "tutto",
 }: {
   ownerId: string;
   plan: Plan;
   activePlan: Plan;
+  /** "dati" = solo anagrafica/posizione · "prodotti" = solo prodotti · "tutto" = entrambi */
+  vista?: "dati" | "prodotti" | "tutto";
 }) {
   const [existing, setExisting] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
@@ -802,19 +855,24 @@ function SchedaMappaCard({
 
   return (
     <section id="scheda" className="card mt-6 p-6 scroll-mt-20">
-      <h2 className="font-display text-2xl text-green-800">
-        La tua scheda sulla mappa
-      </h2>
-      <p className="mt-1 text-sm text-green-900/70">
-        Questi dati appaiono sul segnaposto BioFido. La posizione si ricava dalla
-        città. Il piano <strong>{PLAN_MAP[plan].label}</strong> determina la
-        visibilità e cosa puoi mostrare.
-      </p>
+      {vista !== "prodotti" && (
+        <>
+          <h2 className="font-display text-2xl text-green-800">
+            La tua scheda sulla mappa
+          </h2>
+          <p className="mt-1 text-sm text-green-900/70">
+            Questi dati appaiono sul segnaposto BioFido. La posizione si ricava dalla
+            città. Il piano <strong>{PLAN_MAP[plan].label}</strong> determina la
+            visibilità e cosa puoi mostrare.
+          </p>
+        </>
+      )}
 
       {loading ? (
         <p className="mt-4 text-sm text-green-900/60">Caricamento…</p>
       ) : (
         <>
+          {vista !== "prodotti" && (
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <label className="block md:col-span-2">
               <span className="label">Nome attività *</span>
@@ -890,8 +948,16 @@ function SchedaMappaCard({
               <textarea className="field mt-1" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Racconta la tua attività…" />
             </label>
           </div>
+          )}
 
-          {PLAN_MAP[plan].showProducts ? (
+          {vista === "prodotti" && !existing && (
+            <p className="mt-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+              Prima crea la tua scheda in <strong>«Dati aziendali e posizione»</strong>:
+              senza città/posizione i prodotti non possono essere pubblicati sulla mappa.
+            </p>
+          )}
+
+          {vista === "dati" ? null : PLAN_MAP[plan].showProducts ? (
             (() => {
               const limite = Math.min(PLAN_MAP[plan].maxProducts, 100);
               const pieno = products.length >= limite;
@@ -990,7 +1056,13 @@ function SchedaMappaCard({
 
           <div className="mt-4 flex items-center gap-3">
             <button className="btn-lime" onClick={save} disabled={saving || !name.trim()}>
-              {saving ? "Salvataggio…" : existing ? "Aggiorna scheda" : "Pubblica sulla mappa"}
+              {saving
+                ? "Salvataggio…"
+                : vista === "prodotti"
+                  ? "Salva prodotti"
+                  : existing
+                    ? "Aggiorna scheda"
+                    : "Pubblica sulla mappa"}
             </button>
             {msg && <span className="text-sm font-semibold text-green-700">{msg}</span>}
           </div>
