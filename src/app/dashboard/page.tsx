@@ -70,6 +70,7 @@ import { euroToCents } from "@/lib/prezzo";
 import { pushConfigured } from "@/lib/push";
 import { DashboardShell, BarraTendine, vaiAlPannello, type DashPanel } from "@/components/DashboardShell";
 import { LegendaPianiSlider } from "@/components/LegendaPianiSlider";
+import { PromoTimer } from "@/components/PromoTimer";
 import { contaInSospeso } from "@/lib/contatori";
 import { getMyExtras, getStatoOnboarding } from "@/lib/onboarding";
 
@@ -441,6 +442,7 @@ export default function DashboardPage() {
           onClose={() => setPopupPag(null)}
         />
       )}
+      <PromoTimer plan={activePlan} />
     </>
   );
 }

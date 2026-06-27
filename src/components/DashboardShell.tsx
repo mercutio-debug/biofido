@@ -256,6 +256,15 @@ export function BarraTendine({
   promo?: ReactNode;
 }) {
   const [aperta, setAperta] = useState<string | null>(null);
+  // apertura di una tendina da evento esterno (es. popup promozionale)
+  useEffect(() => {
+    const onT = (e: Event) => {
+      const id = (e as CustomEvent).detail as string;
+      if (voci.some((v) => v.id === id)) setAperta(id);
+    };
+    window.addEventListener("dash:tendina", onT);
+    return () => window.removeEventListener("dash:tendina", onT);
+  }, [voci]);
   return (
     <div>
       <div className="flex flex-col gap-2 lg:flex-row">
