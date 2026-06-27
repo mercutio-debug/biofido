@@ -51,7 +51,14 @@ Deno.serve(async (req) => {
       dati_fatturazione: fatt.data ?? null,
     });
 
-    // 2) elimina l'utente da Auth
+    // 2) rimuovi i dati pubblici legati (così l'azienda sparisce SUBITO dalla
+    //    mappa e dalla vetrina). prodotti/ingredienti vanno via in cascata con
+    //    l'azienda se le FK hanno on delete cascade.
+    await admin.from("biofido_businesses").delete().eq("owner", uid);
+    await admin.from("aziende").delete().eq("owner", uid);
+    await admin.from("dati_fatturazione").delete().eq("user_id", uid);
+
+    // 3) elimina l'utente da Auth
     const { error } = await admin.auth.admin.deleteUser(uid);
     if (error) return json({ error: error.message }, 500);
 
