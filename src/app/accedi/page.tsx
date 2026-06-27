@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
@@ -10,6 +10,21 @@ const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export default function AccediPage() {
   const router = useRouter();
+
+  // Se sei GIÀ loggato (es. torni indietro col tasto del browser dalla dashboard),
+  // non rimostrare il login: rientra subito nell'area corretta. Evita il finto
+  // "logout" che costringeva a riaccedere.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user;
+      if (!u) return;
+      const isAdmin = u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+      const tipo = (u.user_metadata as { tipo?: string } | undefined)?.tipo;
+      if (isAdmin) router.replace("/admin");
+      else if (tipo === "cliente") router.replace("/");
+      else router.replace("/dashboard");
+    });
+  }, [router]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

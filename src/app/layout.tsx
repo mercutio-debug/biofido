@@ -6,7 +6,6 @@ import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
 import { BarkOnStart } from "@/components/BarkOnStart";
 import { RegisterSW } from "@/components/RegisterSW";
-import { InstallPopup } from "@/components/InstallPopup";
 import { UpdateChecker } from "@/components/UpdateChecker";
 import { CookieBanner } from "@/components/CookieBanner";
 import { AccessibilityWidget } from "@/components/AccessibilityWidget";
@@ -112,7 +111,6 @@ export default function RootLayout({
         <CartDrawer portale="BioFido" />
         <BarkOnStart />
         <RegisterSW />
-        <InstallPopup />
         <UpdateChecker />
         <CookieBanner />
         <AccessibilityWidget />

@@ -28,9 +28,14 @@ export function InstallPopup() {
       window.matchMedia?.("(display-mode: standalone)").matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     if (standalone) return; // già installata/aperta come app
-    // "Non ora" nasconde solo per la sessione corrente: alla prossima visita
-    // il popup ricompare (finché l'app non è installata).
-    if (sessionStorage.getItem(DISMISS_KEY)) return;
+    // Mostrato UNA VOLTA SOLA (solo all'arrivo sulla home la prima volta): una
+    // volta visto/chiuso/installato non ricompare più. Persistente in localStorage.
+    if (localStorage.getItem(DISMISS_KEY)) return;
+    const segnaMostrato = () => {
+      try {
+        localStorage.setItem(DISMISS_KEY, "1");
+      } catch {}
+    };
 
     const ios = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
     setIsIOS(ios);
@@ -39,6 +44,7 @@ export function InstallPopup() {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
       setOpen(true);
+      segnaMostrato();
     };
     const onInstalled = () => {
       setOpen(false);
@@ -52,7 +58,11 @@ export function InstallPopup() {
 
     // iOS non emette beforeinstallprompt: mostro comunque il popup con le istruzioni
     let t: number | undefined;
-    if (ios) t = window.setTimeout(() => setOpen(true), 1200);
+    if (ios)
+      t = window.setTimeout(() => {
+        setOpen(true);
+        segnaMostrato();
+      }, 1200);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onPrompt);
@@ -65,7 +75,7 @@ export function InstallPopup() {
 
   function chiudi() {
     try {
-      sessionStorage.setItem(DISMISS_KEY, "1");
+      localStorage.setItem(DISMISS_KEY, "1");
     } catch {}
     setOpen(false);
   }

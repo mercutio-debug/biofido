@@ -5,6 +5,7 @@ import { BioFidoLogo } from "@/components/Logo";
 import { GoldPromoBanner } from "@/components/GoldPromoBanner";
 import { OnboardingPromo } from "@/components/OnboardingPromo";
 import { LegendaSemaforo } from "@/components/LegendaSemaforo";
+import { InstallPopup } from "@/components/InstallPopup";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -116,6 +117,9 @@ export default function Home() {
 
       {/* Banner Gold: invito alle aziende (sotto la mappa) */}
       <GoldPromoBanner portale="BioFido" />
+
+      {/* Popup «installa l'app»: SOLO sulla home e SOLO la prima volta (non più a ogni pagina) */}
+      <InstallPopup />
     </div>
   );
 }
