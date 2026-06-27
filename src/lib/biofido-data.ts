@@ -412,5 +412,15 @@ export async function saveMyBusiness(
     delete (payload as Record<string, unknown>).pubblica_ecovisa;
     ({ error } = await esegui());
   }
+  // Mirror BioFido → ECO-VISA: rispecchia (o rimuove) la scheda + i prodotti
+  // marcati sulla mappa/vetrina ECO-VISA. Best-effort: un errore qui non deve far
+  // fallire il salvataggio su BioFido (la funzione decide da sé cosa fare).
+  if (!error) {
+    try {
+      await supabase.functions.invoke("mirror-ecovisa");
+    } catch {
+      /* non bloccante */
+    }
+  }
   return { error: error?.message };
 }
