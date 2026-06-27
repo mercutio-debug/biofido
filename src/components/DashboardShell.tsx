@@ -242,6 +242,64 @@ export function vaiAlPannello(id: string) {
   window.dispatchEvent(new CustomEvent("dash:goto", { detail: id }));
 }
 
+/**
+ * Barra superiore con i menù a tendina: i PULSANTI stanno in riga, ma il pannello
+ * APERTO si espande a TUTTA LARGHEZZA sotto la riga (così piani/servizi non si
+ * schiacciano nella colonna stretta). Un solo pannello aperto per volta.
+ */
+export function BarraTendine({
+  voci,
+  promo,
+}: {
+  voci: { id: string; icona: string; label: string; tone?: "verde" | "giallo"; content: ReactNode }[];
+  promo?: ReactNode;
+}) {
+  const [aperta, setAperta] = useState<string | null>(null);
+  return (
+    <div>
+      <div className="flex flex-col gap-2 lg:flex-row">
+        {voci.map((v) => {
+          const giallo = v.tone === "giallo";
+          const on = aperta === v.id;
+          return (
+            <button
+              key={v.id}
+              type="button"
+              onClick={() => setAperta((a) => (a === v.id ? null : v.id))}
+              className={`flex min-w-0 flex-1 items-center gap-2 rounded-lg border px-3 py-2 text-[13px] font-semibold transition ${
+                giallo
+                  ? "border-badge-yellow bg-[#fffbe9] text-[#7a5b00]"
+                  : on
+                    ? "border-green-600 bg-[#e7f3da] text-green-900"
+                    : "border-[#d7e6c6] bg-[#f3f9ee] text-green-800"
+              }`}
+            >
+              <span className="flex-none">{v.icona}</span>
+              <span className="flex-1 truncate text-left">{v.label}</span>
+              <svg
+                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth={2} strokeLinecap="round" aria-hidden
+                className={`flex-none transition-transform ${on ? "rotate-180" : ""}`}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+          );
+        })}
+        {promo}
+      </div>
+      {voci.map(
+        (v) =>
+          aperta === v.id && (
+            <div key={v.id} className="mt-2 rounded-xl border border-[#e3eed7] bg-white p-3 md:p-4">
+              {v.content}
+            </div>
+          ),
+      )}
+    </div>
+  );
+}
+
 /** Menù a tendina (comparsa/scomparsa) per la barra superiore sempre visibile. */
 export function Tendina({
   icona,

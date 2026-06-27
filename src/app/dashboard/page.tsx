@@ -68,7 +68,7 @@ import { OrdiniShopRicevuti } from "@/components/OrdiniShopRicevuti";
 import { ImportoInput } from "@/components/ImportoInput";
 import { euroToCents } from "@/lib/prezzo";
 import { pushConfigured } from "@/lib/push";
-import { DashboardShell, Tendina, vaiAlPannello, type DashPanel } from "@/components/DashboardShell";
+import { DashboardShell, BarraTendine, vaiAlPannello, type DashPanel } from "@/components/DashboardShell";
 import { LegendaPianiSlider } from "@/components/LegendaPianiSlider";
 import { contaInSospeso } from "@/lib/contatori";
 import { getMyExtras, getStatoOnboarding } from "@/lib/onboarding";
@@ -218,16 +218,30 @@ export default function DashboardPage() {
 
   // Barra SEMPRE visibile: le tre tendine (piani · servizi extra · promo onboarding).
   const topBar = (
-    <div className="flex flex-col gap-2 lg:flex-row lg:items-start">
-      <Tendina icona="🚀" label="Con cosa vuoi partire" defaultOpen>
-        <PianoSelector scelto={pianoScelto} attivo={activePlan} onScegli={scegliPiano} />
-        <PagamentoFinale ownerId={user.id} scelto={pianoScelto} attivo={activePlan} bioOk={bioOk} />
-      </Tendina>
-      <Tendina icona="🎁" label="Aggiungi servizi extra" tone="giallo">
-        <ServiziExtra showPrices plan={activePlan} onAcquista={acquistaServizio} />
-      </Tendina>
-      <PromoOnboarding />
-    </div>
+    <BarraTendine
+      voci={[
+        {
+          id: "piani",
+          icona: "🚀",
+          label: "Con cosa vuoi partire",
+          tone: "verde",
+          content: (
+            <>
+              <PianoSelector scelto={pianoScelto} attivo={activePlan} onScegli={scegliPiano} />
+              <PagamentoFinale ownerId={user.id} scelto={pianoScelto} attivo={activePlan} bioOk={bioOk} />
+            </>
+          ),
+        },
+        {
+          id: "extra",
+          icona: "🎁",
+          label: "Aggiungi servizi extra",
+          tone: "giallo",
+          content: <ServiziExtra showPrices plan={activePlan} onAcquista={acquistaServizio} />,
+        },
+      ]}
+      promo={<PromoOnboarding />}
+    />
   );
 
   const alert =

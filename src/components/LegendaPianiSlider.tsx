@@ -28,6 +28,7 @@ export function LegendaPianiSlider({
 }) {
   const [sel, setSel] = useState<Plan>(activePlan);
   const [info, setInfo] = useState<string | null>(null); // funzione col «?» aperto
+  const [mostraLegenda, setMostraLegenda] = useState(false); // legenda chiusa di default (dashboard compatta)
   const superiore = ORDINE.indexOf(sel) > ORDINE.indexOf(activePlan);
 
   return (
@@ -65,9 +66,21 @@ export function LegendaPianiSlider({
         <ConfrontoCosti />
       </div>
 
+      {/* toggle: la legenda dettagliata è CHIUSA di default → dashboard compatta,
+          così le cornici "Carica prodotti/servizi" restano in vista. */}
+      <button
+        type="button"
+        onClick={() => setMostraLegenda((v) => !v)}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#cfe3b4] bg-leaf/40 px-3 py-2 text-sm font-semibold text-green-800 hover:bg-leaf"
+      >
+        {mostraLegenda ? "Nascondi le funzioni" : "Vedi cosa puoi fare con ogni piano"}
+        <span className={`transition-transform ${mostraLegenda ? "rotate-180" : ""}`}>▾</span>
+      </button>
+
       {/* legenda funzioni, accese/spente in base al piano del cursore. Ogni voce
           ha un «?» che spiega la funzione (ripresa dalla presentazione). */}
-      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+      {mostraLegenda && (
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {FUNZIONI.map((f) => {
           const ok = planAllows(sel, f.minPlan);
           const aperto = info === f.label;
@@ -118,6 +131,7 @@ export function LegendaPianiSlider({
           );
         })}
       </div>
+      )}
 
       {/* CTA di upgrade quando guardi un piano più alto del tuo */}
       {superiore && onScegli && (
