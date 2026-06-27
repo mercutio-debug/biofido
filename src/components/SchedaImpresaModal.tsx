@@ -111,10 +111,11 @@ export function SchedaImpresaModal({
       document.body.style.overflow = prev;
     };
   }, [embedded]);
-  // Il catalogo (prodotti in vendita + servizi su prenotazione) è una funzione
-  // Gold: sotto quel piano (es. dopo un downgrade) non va mostrato.
-  const catalogoVisibile = b.plan === "gold" ? catalogo : [];
-  const prodottiCat = catalogoVisibile.filter((v) => v.tipo === "prodotto");
+  // Esperienze in azienda prenotabili (visite, laboratori) = Silver e Gold (canSell).
+  // I prodotti ORDINABILI dal catalogo (tipo 'prodotto') restano solo Gold.
+  const catalogoVisibile = plan.canSell ? catalogo : [];
+  const prodottiCat =
+    b.plan === "gold" ? catalogoVisibile.filter((v) => v.tipo === "prodotto") : [];
   const serviziCat = catalogoVisibile.filter((v) => v.tipo !== "prodotto");
   const [segnala, setSegnala] = useState<VoceCatalogo | null>(null);
   const [servDett, setServDett] = useState<VoceCatalogo | null>(null);
@@ -291,8 +292,8 @@ export function SchedaImpresaModal({
                     onClick={() => setProdottoAperto({ p, i })}
                     title="Tocca per vedere i dettagli del prodotto"
                   >
-                    {/* foto: solo Gold (su downgrade sparisce) */}
-                    {b.plan === "gold" && p.image && (
+                    {/* foto prodotto: Silver e Gold (Free = solo nome + semaforo) */}
+                    {plan.showDescription && p.image && (
                       <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -341,11 +342,11 @@ export function SchedaImpresaModal({
                           </span>
                         )}
                       </div>
-                      {p.description && (
+                      {plan.showDescription && p.description && (
                         <div className="truncate text-xs text-green-900/60">{p.description}</div>
                       )}
                       <div className="text-[10px] font-semibold text-green-700">tocca per la scheda ▾</div>
-                      {(p.confezione || p.contenuto != null) && (
+                      {b.plan === "gold" && (p.confezione || p.contenuto != null) && (
                         <div className="text-xs font-semibold text-green-900/70">
                           {[
                             p.confezione,

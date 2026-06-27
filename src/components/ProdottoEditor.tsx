@@ -5,6 +5,7 @@ import { ComuneAutocomplete } from "./ComuneAutocomplete";
 import { calcolaImpronta, SEMAFORO } from "@/lib/impronta";
 import { caricaImmagineCatalogo } from "@/lib/catalogo";
 import { ImportoInput } from "./ImportoInput";
+import { PLAN_MAP, type Plan } from "@/lib/categories";
 import type { Product, MateriaPrima } from "@/lib/biofido-data";
 
 const CATEGORIE = [
@@ -39,6 +40,7 @@ export function ProdottoEditor({
   onSave,
   onClose,
   ownerId,
+  plan,
 }: {
   sede: { lat: number; lon: number } | null;
   initial?: Product;
@@ -46,7 +48,13 @@ export function ProdottoEditor({
   onClose: () => void;
   /** id utente: serve per salvare la foto nello storage (la RLS richiede l'uid) */
   ownerId: string;
+  /** piano corrente: gestisce i blocchi visibili (foto/descrizione da Silver, prezzo/shop solo Gold) */
+  plan: Plan;
 }) {
+  const info = PLAN_MAP[plan] ?? PLAN_MAP.free;
+  // foto + descrizione del prodotto: da Silver in su; prezzo + shop: solo Gold.
+  const media = info.showDescription;
+  const gold = plan === "gold";
   const [name, setName] = useState(initial?.name ?? "");
   const [category, setCategory] = useState(initial?.category ?? CATEGORIE[0]);
   const [price, setPrice] = useState(initial?.price ?? "");
@@ -102,30 +110,31 @@ export function ProdottoEditor({
     onSave({
       name: name.trim(),
       category,
-      price: price.trim() || undefined,
+      // prezzo solo Gold; foto + descrizione da Silver in su; Free = nome + semaforo
+      price: gold ? price.trim() || undefined : undefined,
       unit,
-      description: description.trim() || undefined,
-      image: image.trim() || undefined,
-      foto2: foto2.trim() || undefined,
+      description: media ? description.trim() || undefined : undefined,
+      image: media ? image.trim() || undefined : undefined,
+      foto2: gold ? foto2.trim() || undefined : undefined,
       ingredients: ingredients.filter((i) => i.nome.trim()),
       certifications: certs,
       mostraSemaforo,
       // su ECO-VISA il semaforo è obbligatorio: senza, il prodotto resta solo su BioFido
       pubblicaEcovisa: mostraSemaforo && pubblicaEcovisa,
       prenotabile: tipoVoce === "servizio" && accetta,
-      in_shop: tipoVoce === "prodotto" && inShop,
+      in_shop: tipoVoce === "prodotto" && gold && inShop,
       giacenza:
-        tipoVoce === "prodotto" && inShop && giacenza.trim() !== ""
+        tipoVoce === "prodotto" && gold && inShop && giacenza.trim() !== ""
           ? Math.max(0, Math.floor(Number(giacenza)) || 0)
           : undefined,
       // scorta piena di riferimento per i reminder (metà / un terzo / esaurito)
       giacenza_iniziale:
-        tipoVoce === "prodotto" && inShop && giacenza.trim() !== ""
+        tipoVoce === "prodotto" && gold && inShop && giacenza.trim() !== ""
           ? Math.max(0, Math.floor(Number(giacenza)) || 0)
           : undefined,
-      confezione: confezione.trim() || undefined,
-      contenuto: contenuto.trim() === "" ? undefined : Number(contenuto),
-      unita: unitaCont.trim() || undefined,
+      confezione: gold ? confezione.trim() || undefined : undefined,
+      contenuto: gold && contenuto.trim() !== "" ? Number(contenuto) : undefined,
+      unita: gold ? unitaCont.trim() || undefined : undefined,
       durata: tipoVoce === "servizio" ? durata.trim() || undefined : undefined,
     });
   }
@@ -148,8 +157,9 @@ export function ProdottoEditor({
           </button>
         </div>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-[130px_1fr]">
-          {/* foto */}
+        <div className={`mt-4 grid gap-4 ${media ? "md:grid-cols-[130px_1fr]" : ""}`}>
+          {/* foto: da Silver in su (Free = solo nome + semaforo) */}
+          {media && (
           <div>
             <span className="label">Foto</span>
             <div className="mt-1 flex aspect-square items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#cfe3b4] bg-leaf/40 text-green-900/50">
@@ -188,6 +198,7 @@ export function ProdottoEditor({
               placeholder="…oppure incolla un link"
             />
           </div>
+          )}
 
           {/* dati principali */}
           <div className="space-y-3">
@@ -204,22 +215,24 @@ export function ProdottoEditor({
                   ))}
                 </select>
               </label>
-              <label className="block">
-                <span className="label">Prezzo</span>
-                <div className="mt-1 flex gap-2">
-                  <ImportoInput
-                    value={price}
-                    onChange={setPrice}
-                    className="field"
-                    placeholder="€ 15,00"
-                  />
-                  <select className="field w-32" value={unit} onChange={(e) => setUnit(e.target.value)}>
-                    {UNITA.map((u) => (
-                      <option key={u}>{u}</option>
-                    ))}
-                  </select>
-                </div>
-              </label>
+              {gold && (
+                <label className="block">
+                  <span className="label">Prezzo</span>
+                  <div className="mt-1 flex gap-2">
+                    <ImportoInput
+                      value={price}
+                      onChange={setPrice}
+                      className="field"
+                      placeholder="€ 15,00"
+                    />
+                    <select className="field w-32" value={unit} onChange={(e) => setUnit(e.target.value)}>
+                      {UNITA.map((u) => (
+                        <option key={u}>{u}</option>
+                      ))}
+                    </select>
+                  </div>
+                </label>
+              )}
             </div>
           </div>
         </div>
@@ -257,7 +270,7 @@ export function ProdottoEditor({
           </div>
         )}
 
-        {tipoVoce === "prodotto" && (
+        {tipoVoce === "prodotto" && gold && (
           <label className="mt-2 flex items-start gap-2 rounded-xl border-2 border-[#cfe6b0] bg-leaf/50 p-3 text-sm">
             <input
               type="checkbox"
@@ -272,7 +285,7 @@ export function ProdottoEditor({
           </label>
         )}
 
-        {tipoVoce === "prodotto" && inShop && (
+        {tipoVoce === "prodotto" && gold && inShop && (
           <label className="mt-2 block">
             <span className="label">📦 Magazzino — quantità disponibile (vuoto = illimitata)</span>
             <input
@@ -286,14 +299,16 @@ export function ProdottoEditor({
           </label>
         )}
 
-        <label className="mt-3 block">
-          <span className="label">Descrizione</span>
-          <textarea className="field mt-1" rows={2} maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Racconta il prodotto: cos'è, come nasce, stagionalità…" />
-          <span className="text-[11px] text-green-900/45">{description.length}/2000</span>
-        </label>
+        {media && (
+          <label className="mt-3 block">
+            <span className="label">Descrizione</span>
+            <textarea className="field mt-1" rows={2} maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Racconta il prodotto: cos'è, come nasce, stagionalità…" />
+            <span className="text-[11px] text-green-900/45">{description.length}/2000</span>
+          </label>
+        )}
 
-        {/* confezione + contenuto: solo prodotti (i servizi non ne hanno) */}
-        {tipoVoce === "prodotto" && (
+        {/* confezione + contenuto: dettagli di vendita → solo Gold */}
+        {tipoVoce === "prodotto" && gold && (
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <label className="block">
             <span className="label">Confezione</span>
@@ -328,6 +343,7 @@ export function ProdottoEditor({
         </div>
         )}
 
+        {gold && (
         <div className="mt-3">
           <span className="label">2ª foto (es. l&apos;etichetta) — opzionale</span>
           <div className="mt-1 flex items-center gap-3">
@@ -367,6 +383,7 @@ export function ProdottoEditor({
             )}
           </div>
         </div>
+        )}
 
         {/* materie prime (il semaforo): solo prodotti, i servizi speciali NON hanno semaforo */}
         {tipoVoce === "prodotto" && (

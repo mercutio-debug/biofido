@@ -303,7 +303,7 @@ export default function DashboardPage() {
       label: "Esperienze in azienda",
       content: (
         <>
-          <CatalogoCard ownerId={user.id} gold={pianoScelto === "gold"} />
+          <CatalogoCard ownerId={user.id} canSell={pianoScelto !== "free"} />
           <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
         </>
       ),
@@ -1189,14 +1189,25 @@ function SchedaMappaCard({
               <span className="label">Telefono</span>
               <input className="field mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} />
             </label>
-            <label className="block md:col-span-2">
-              <span className="label">Sito web</span>
-              <input className="field mt-1" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="www.esempio.it" />
-            </label>
-            <label className="block md:col-span-2">
-              <span className="label">Descrizione</span>
-              <textarea className="field mt-1" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Racconta la tua attività…" />
-            </label>
+            {PLAN_MAP[plan].showWebsite && (
+              <label className="block md:col-span-2">
+                <span className="label">Sito web</span>
+                <input className="field mt-1" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="www.esempio.it" />
+              </label>
+            )}
+            {PLAN_MAP[plan].showDescription && (
+              <label className="block md:col-span-2">
+                <span className="label">Descrizione</span>
+                <textarea className="field mt-1" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Racconta la tua attività…" />
+              </label>
+            )}
+            {!PLAN_MAP[plan].showDescription && (
+              <p className="rounded-xl bg-leaf/50 p-3 text-xs text-green-900/70 md:col-span-2">
+                Con <strong>Free</strong> la tua azienda compare come segnaposto sulla mappa
+                (posizione, tipo e nome). Foto, descrizione e sito web si sbloccano dal piano{" "}
+                <strong>Silver</strong>.
+              </p>
+            )}
           </div>
           )}
 
@@ -1291,6 +1302,7 @@ function SchedaMappaCard({
                     <ProdottoEditor
                       sede={coord}
                       ownerId={ownerId}
+                      plan={plan}
                       initial={editProd === "new" ? undefined : products[editProd]}
                       onClose={() => setEditProd(null)}
                       onSave={(prod) => {

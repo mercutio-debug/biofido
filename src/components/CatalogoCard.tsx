@@ -32,7 +32,7 @@ export const LINGUE_SERVIZIO: { code: string; label: string; flag: string }[] = 
  * numero, nome, tipo, prezzo, immagine). I clienti li vedranno in anteprima sul
  * widget e potranno contattare l'azienda (Fase 2).
  */
-export function CatalogoCard({ ownerId, gold }: { ownerId: string; gold: boolean }) {
+export function CatalogoCard({ ownerId, canSell }: { ownerId: string; canSell: boolean }) {
   const [voci, setVoci] = useState<VoceCatalogo[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<VoceCatalogo | null>(null);
@@ -45,7 +45,7 @@ export function CatalogoCard({ ownerId, gold }: { ownerId: string; gold: boolean
   }
   useEffect(ricarica, [ownerId]);
 
-  if (!gold) {
+  if (!canSell) {
     return (
       <section id="catalogo" className="card mt-6 p-6 scroll-mt-20">
         <h2 className="font-display text-2xl text-green-800">
@@ -55,7 +55,7 @@ export function CatalogoCard({ ownerId, gold }: { ownerId: string; gold: boolean
           Carica le tue esperienze in azienda (visite guidate, laboratori
           didattici, degustazioni) con prezzo e foto: i clienti le vedono in
           anteprima e possono contattarti per info o prenotazioni. È una funzione
-          del piano <strong>Gold</strong>.
+          dei piani <strong>Silver</strong> e <strong>Gold</strong>.
         </p>
       </section>
     );
