@@ -28,6 +28,7 @@ export function PrenotaModal({
 
   const [persone, setPersone] = useState(1);
   const [data, setData] = useState("");
+  const [orarioCliente, setOrarioCliente] = useState("");
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [tel, setTel] = useState("");
@@ -35,6 +36,16 @@ export function PrenotaModal({
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // agenda dell'esperienza: giorni ammessi (1=lun…7=dom) e orario fisso, se impostati
+  const GIORNI_LAB = ["", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
+  const giorniAmmessi = exp?.giorniSettimana ?? [];
+  const orarioFisso = exp?.orario || "";
+  const weekdayOf = (iso: string) => {
+    const g = new Date(iso + "T00:00:00").getDay();
+    return g === 0 ? 7 : g; // domenica: JS=0 → 7
+  };
+  const giornoOk = !data || giorniAmmessi.length === 0 || giorniAmmessi.includes(weekdayOf(data));
 
   // blocca lo scroll di sfondo finché il modale è aperto (no shift di pagina su mobile)
   useEffect(() => {
@@ -50,6 +61,14 @@ export function PrenotaModal({
   async function submit() {
     if (!exp || !nome.trim() || !email.trim() || !data) {
       setErr("Compila nome, email e data.");
+      return;
+    }
+    if (!giornoOk) {
+      setErr(
+        "Questa attività si svolge solo di: " +
+          giorniAmmessi.map((g) => GIORNI_LAB[g]).join(", ") +
+          ". Scegli una di queste giornate.",
+      );
       return;
     }
     setSaving(true);
@@ -69,6 +88,7 @@ export function PrenotaModal({
       clienteEmail: email,
       clienteTel: tel,
       dataRichiesta: data,
+      orario: orarioFisso || orarioCliente || undefined,
       persone,
       note,
     });
@@ -165,11 +185,40 @@ export function PrenotaModal({
                 <span className="label">Data *</span>
                 <input
                   type="date"
-                  className="field mt-1"
+                  className={`field mt-1 ${data && !giornoOk ? "border-traffic-red" : ""}`}
                   value={data}
                   onChange={(e) => setData(e.target.value)}
                 />
+                {giorniAmmessi.length > 0 && (
+                  <span
+                    className={`mt-1 block text-[11px] ${
+                      data && !giornoOk ? "font-bold text-traffic-red" : "text-green-900/60"
+                    }`}
+                  >
+                    Disponibile solo: {giorniAmmessi.map((g) => GIORNI_LAB[g]).join(", ")}
+                  </span>
+                )}
               </label>
+              {/* orario: fissato dall'azienda (bloccato) oppure preferenza del cliente */}
+              {orarioFisso ? (
+                <label className="block">
+                  <span className="label">Orario</span>
+                  <input type="time" className="field mt-1 bg-leaf/40" value={orarioFisso} readOnly />
+                  <span className="mt-1 block text-[11px] text-green-900/60">
+                    Orario fissato dall&apos;azienda. Puoi chiedere una modifica nel messaggio.
+                  </span>
+                </label>
+              ) : (
+                <label className="block">
+                  <span className="label">Orario preferito</span>
+                  <input
+                    type="time"
+                    className="field mt-1"
+                    value={orarioCliente}
+                    onChange={(e) => setOrarioCliente(e.target.value)}
+                  />
+                </label>
+              )}
               <label className="block">
                 <span className="label">Persone *</span>
                 <input

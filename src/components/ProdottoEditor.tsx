@@ -279,8 +279,9 @@ export function ProdottoEditor({
               onChange={(e) => setInShop(e.target.checked)}
             />
             <span className="text-green-900/85">
-              <strong>🛒 Rendi questo prodotto ordinabile dallo shop.</strong> Il cliente
-              potrà aggiungerlo al carrello e inviarti l&apos;ordine (lo confermi tu).
+              <strong>🛒 Rendi questo prodotto ordinabile dallo shop.</strong> Il cliente lo
+              ordina e <strong>paga subito online</strong>: ricevi l&apos;ordine già pagato, con i
+              dati per fattura e spedizione, pronto da preparare e spedire.
             </span>
           </label>
         )}

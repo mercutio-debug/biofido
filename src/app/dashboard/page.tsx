@@ -1466,8 +1466,13 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
   const [prezzo, setPrezzo] = useState("");
   const [durata, setDurata] = useState("");
   const [maxP, setMaxP] = useState("10");
+  // agenda: giorni della settimana in cui si svolge (1=lun…7=dom) + orario fisso
+  const [giorni, setGiorni] = useState<number[]>([]);
+  const [orario, setOrario] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const toggleGiorno = (g: number) =>
+    setGiorni((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g].sort()));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1497,6 +1502,8 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
       durataMin: durata ? Number(durata) : undefined,
       maxPersone: Math.max(1, Number(maxP) || 1),
       attiva: true,
+      giorniSettimana: giorni.length ? giorni : undefined,
+      orario: orario || undefined,
     });
     setSaving(false);
     if (error) {
@@ -1508,6 +1515,8 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
     setPrezzo("");
     setDurata("");
     setMaxP("10");
+    setGiorni([]);
+    setOrario("");
     load();
   }
 
@@ -1550,6 +1559,17 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
                         {euroCents(e.prezzoCents)}
                         {e.durataMin ? ` · ${e.durataMin} min` : ""} · max {e.maxPersone}
                       </span>
+                      {(e.giorniSettimana?.length || e.orario) && (
+                        <span className="ml-2 text-xs font-semibold text-green-700">
+                          🗓{" "}
+                          {e.giorniSettimana?.length
+                            ? e.giorniSettimana
+                                .map((g) => ["", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"][g])
+                                .join(", ")
+                            : "ogni giorno"}
+                          {e.orario ? ` · ${e.orario}` : ""}
+                        </span>
+                      )}
                     </span>
                     <button
                       className="text-xs font-bold text-traffic-red hover:underline"
@@ -1617,6 +1637,47 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
                     value={descrizione}
                     onChange={(e) => setDescrizione(e.target.value)}
                   />
+                </label>
+
+                {/* AGENDA: quando si svolge l'attività (facoltativo). Se specificato,
+                    il cliente potrà prenotare solo questi giorni / a quest'orario. */}
+                <div className="md:col-span-2">
+                  <span className="label">Giorni in cui si svolge <span className="font-normal text-green-900/50">(facoltativo)</span></span>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {[
+                      [1, "Lun"], [2, "Mar"], [3, "Mer"], [4, "Gio"],
+                      [5, "Ven"], [6, "Sab"], [7, "Dom"],
+                    ].map(([g, lab]) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => toggleGiorno(g as number)}
+                        className={`rounded-full px-3 py-1 text-sm font-bold ${
+                          giorni.includes(g as number)
+                            ? "bg-green-700 text-white"
+                            : "bg-leaf text-green-800 hover:bg-[#dcebc8]"
+                        }`}
+                      >
+                        {lab}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="mt-1 block text-[11px] text-green-900/55">
+                    Lascia vuoto se l&apos;attività si può fare in qualsiasi giorno.
+                  </span>
+                </div>
+                <label className="block">
+                  <span className="label">Orario <span className="font-normal text-green-900/50">(facoltativo)</span></span>
+                  <input
+                    type="time"
+                    className="field mt-1"
+                    value={orario}
+                    onChange={(e) => setOrario(e.target.value)}
+                  />
+                  <span className="mt-1 block text-[11px] text-green-900/55">
+                    Se lo imposti, il cliente prenoterà a quest&apos;ora (può chiederti una
+                    modifica nel messaggio).
+                  </span>
                 </label>
               </div>
               <button

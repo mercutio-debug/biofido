@@ -16,6 +16,10 @@ export type Experience = {
   durataMin?: number;
   maxPersone: number;
   attiva: boolean;
+  /** giorni della settimana in cui si svolge (1=lun … 7=dom). Vuoto = qualsiasi giorno. */
+  giorniSettimana?: number[];
+  /** orario fisso "HH:MM" deciso dall'azienda. Vuoto = orario libero per il cliente. */
+  orario?: string;
 };
 
 export type BookingStatus = "in_attesa" | "confermata" | "rifiutata" | "annullata";
@@ -67,6 +71,8 @@ type ExpRow = {
   durata_min: number | null;
   max_persone: number;
   attiva: boolean;
+  giorni_settimana: number[] | null;
+  orario: string | null;
 };
 
 const fromExpRow = (r: ExpRow): Experience => ({
@@ -78,6 +84,8 @@ const fromExpRow = (r: ExpRow): Experience => ({
   durataMin: r.durata_min ?? undefined,
   maxPersone: r.max_persone,
   attiva: r.attiva,
+  giorniSettimana: r.giorni_settimana ?? undefined,
+  orario: r.orario ?? undefined,
 });
 
 export async function listMyExperiences(owner: string): Promise<Experience[]> {
@@ -93,7 +101,7 @@ export async function createExperience(
   owner: string,
   e: Omit<Experience, "id" | "owner">,
 ): Promise<{ error?: string }> {
-  const { error } = await supabase.from("esperienze").insert({
+  const payload: Record<string, unknown> = {
     owner,
     titolo: e.titolo,
     descrizione: e.descrizione || null,
@@ -101,7 +109,16 @@ export async function createExperience(
     durata_min: e.durataMin ?? null,
     max_persone: e.maxPersone,
     attiva: e.attiva,
-  });
+    giorni_settimana: e.giorniSettimana && e.giorniSettimana.length ? e.giorniSettimana : null,
+    orario: e.orario || null,
+  };
+  let { error } = await supabase.from("esperienze").insert(payload);
+  // se le colonne agenda non esistono ancora nel DB, le tolgo e riprovo
+  if (error && /giorni_settimana|orario/i.test(error.message)) {
+    delete payload.giorni_settimana;
+    delete payload.orario;
+    ({ error } = await supabase.from("esperienze").insert(payload));
+  }
   return { error: error?.message };
 }
 
@@ -173,6 +190,8 @@ export async function createBookingRequest(input: {
   clienteEmail: string;
   clienteTel?: string;
   dataRichiesta: string;
+  /** orario richiesto "HH:MM" (fisso se l'azienda l'ha imposto, altrimenti scelto dal cliente) */
+  orario?: string;
   persone: number;
   note?: string;
 }): Promise<{ error?: string; totaleCents: number }> {
@@ -184,7 +203,7 @@ export async function createBookingRequest(input: {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const { error } = await supabase.from("prenotazioni").insert({
+  const payload: Record<string, unknown> = {
     esperienza_id: input.esperienza.id,
     owner: input.esperienza.owner,
     cliente_user_id: session?.user.id ?? null,
@@ -192,13 +211,19 @@ export async function createBookingRequest(input: {
     cliente_email: input.clienteEmail,
     cliente_tel: input.clienteTel || null,
     data_richiesta: input.dataRichiesta,
+    orario_richiesto: input.orario || null,
     persone: input.persone,
     note: input.note || null,
     totale_cents: totaleCents,
     commissione_rate: PLAN_MAP[input.ownerPlan].commissionRate,
     commissione_cents: commCents,
     stato: "in_attesa",
-  });
+  };
+  let { error } = await supabase.from("prenotazioni").insert(payload);
+  if (error && /orario_richiesto/i.test(error.message)) {
+    delete payload.orario_richiesto;
+    ({ error } = await supabase.from("prenotazioni").insert(payload));
+  }
   return { error: error?.message, totaleCents };
 }
 
