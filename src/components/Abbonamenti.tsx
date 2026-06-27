@@ -60,23 +60,24 @@ const pct = (r: number) => `${Math.round(r * 100)}%`;
 const FEATURES: Record<Plan, string[]> = {
   free: [
     "Segnaposto sulla mappa",
-    "Telefono visibile a chi ti cerca",
     "Categoria e città",
-    "1 prodotto con foto e prezzo",
+    "Un tuo prodotto con semaforo di sostenibilità",
   ],
   silver: [
     "Segnaposto più grande con icona",
-    "Scheda con descrizione, sito web e 3 foto",
-    "Fino a 10 prodotti con foto e prezzi",
-    "1 esperienza prenotabile + vendita online (15%)",
-    "Statistiche base",
+    "La scheda della tua azienda con URL personale, da condividere con chi vuoi",
+    "Scheda con descrizione, sito web e una foto della tua azienda",
+    "Fino a 10 prodotti con foto",
+    "Un'attività extra in azienda prenotabile dalla tua scheda cliente personalizzata",
+    "Statistiche base: quante visite riceve la tua scheda",
   ],
   gold: [
+    "Una scheda cliente che vale come un sito personale con URL dedicata: prodotti e servizi acquistabili da chiunque, un vero negozio online",
     "Massima visibilità + slot «in evidenza»",
-    "Fino a 100 prodotti + video di presentazione",
+    "Fino a 100 prodotti o servizi extra",
     "Esperienze prenotabili illimitate",
     "Commissione ridotta (8%)",
-    "Statistiche avanzate",
+    "Statistiche avanzate: andamento nel tempo e area geografica",
   ],
 };
 
