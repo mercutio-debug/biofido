@@ -142,37 +142,38 @@ export function UserMenu() {
             </Link>
           )}
           {!isCliente &&
-            (["dati", "prodotti"] as const).map((v) => (
+            [
+              { id: "dati", label: "🏢 Dati aziendali" },
+              { id: "prod", label: "🥫 I tuoi prodotti" },
+            ].map((m) => (
               <Link
-                key={v}
-                href={`/dashboard?v=${v}`}
+                key={m.id}
+                href={`/dashboard?p=${m.id}`}
                 role="menuitem"
                 onClick={(e) => {
                   setOpen(false);
-                  // se sono GIÀ in dashboard, cambio vista senza ricaricare la pagina
+                  // se sono GIÀ in dashboard, apro il pannello senza ricaricare la pagina
                   if (window.location.pathname.replace(/\/+$/, "").endsWith("/dashboard")) {
                     e.preventDefault();
-                    window.dispatchEvent(new CustomEvent("biofido:vista", { detail: v }));
-                    window.history.replaceState(null, "", `?v=${v}`);
+                    window.dispatchEvent(new CustomEvent("dash:goto", { detail: m.id }));
+                    window.history.replaceState(null, "", `?p=${m.id}`);
                   }
                 }}
                 className="block px-4 py-2 pl-9 text-sm font-semibold text-green-800/90 hover:bg-leaf/50"
               >
-                {v === "dati" ? "🏢 Dati aziendali" : "🥫 I tuoi prodotti"}
+                {m.label}
               </Link>
             ))}
           {!isCliente && (
             <Link
-              href="/dashboard/#messaggi"
+              href="/dashboard?p=msg"
               role="menuitem"
               onClick={(e) => {
                 setOpen(false);
-                // se sono GIÀ in dashboard, Next non scrolla all'ancora: lo faccio a mano
-                // (endsWith gestisce anche il basePath /biofido di GitHub Pages)
                 if (window.location.pathname.replace(/\/+$/, "").endsWith("/dashboard")) {
                   e.preventDefault();
-                  document.getElementById("messaggi")?.scrollIntoView({ behavior: "smooth" });
-                  window.history.replaceState(null, "", "#messaggi");
+                  window.dispatchEvent(new CustomEvent("dash:goto", { detail: "msg" }));
+                  window.history.replaceState(null, "", "?p=msg");
                 }
               }}
               className="block px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
@@ -209,14 +210,14 @@ export function UserMenu() {
           )}
           {!isCliente && (
             <Link
-              href="/dashboard/#prenotazioni"
+              href="/dashboard?p=pren"
               role="menuitem"
               onClick={(e) => {
                 setOpen(false);
                 if (window.location.pathname.replace(/\/+$/, "").endsWith("/dashboard")) {
                   e.preventDefault();
-                  document.getElementById("prenotazioni")?.scrollIntoView({ behavior: "smooth" });
-                  window.history.replaceState(null, "", "#prenotazioni");
+                  window.dispatchEvent(new CustomEvent("dash:goto", { detail: "pren" }));
+                  window.history.replaceState(null, "", "?p=pren");
                 }
               }}
               className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"

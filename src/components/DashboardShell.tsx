@@ -14,7 +14,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 export type IconKey =
   | "start" | "piano" | "prodotti" | "catalogo" | "dati" | "bio" | "anteprima"
   | "messaggi" | "prenotazioni" | "ordini" | "statistiche" | "incassi"
-  | "extra" | "onboarding";
+  | "extra" | "onboarding" | "attivi";
 
 export type DashPanel = {
   id: string;
@@ -47,6 +47,7 @@ const ICON: Record<IconKey, ReactNode> = {
   incassi: <><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M3 10.5h18" /></>,
   extra: <><rect x="3" y="9" width="18" height="11" rx="1.5" /><path d="M3 13h18M12 9v11M12 9s-1.2-5-4-5-2.2 5 4 5zM12 9s1.2-5 4-5 2.2 5-4 5z" /></>,
   onboarding: <path d="M5 19l9-9M13 4.5l2 2M18 8l1.5 1.5M15.5 3l.6.6M9.5 5l.6.6" />,
+  attivi: <><path d="M4 6h10M4 12h10M4 18h7" /><path d="M16 16.5l2 2 4-4" /></>,
 };
 
 function Icona({ k }: { k: IconKey }) {
@@ -61,6 +62,8 @@ function Icona({ k }: { k: IconKey }) {
 export function DashboardShell({
   title,
   header,
+  topBar,
+  alert,
   panels,
   defaultPanel,
 }: {
@@ -68,6 +71,10 @@ export function DashboardShell({
   title: string;
   /** contenuto a destra dell'header (es. badge piano + Esci) */
   header?: ReactNode;
+  /** barra SEMPRE visibile sotto l'header (es. le tre tendine + promo) */
+  topBar?: ReactNode;
+  /** avviso a tutta larghezza in cima (es. acquisto in sospeso) */
+  alert?: ReactNode;
   panels: DashPanel[];
   defaultPanel?: string;
 }) {
@@ -139,6 +146,11 @@ export function DashboardShell({
           <div className="truncate font-display text-base text-green-800">{title}</div>
           <div className="ml-auto flex items-center gap-3">{header}</div>
         </div>
+
+        {alert && <div className="border-b border-[#eef3e6] bg-[#fffbe9] px-4 py-3">{alert}</div>}
+
+        {/* barra SEMPRE visibile (le tre tendine: piani · servizi extra · onboarding) */}
+        {topBar && <div className="border-b border-[#eef3e6] bg-white px-3 py-2.5">{topBar}</div>}
 
         <div className="relative flex min-h-[560px]">
           {/* backdrop drawer mobile */}
@@ -228,4 +240,43 @@ export function DashboardShell({
 /** Naviga a un pannello da QUALSIASI componente (sostituisce gli scroll-to-ancora). */
 export function vaiAlPannello(id: string) {
   window.dispatchEvent(new CustomEvent("dash:goto", { detail: id }));
+}
+
+/** Menù a tendina (comparsa/scomparsa) per la barra superiore sempre visibile. */
+export function Tendina({
+  icona,
+  label,
+  tone = "verde",
+  defaultOpen = false,
+  children,
+}: {
+  icona: string;
+  label: string;
+  tone?: "verde" | "giallo";
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const giallo = tone === "giallo";
+  return (
+    <details open={defaultOpen} className="group min-w-0 flex-1">
+      <summary
+        className={`flex cursor-pointer list-none items-center gap-2 rounded-lg border px-3 py-2 text-[13px] font-semibold ${
+          giallo
+            ? "border-badge-yellow bg-[#fffbe9] text-[#7a5b00]"
+            : "border-[#d7e6c6] bg-[#f3f9ee] text-green-800"
+        }`}
+      >
+        <span className="flex-none">{icona}</span>
+        <span className="flex-1 truncate">{label}</span>
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth={2} strokeLinecap="round" aria-hidden
+          className="flex-none transition-transform group-open:rotate-180"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </summary>
+      <div className="mt-2 rounded-xl border border-[#e3eed7] bg-white p-3">{children}</div>
+    </details>
+  );
 }
