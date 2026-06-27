@@ -1,6 +1,8 @@
-// Edge Function "booking-pay": il cliente paga una prenotazione CONFERMATA.
-// Destination charge verso l'account Connect del produttore, con application
-// fee pari alla commissione BioFido già registrata sulla prenotazione.
+// Edge Function "booking-pay": il cliente AUTORIZZA il pagamento di una
+// prenotazione (manual capture: i fondi vengono bloccati, non addebitati). L'addebito
+// vero avviene solo quando l'azienda APPROVA (booking-capture); se rifiuta, l'auto-
+// rizzazione si annulla (booking-cancel). Destination charge verso l'account Connect
+// del produttore, con application fee pari alla commissione già registrata.
 //
 // SEGRETI: STRIPE_SECRET_KEY, SITE_URL
 // Deploy: supabase functions deploy booking-pay
@@ -45,8 +47,12 @@ Deno.serve(async (req) => {
 
     if (!p) return json({ error: "Prenotazione non trovata" }, 404);
     if (p.cliente_user_id !== user.id) return json({ error: "Non autorizzato" }, 403);
-    if (p.stato !== "confermata") return json({ error: "La prenotazione non è ancora confermata" }, 400);
-    if (p.payment_status === "pagata") return json({ error: "Prenotazione già pagata" }, 400);
+    // si paga (autorizza) una prenotazione ancora in attesa: non dev'essere già
+    // autorizzata/pagata, né rifiutata/annullata dall'azienda.
+    if (p.payment_status === "autorizzata" || p.payment_status === "pagata")
+      return json({ error: "Prenotazione già pagata o autorizzata" }, 400);
+    if (p.stato === "rifiutata" || p.stato === "annullata")
+      return json({ error: "Prenotazione non più disponibile" }, 400);
 
     // Importi AUTOREVOLI ricalcolati dal DB: non ci si fida dei valori inviati
     // dal client al momento della richiesta (potrebbero essere manomessi).
@@ -96,6 +102,8 @@ Deno.serve(async (req) => {
         },
       ],
       payment_intent_data: {
+        // cattura manuale: i fondi sono bloccati finché l'azienda non approva
+        capture_method: "manual",
         application_fee_amount: amount.commissioneCents,
         transfer_data: { destination: acc.account_id },
       },

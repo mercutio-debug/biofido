@@ -37,10 +37,38 @@ export function startOnboarding(): Promise<void> {
   return callAndRedirect("connect-onboard");
 }
 
-/** Apre il pagamento Stripe per una prenotazione confermata. */
+/** Apre il pagamento (autorizzazione) Stripe di una prenotazione. */
 export function payBooking(prenotazioneId: string): Promise<void> {
   return callAndRedirect("booking-pay", { prenotazioneId });
 }
+
+/** Chiamata semplice a una edge function (no redirect): lancia errore se fallisce. */
+async function callFunction(fn: string, body?: unknown): Promise<void> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Accedi per continuare.");
+  const res = await fetch(`${FUNCTIONS_BASE}/${fn}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(body ?? {}),
+  });
+  if (!res.ok) {
+    const { error } = await res.json().catch(() => ({ error: "" }));
+    throw new Error(error || "Operazione non riuscita. Riprova.");
+  }
+}
+
+/** L'azienda APPROVA una prenotazione → cattura il pagamento autorizzato. */
+export const captureBooking = (prenotazioneId: string) =>
+  callFunction("booking-capture", { prenotazioneId });
+
+/** L'azienda RIFIUTA una prenotazione → annulla l'autorizzazione (nessun addebito). */
+export const cancelBooking = (prenotazioneId: string) =>
+  callFunction("booking-cancel", { prenotazioneId });
 
 /**
  * Rilegge da Stripe lo stato dell'account Connect del produttore e aggiorna il

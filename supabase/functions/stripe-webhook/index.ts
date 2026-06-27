@@ -591,14 +591,33 @@ Deno.serve(async (req) => {
           }
           break;
         }
-        // Pagamento di una prenotazione (Connect)
+        // AUTORIZZAZIONE di una prenotazione (manual capture): i fondi sono bloccati.
+        // Resta "in_attesa": l'addebito vero avviene quando l'azienda approva
+        // (booking-capture); se rifiuta, l'autorizzazione si annulla (booking-cancel).
         if (s.metadata?.kind === "booking") {
           const prenotazioneId = s.metadata?.prenotazione_id;
           if (prenotazioneId) {
             await admin
               .from("prenotazioni")
-              .update({ payment_status: "pagata", stripe_session_id: s.id })
+              .update({
+                payment_status: "autorizzata",
+                stripe_payment_intent: s.payment_intent as string,
+                stripe_session_id: s.id,
+              })
               .eq("id", prenotazioneId);
+            // avvisa l'azienda: nuova prenotazione pagata (fondi bloccati) da approvare
+            const { data: pr } = await admin
+              .from("prenotazioni")
+              .select("owner, titolo, cliente_nome")
+              .eq("id", prenotazioneId)
+              .maybeSingle();
+            if (pr?.owner) {
+              await sendPush(pr.owner, {
+                title: "🗓️ Nuova prenotazione da approvare",
+                body: `${pr.cliente_nome ?? "Un cliente"} ha prenotato e pagato "${pr.titolo ?? "un'esperienza"}". I fondi sono bloccati: approva entro pochi giorni per incassare.`,
+                url: SITE_URL ? `${SITE_URL}/dashboard/` : undefined,
+              });
+            }
           }
           break;
         }

@@ -110,6 +110,10 @@ export default function PrenotazioniPage() {
                   <span className="rounded-full bg-traffic-green px-3 py-1 text-xs font-bold text-white">
                     Pagata ✅
                   </span>
+                ) : b.paymentStatus === "autorizzata" ? (
+                  <span className="rounded-full bg-badge-yellow px-3 py-1 text-xs font-bold text-[#7a5a00]">
+                    💳 Pagato · in attesa di conferma dell&apos;azienda
+                  </span>
                 ) : (
                   billingEnabled &&
                   b.stato === "confermata" && (

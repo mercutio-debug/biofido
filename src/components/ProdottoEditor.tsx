@@ -56,7 +56,15 @@ export function ProdottoEditor({
   const media = info.showDescription;
   const gold = plan === "gold";
   const [name, setName] = useState(initial?.name ?? "");
-  const [category, setCategory] = useState(initial?.category ?? CATEGORIE[0]);
+  // categoria: se quella salvata non è tra le preimpostate, è una categoria
+  // personalizzata → mostro "Altro" + il campo libero precompilato.
+  const catPreset = CATEGORIE.includes(initial?.category ?? "");
+  const [category, setCategory] = useState(
+    catPreset ? (initial!.category as string) : initial?.category ? "Altro" : CATEGORIE[0],
+  );
+  const [categoriaCustom, setCategoriaCustom] = useState(
+    catPreset ? "" : initial?.category ?? "",
+  );
   const [price, setPrice] = useState(initial?.price ?? "");
   const [unit, setUnit] = useState(initial?.unit ?? UNITA[0]);
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -109,7 +117,7 @@ export function ProdottoEditor({
     }
     onSave({
       name: name.trim(),
-      category,
+      category: category === "Altro" && categoriaCustom.trim() ? categoriaCustom.trim() : category,
       // prezzo solo Gold; foto + descrizione da Silver in su; Free = nome + semaforo
       price: gold ? price.trim() || undefined : undefined,
       unit,
@@ -214,6 +222,14 @@ export function ProdottoEditor({
                     <option key={c}>{c}</option>
                   ))}
                 </select>
+                {category === "Altro" && (
+                  <input
+                    className="field mt-2"
+                    value={categoriaCustom}
+                    onChange={(e) => setCategoriaCustom(e.target.value)}
+                    placeholder="Scrivi la tua categoria (es. Spezie, Tisane…)"
+                  />
+                )}
               </label>
               {gold && (
                 <label className="block">

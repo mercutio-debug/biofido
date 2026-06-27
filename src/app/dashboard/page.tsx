@@ -44,7 +44,7 @@ import { SchedaServizi } from "@/components/SchedaServizi";
 import { ServiziExtra } from "@/components/ServiziExtra";
 import { GoldPromoBanner } from "@/components/GoldPromoBanner";
 import { caricaImmagineCatalogo, LINGUE_SERVIZIO } from "@/lib/catalogo";
-import { startOnboarding, refreshConnectStatus } from "@/lib/connect";
+import { startOnboarding, refreshConnectStatus, captureBooking, cancelBooking } from "@/lib/connect";
 import {
   listMyExperiences,
   createExperience,
@@ -1959,11 +1959,25 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
     load();
   }, [load]);
 
-  async function act(id: string, stato: BookingStatus) {
-    await setBookingStatus(id, stato);
+  async function act(b: Booking, stato: BookingStatus) {
+    try {
+      if (stato === "confermata") {
+        // se il cliente ha già pagato (fondi bloccati) catturo l'autorizzazione;
+        // altrimenti marco solo confermata (vecchio flusso, paga dopo).
+        if (b.paymentStatus === "autorizzata") await captureBooking(b.id);
+        else await setBookingStatus(b.id, "confermata");
+      } else {
+        // rifiuto: se c'era un'autorizzazione la annullo (libera i fondi), poi marco rifiutata
+        if (b.paymentStatus === "autorizzata") await cancelBooking(b.id);
+        else await setBookingStatus(b.id, "rifiutata");
+      }
+    } catch (e) {
+      alert((e as Error).message);
+      return;
+    }
     // notifica in-app al cliente collegato
     await sendMessage(
-      id,
+      b.id,
       "azienda",
       stato === "confermata"
         ? "La tua prenotazione è stata confermata ✅. A presto!"
@@ -2018,17 +2032,22 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
                     Pagata ✅
                   </span>
                 )}
+                {b.paymentStatus === "autorizzata" && (
+                  <span className="rounded-full bg-badge-yellow px-2 py-0.5 text-[11px] font-bold text-[#7a5a00]">
+                    💳 Pagata · fondi bloccati
+                  </span>
+                )}
                 {b.stato === "in_attesa" && (
                   <>
                     <button
                       className="rounded-full bg-traffic-green px-3 py-1 text-xs font-bold text-white"
-                      onClick={() => act(b.id, "confermata")}
+                      onClick={() => act(b, "confermata")}
                     >
-                      Conferma
+                      {b.paymentStatus === "autorizzata" ? "Approva e incassa" : "Conferma"}
                     </button>
                     <button
                       className="rounded-full border border-traffic-red px-3 py-1 text-xs font-bold text-traffic-red"
-                      onClick={() => act(b.id, "rifiutata")}
+                      onClick={() => act(b, "rifiutata")}
                     >
                       Rifiuta
                     </button>
