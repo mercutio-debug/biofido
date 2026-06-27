@@ -981,10 +981,11 @@ function SchedaMappaCard({
                   <div className="mt-3 space-y-2">
                     {products.map((p, i) => {
                       const conSemaforo = p.mostraSemaforo !== false;
+                      const haSemaforoEcovisa = conSemaforo && (p.ingredients?.length ?? 0) > 0;
                       const sem = SEMAFORO[calcolaImpronta(coord, p.ingredients ?? []).level];
                       return (
+                        <div key={i}>
                         <div
-                          key={i}
                           className="flex items-center justify-between gap-3 rounded-xl border border-[#e3eed7] bg-white px-4 py-2"
                         >
                           <div className="flex min-w-0 items-center gap-3">
@@ -1014,6 +1015,14 @@ function SchedaMappaCard({
                               Elimina
                             </button>
                           </div>
+                        </div>
+                        {!haSemaforoEcovisa && (
+                          <p className="mt-1 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
+                            🚦 Ricorda: per essere pubblicato anche su <strong>ECO-VISA</strong>,
+                            questo prodotto deve avere il <strong>semaforo di sostenibilità</strong>
+                            {" "}(materie prime con la loro origine).
+                          </p>
+                        )}
                         </div>
                       );
                     })}
@@ -1058,9 +1067,11 @@ function SchedaMappaCard({
           )}
 
           {vista !== "dati" && (() => {
-            const conSem = products.filter((p) => p.mostraSemaforo !== false).length;
+            const haSemaforo = (p: Product) =>
+              p.mostraSemaforo !== false && (p.ingredients?.length ?? 0) > 0;
+            const conSem = products.filter(haSemaforo).length;
             const tot = products.length;
-            const okDueTerzi = tot === 0 || conSem * 3 >= tot * 2; // ≥ 2/3
+            const tutti = tot > 0 && conSem === tot;
             return (
               <div className="mt-5 rounded-2xl border-2 border-[#cfe0b0] bg-white p-4">
                 <label className="flex cursor-pointer items-start gap-3">
@@ -1081,21 +1092,21 @@ function SchedaMappaCard({
                     </span>
                     <span className="mt-1 block text-xs text-green-900/70">
                       Su BioFido il semaforo è facoltativo. Per comparire <strong>anche su
-                      ECO-VISA</strong>, almeno <strong>2/3 dei tuoi prodotti</strong> devono
-                      avere il semaforo di sostenibilità (materie prime con la loro origine):
-                      è il criterio fondante di ECO-VISA.
+                      ECO-VISA</strong>, <strong>ogni prodotto deve avere il semaforo</strong> di
+                      sostenibilità (materie prime con la loro origine): è il criterio fondante
+                      di ECO-VISA. I prodotti senza semaforo restano solo su BioFido.
                     </span>
                     {pubblicaEcovisa && (
                       <span
                         className={`mt-2 block rounded-lg px-3 py-2 text-xs font-semibold ${
-                          okDueTerzi ? "bg-leaf/60 text-green-800" : "bg-amber-50 text-amber-800"
+                          tutti ? "bg-leaf/60 text-green-800" : "bg-amber-50 text-amber-800"
                         }`}
                       >
                         {tot === 0
-                          ? "Aggiungi prodotti col semaforo per pubblicare su ECO-VISA."
-                          : okDueTerzi
-                            ? `✅ ${conSem}/${tot} prodotti col semaforo: requisito dei 2/3 soddisfatto.`
-                            : `⚠️ Solo ${conSem}/${tot} prodotti hanno il semaforo: su ECO-VISA ne verranno pubblicati al massimo i 2/3. Aggiungi le origini delle materie prime per pubblicarli tutti.`}
+                          ? "Aggiungi prodotti col semaforo per pubblicarli su ECO-VISA."
+                          : tutti
+                            ? `✅ Tutti i ${tot} prodotti hanno il semaforo: verranno pubblicati su ECO-VISA.`
+                            : `⚠️ ${conSem}/${tot} prodotti hanno il semaforo. Su ECO-VISA verranno pubblicati solo questi; i ${tot - conSem} senza semaforo restano solo su BioFido. Aggiungi le materie prime con la loro origine per pubblicarli tutti.`}
                       </span>
                     )}
                   </span>

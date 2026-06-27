@@ -472,6 +472,13 @@ export function ProdottoEditor({
             Togli la spunta se vuoi tenerlo solo in vetrina, senza semaforo.
           </span>
         </label>
+        {!mostraSemaforo && (
+          <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            🚦 Ricorda: per essere pubblicato anche su <strong>ECO-VISA</strong> questo prodotto
+            deve avere il <strong>semaforo di sostenibilità</strong> (materie prime con la loro
+            origine). Senza, resta solo su BioFido.
+          </p>
+        )}
         </>
         )}
 
