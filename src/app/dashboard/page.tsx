@@ -43,8 +43,7 @@ import { SezioneBio } from "@/components/SezioneBio";
 import { SchedaServizi } from "@/components/SchedaServizi";
 import { ServiziExtra } from "@/components/ServiziExtra";
 import { GoldPromoBanner } from "@/components/GoldPromoBanner";
-import { LINGUE_SERVIZIO } from "@/components/CatalogoCard";
-import { caricaImmagineCatalogo } from "@/lib/catalogo";
+import { caricaImmagineCatalogo, LINGUE_SERVIZIO } from "@/lib/catalogo";
 import { startOnboarding, refreshConnectStatus } from "@/lib/connect";
 import {
   listMyExperiences,

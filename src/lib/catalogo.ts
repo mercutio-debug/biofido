@@ -17,6 +17,20 @@ export const TIPI_VOCE: { id: TipoVoce; label: string; servizio: boolean }[] = [
   { id: "esperienza", label: "Esperienza", servizio: true },
 ];
 
+/** Lingue selezionabili per un'esperienza/attività (italiano sempre incluso). */
+export const LINGUE_SERVIZIO: { code: string; label: string; flag: string }[] = [
+  { code: "it", label: "Italiano", flag: "🇮🇹" },
+  { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
+  { code: "pt", label: "Português", flag: "🇵🇹" },
+  { code: "nl", label: "Nederlands", flag: "🇳🇱" },
+  { code: "zh", label: "中文", flag: "🇨🇳" },
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "ar", label: "العربية", flag: "🇸🇦" },
+];
+
 export type VoceCatalogo = {
   id?: string;
   numero: number;
