@@ -19,6 +19,7 @@ const CONSENSI_ABBONAMENTO: { id: string; testo: string; link?: { label: string;
   { id: "termini", testo: "Ho letto e accetto i {LINK}.", link: { label: "Termini di vendita", href: LEGALE.terminiVendita } },
   { id: "privacy", testo: "Ho letto l'{LINK} e accetto il trattamento dei dati per l'abbonamento e la fatturazione (Ligusto Srl).", link: { label: "Informativa privacy", href: LEGALE.privacy } },
   { id: "responsabilita", testo: "Dichiaro di rappresentare un'azienda reale e mi assumo la responsabilità dei contenuti che pubblico (testi, immagini, dati): non caricherò materiale illecito o ingannevole." },
+  { id: "semaforo", testo: "Capisco che su BioFido il semaforo di sostenibilità è facoltativo, ma se scelgo di pubblicare anche su ECO-VISA almeno 2/3 dei miei prodotti devono avere il semaforo (materie prime con la loro origine), altrimenti la pubblicazione su ECO-VISA viene limitata." },
 ];
 
 /** Servizi attivabili per piano (onboarding solo Gold). */

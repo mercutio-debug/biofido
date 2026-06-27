@@ -761,6 +761,7 @@ function SchedaMappaCard({
   const [products, setProducts] = useState<Product[]>([]);
   const [coord, setCoord] = useState<{ lat: number; lon: number } | null>(null);
   const [editProd, setEditProd] = useState<number | "new" | null>(null);
+  const [pubblicaEcovisa, setPubblicaEcovisa] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -776,6 +777,7 @@ function SchedaMappaCard({
       setWebsite(b.website ?? "");
       setPhone(b.phone ?? "");
       setProducts(b.products ?? []);
+      setPubblicaEcovisa(b.pubblicaEcovisa === true);
       setCoord({ lat: b.lat, lon: b.lon });
     } else {
       // Nessuna scheda salvata: ripristina l'eventuale bozza locale (anti perdita-dati)
@@ -838,6 +840,7 @@ function SchedaMappaCard({
         website,
         phone,
         products: products.filter((p) => p.name.trim()),
+        pubblicaEcovisa,
       },
       existing?.id,
     );
@@ -1053,6 +1056,53 @@ function SchedaMappaCard({
               10) e Gold (fino a 100).
             </p>
           )}
+
+          {vista !== "dati" && (() => {
+            const conSem = products.filter((p) => p.mostraSemaforo !== false).length;
+            const tot = products.length;
+            const okDueTerzi = tot === 0 || conSem * 3 >= tot * 2; // ≥ 2/3
+            return (
+              <div className="mt-5 rounded-2xl border-2 border-[#cfe0b0] bg-white p-4">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-6 w-6 flex-none accent-green-700"
+                    checked={pubblicaEcovisa}
+                    onChange={(e) => setPubblicaEcovisa(e.target.checked)}
+                  />
+                  <span>
+                    <span className="flex items-center gap-2">
+                      <span className="rounded-md bg-green-700 px-2 py-0.5 font-display text-sm font-bold tracking-wide text-white">
+                        ECO-VISA
+                      </span>
+                      <span className="font-display text-base font-bold uppercase tracking-wide text-green-800">
+                        Pubblica anche sulla tua bacheca di ECO-VISA
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-xs text-green-900/70">
+                      Su BioFido il semaforo è facoltativo. Per comparire <strong>anche su
+                      ECO-VISA</strong>, almeno <strong>2/3 dei tuoi prodotti</strong> devono
+                      avere il semaforo di sostenibilità (materie prime con la loro origine):
+                      è il criterio fondante di ECO-VISA.
+                    </span>
+                    {pubblicaEcovisa && (
+                      <span
+                        className={`mt-2 block rounded-lg px-3 py-2 text-xs font-semibold ${
+                          okDueTerzi ? "bg-leaf/60 text-green-800" : "bg-amber-50 text-amber-800"
+                        }`}
+                      >
+                        {tot === 0
+                          ? "Aggiungi prodotti col semaforo per pubblicare su ECO-VISA."
+                          : okDueTerzi
+                            ? `✅ ${conSem}/${tot} prodotti col semaforo: requisito dei 2/3 soddisfatto.`
+                            : `⚠️ Solo ${conSem}/${tot} prodotti hanno il semaforo: su ECO-VISA ne verranno pubblicati al massimo i 2/3. Aggiungi le origini delle materie prime per pubblicarli tutti.`}
+                      </span>
+                    )}
+                  </span>
+                </label>
+              </div>
+            );
+          })()}
 
           <div className="mt-4 flex items-center gap-3">
             <button className="btn-lime" onClick={save} disabled={saving || !name.trim()}>

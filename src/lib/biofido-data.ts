@@ -73,6 +73,8 @@ export type Business = {
   products?: Product[];
   /** false = shop in attesa di approvazione (prodotti in_shop nascosti al pubblico) */
   shop_approvato?: boolean | null;
+  /** true = il produttore vuole pubblicare la sua vetrina ANCHE su ECO-VISA (richiede ≥2/3 prodotti col semaforo) */
+  pubblicaEcovisa?: boolean;
   /** id utente proprietario della scheda (per legare le esperienze) */
   owner?: string;
   /** esperienze prenotabili del produttore (caricate a parte o demo) */
@@ -201,6 +203,7 @@ type Row = {
   products?: Product[] | null;
   owner?: string | null;
   shop_approvato?: boolean | null;
+  pubblica_ecovisa?: boolean | null;
 };
 
 function fromRow(r: Row): Business {
@@ -220,6 +223,7 @@ function fromRow(r: Row): Business {
     products: r.products ?? undefined,
     owner: r.owner ?? undefined,
     shop_approvato: r.shop_approvato ?? undefined,
+    pubblicaEcovisa: r.pubblica_ecovisa ?? undefined,
   };
 }
 
@@ -366,6 +370,7 @@ export type SaveBusinessInput = {
   website?: string;
   phone?: string;
   products?: Product[];
+  pubblicaEcovisa?: boolean;
 };
 
 /** Crea o aggiorna la scheda mappa del produttore. */
@@ -387,9 +392,18 @@ export async function saveMyBusiness(
     website: input.website || null,
     phone: input.phone || null,
     products: input.products && input.products.length ? input.products : null,
+    pubblica_ecovisa: input.pubblicaEcovisa ?? false,
   };
-  const { error } = id
-    ? await supabase.from("biofido_businesses").update(payload).eq("id", id)
-    : await supabase.from("biofido_businesses").insert(payload);
+  const esegui = () =>
+    id
+      ? supabase.from("biofido_businesses").update(payload).eq("id", id)
+      : supabase.from("biofido_businesses").insert(payload);
+  let { error } = await esegui();
+  // se la colonna pubblica_ecovisa non esiste ancora nel DB, la tolgo e riprovo
+  // (così il salvataggio non si rompe finché non lanci la piccola migrazione)
+  if (error && /pubblica_ecovisa/i.test(error.message)) {
+    delete (payload as Record<string, unknown>).pubblica_ecovisa;
+    ({ error } = await esegui());
+  }
   return { error: error?.message };
 }
