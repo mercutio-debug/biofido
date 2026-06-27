@@ -20,6 +20,10 @@ export type Experience = {
   giorniSettimana?: number[];
   /** orario fisso "HH:MM" deciso dall'azienda. Vuoto = orario libero per il cliente. */
   orario?: string;
+  /** lingue in cui si svolge l'attività (codici ISO, es. ["it","en"]); per i turisti */
+  lingue?: string[];
+  /** foto dell'esperienza */
+  immagine?: string;
 };
 
 export type BookingStatus = "in_attesa" | "confermata" | "rifiutata" | "annullata";
@@ -73,6 +77,8 @@ type ExpRow = {
   attiva: boolean;
   giorni_settimana: number[] | null;
   orario: string | null;
+  lingue: string[] | null;
+  immagine: string | null;
 };
 
 const fromExpRow = (r: ExpRow): Experience => ({
@@ -86,6 +92,8 @@ const fromExpRow = (r: ExpRow): Experience => ({
   attiva: r.attiva,
   giorniSettimana: r.giorni_settimana ?? undefined,
   orario: r.orario ?? undefined,
+  lingue: r.lingue && r.lingue.length ? r.lingue : undefined,
+  immagine: r.immagine ?? undefined,
 });
 
 export async function listMyExperiences(owner: string): Promise<Experience[]> {
@@ -111,12 +119,16 @@ export async function createExperience(
     attiva: e.attiva,
     giorni_settimana: e.giorniSettimana && e.giorniSettimana.length ? e.giorniSettimana : null,
     orario: e.orario || null,
+    lingue: e.lingue && e.lingue.length ? e.lingue : null,
+    immagine: e.immagine || null,
   };
   let { error } = await supabase.from("esperienze").insert(payload);
-  // se le colonne agenda non esistono ancora nel DB, le tolgo e riprovo
-  if (error && /giorni_settimana|orario/i.test(error.message)) {
+  // se le colonne nuove non esistono ancora nel DB, le tolgo e riprovo
+  if (error && /giorni_settimana|orario|lingue|immagine/i.test(error.message)) {
     delete payload.giorni_settimana;
     delete payload.orario;
+    delete payload.lingue;
+    delete payload.immagine;
     ({ error } = await supabase.from("esperienze").insert(payload));
   }
   return { error: error?.message };

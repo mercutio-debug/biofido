@@ -111,12 +111,13 @@ export function SchedaImpresaModal({
       document.body.style.overflow = prev;
     };
   }, [embedded]);
-  // Esperienze in azienda prenotabili (visite, laboratori) = Silver e Gold (canSell).
   // I prodotti ORDINABILI dal catalogo (tipo 'prodotto') restano solo Gold.
   const catalogoVisibile = plan.canSell ? catalogo : [];
   const prodottiCat =
     b.plan === "gold" ? catalogoVisibile.filter((v) => v.tipo === "prodotto") : [];
-  const serviziCat = catalogoVisibile.filter((v) => v.tipo !== "prodotto");
+  // Le esperienze ora vivono nella tabella `esperienze` (b.experiences) — il vecchio
+  // "catalogo servizi" è deprecato (era un doppione), quindi non lo mostro più.
+  const serviziCat: VoceCatalogo[] = [];
   const [segnala, setSegnala] = useState<VoceCatalogo | null>(null);
   const [servDett, setServDett] = useState<VoceCatalogo | null>(null);
   const [cartMsg, setCartMsg] = useState<string | null>(null);

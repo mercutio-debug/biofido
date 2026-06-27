@@ -43,7 +43,8 @@ import { SezioneBio } from "@/components/SezioneBio";
 import { SchedaServizi } from "@/components/SchedaServizi";
 import { ServiziExtra } from "@/components/ServiziExtra";
 import { GoldPromoBanner } from "@/components/GoldPromoBanner";
-import { CatalogoCard } from "@/components/CatalogoCard";
+import { LINGUE_SERVIZIO } from "@/components/CatalogoCard";
+import { caricaImmagineCatalogo } from "@/lib/catalogo";
 import { startOnboarding, refreshConnectStatus } from "@/lib/connect";
 import {
   listMyExperiences,
@@ -304,12 +305,7 @@ export default function DashboardPage() {
       section: "Lavoro",
       icon: "catalogo",
       label: "Esperienze in azienda",
-      content: (
-        <>
-          <CatalogoCard ownerId={user.id} canSell={pianoScelto !== "free"} />
-          <EsperienzeCard ownerId={user.id} plan={pianoScelto} />
-        </>
-      ),
+      content: <EsperienzeCard ownerId={user.id} plan={pianoScelto} />,
     },
     {
       id: "dati",
@@ -1469,10 +1465,22 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
   // agenda: giorni della settimana in cui si svolge (1=lun…7=dom) + orario fisso
   const [giorni, setGiorni] = useState<number[]>([]);
   const [orario, setOrario] = useState("");
+  // foto + lingue dell'esperienza (italiano sempre incluso)
+  const [immagine, setImmagine] = useState("");
+  const [lingue, setLingue] = useState<string[]>(["it"]);
+  const [caricando, setCaricando] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const toggleGiorno = (g: number) =>
     setGiorni((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g].sort()));
+  const toggleLingua = (code: string) =>
+    setLingue((prev) => {
+      const cur = new Set(prev.length ? prev : ["it"]);
+      if (code === "it") return [...cur]; // l'italiano è sempre incluso
+      if (cur.has(code)) cur.delete(code);
+      else if (cur.size < 8) cur.add(code);
+      return [...cur];
+    });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1504,6 +1512,8 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
       attiva: true,
       giorniSettimana: giorni.length ? giorni : undefined,
       orario: orario || undefined,
+      lingue: lingue.length ? lingue : undefined,
+      immagine: immagine || undefined,
     });
     setSaving(false);
     if (error) {
@@ -1517,6 +1527,8 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
     setMaxP("10");
     setGiorni([]);
     setOrario("");
+    setImmagine("");
+    setLingue(["it"]);
     load();
   }
 
@@ -1638,6 +1650,76 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
                     onChange={(e) => setDescrizione(e.target.value)}
                   />
                 </label>
+
+                {/* foto dell'esperienza */}
+                <div className="md:col-span-2">
+                  <span className="label">Foto dell&apos;esperienza</span>
+                  <div className="mt-1 flex items-center gap-3">
+                    {immagine ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={immagine} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                    ) : (
+                      <span className="flex h-16 w-16 items-center justify-center rounded-lg bg-leaf text-[10px] text-green-900/50">
+                        nessuna
+                      </span>
+                    )}
+                    <label className="btn-ghost cursor-pointer text-sm">
+                      {caricando ? "Carico…" : immagine ? "Cambia foto" : "📷 Carica foto"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          setCaricando(true);
+                          try {
+                            setImmagine(await caricaImmagineCatalogo(ownerId, f));
+                          } catch (er) {
+                            setMsg((er as Error).message);
+                          } finally {
+                            setCaricando(false);
+                          }
+                        }}
+                      />
+                    </label>
+                    {immagine && (
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-traffic-red"
+                        onClick={() => setImmagine("")}
+                      >
+                        Rimuovi
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* lingue dell'attività (per i turisti) */}
+                <div className="md:col-span-2">
+                  <span className="label">Lingue dell&apos;attività</span>
+                  <span className="mt-0.5 block text-[11px] text-green-900/55">
+                    L&apos;italiano è sempre incluso. Aggiungi fino a 8 lingue.
+                  </span>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {LINGUE_SERVIZIO.map((l) => {
+                      const attive = lingue.length ? lingue : ["it"];
+                      const on = attive.includes(l.code);
+                      return (
+                        <button
+                          key={l.code}
+                          type="button"
+                          onClick={() => toggleLingua(l.code)}
+                          className={`rounded-full px-3 py-1 text-sm font-bold ${
+                            on ? "bg-green-700 text-white" : "bg-leaf text-green-800 hover:bg-[#dcebc8]"
+                          } ${l.code === "it" ? "opacity-90" : ""}`}
+                        >
+                          {l.flag} {l.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* AGENDA: quando si svolge l'attività (facoltativo). Se specificato,
                     il cliente potrà prenotare solo questi giorni / a quest'orario. */}
