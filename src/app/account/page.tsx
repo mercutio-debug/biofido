@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import { DatiFatturazioneForm } from "@/components/DatiFatturazioneForm";
+import { NotificheToggle } from "@/components/NotificheToggle";
+import { SmsNotificheToggle } from "@/components/SmsNotificheToggle";
+import { LEGALE } from "@/lib/legale";
+import { eliminaAccount } from "@/lib/elimina-account";
 
 /**
  * "Il mio account": area dove il cliente, già loggato, può cambiare l'email di
@@ -25,6 +30,24 @@ export default function AccountPage() {
   const [pwd2, setPwd2] = useState("");
   const [pwdBusy, setPwdBusy] = useState(false);
   const [pwdMsg, setPwdMsg] = useState<string | null>(null);
+
+  // eliminazione account: 0 chiuso · 1 avviso · 2 conferma finale
+  const [delStep, setDelStep] = useState(0);
+  const [delBusy, setDelBusy] = useState(false);
+  const [delErr, setDelErr] = useState<string | null>(null);
+
+  async function confermaEliminazione() {
+    setDelBusy(true);
+    setDelErr(null);
+    const { ok, error } = await eliminaAccount();
+    if (!ok) {
+      setDelBusy(false);
+      setDelErr(error ?? "Errore");
+      return;
+    }
+    await supabase.auth.signOut();
+    router.replace("/?account=eliminato");
+  }
 
   useEffect(() => {
     if (!loading && !user) router.replace("/accedi");
@@ -149,7 +172,7 @@ export default function AccountPage() {
       </section>
 
       {/* Dati di fatturazione (sempre modificabili) */}
-      <section className="mt-6">
+      <section id="fatturazione" className="mt-6 scroll-mt-20">
         <h2 className="font-display text-2xl text-green-800">Dati di fatturazione</h2>
         <p className="mt-1 text-sm text-green-900/70">
           Servono per la fattura dell&apos;abbonamento. Puoi correggerli quando vuoi.
@@ -158,6 +181,119 @@ export default function AccountPage() {
           <DatiFatturazioneForm ownerId={user.id} />
         </div>
       </section>
+
+      {/* Notifiche */}
+      <section id="notifiche" className="card mt-6 p-6 scroll-mt-20">
+        <h2 className="font-display text-2xl text-green-800">Notifiche</h2>
+        <p className="mt-1 text-sm text-green-900/70">
+          Ricevi un avviso quando arriva un ordine, una prenotazione o un messaggio.
+        </p>
+        <div className="mt-3 space-y-3">
+          <NotificheToggle />
+          <SmsNotificheToggle ownerId={user.id} />
+        </div>
+      </section>
+
+      {/* Geolocalizzazione & posizione */}
+      <section id="geolocalizzazione" className="card mt-6 p-6 scroll-mt-20">
+        <h2 className="font-display text-2xl text-green-800">Geolocalizzazione &amp; posizione</h2>
+        <p className="mt-1 text-sm text-green-900/70">
+          La posizione del tuo segnaposto sulla mappa si gestisce dalla scheda azienda
+          (città, indirizzo e pin esatto).
+        </p>
+        <Link href="/dashboard?p=dati" className="btn-ghost mt-3 inline-flex text-sm">
+          📍 Modifica posizione e dati aziendali →
+        </Link>
+      </section>
+
+      {/* Termini & privacy */}
+      <section id="privacy" className="card mt-6 p-6 scroll-mt-20">
+        <h2 className="font-display text-2xl text-green-800">Termini &amp; privacy</h2>
+        <ul className="mt-3 space-y-2 text-sm">
+          <li>
+            <a href={LEGALE.privacy} target="_blank" rel="noopener noreferrer" className="font-semibold text-green-700 hover:underline">
+              Informativa privacy →
+            </a>
+          </li>
+          <li>
+            <a href={LEGALE.terminiVendita} target="_blank" rel="noopener noreferrer" className="font-semibold text-green-700 hover:underline">
+              Termini di vendita →
+            </a>
+          </li>
+          <li>
+            <a href={LEGALE.condizioniVenditori} target="_blank" rel="noopener noreferrer" className="font-semibold text-green-700 hover:underline">
+              Condizioni per i venditori →
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      {/* Elimina account */}
+      <section id="elimina" className="card mt-6 border-2 border-traffic-red/30 p-6 scroll-mt-20">
+        <h2 className="font-display text-2xl text-traffic-red">Elimina account</h2>
+        <p className="mt-1 text-sm text-green-900/70">
+          Cancella definitivamente il tuo profilo. È un&apos;azione <strong>irreversibile</strong>.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setDelErr(null);
+            setDelStep(1);
+          }}
+          className="mt-3 rounded-xl border-2 border-traffic-red px-4 py-2 text-sm font-bold text-traffic-red hover:bg-red-50"
+        >
+          🗑️ Elimina il mio account
+        </button>
+      </section>
+
+      {/* Doppia conferma cancellazione */}
+      {delStep > 0 && (
+        <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            {delStep === 1 ? (
+              <>
+                <h3 className="font-display text-2xl text-traffic-red">Attenzione: stai per cancellare il profilo</h3>
+                <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-green-900/85">
+                  <li>Tutti i tuoi <strong>dati saranno persi</strong> (scheda, prodotti, ordini, messaggi).</li>
+                  <li>È una <strong>decisione irreversibile</strong>: non si può annullare.</li>
+                  <li>Perderai gli <strong>abbonamenti</strong> e i <strong>servizi extra acquistati</strong>, senza rimborso.</li>
+                  <li>Lo stesso account vale su ECO-VISA e BioFido: sparisce da entrambi.</li>
+                </ul>
+                <div className="mt-5 flex justify-end gap-3">
+                  <button onClick={() => setDelStep(0)} className="btn-ghost text-sm">
+                    Annulla
+                  </button>
+                  <button
+                    onClick={() => setDelStep(2)}
+                    className="rounded-xl bg-traffic-red px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                  >
+                    Accetto, continua
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="font-display text-2xl text-traffic-red">Ultima conferma</h3>
+                <p className="mt-2 text-sm text-green-900/85">
+                  Premendo il tasto qui sotto il tuo profilo <strong>smetterà di esistere</strong>.
+                  Dati, abbonamenti e servizi extra andranno persi per sempre.
+                </p>
+                {delErr && <p className="mt-3 text-sm font-semibold text-traffic-red">{delErr}</p>}
+                <button
+                  onClick={confermaEliminazione}
+                  disabled={delBusy}
+                  className="mt-5 w-full rounded-xl bg-traffic-red px-4 py-4 text-center font-bold text-white hover:opacity-90 disabled:opacity-60"
+                >
+                  {delBusy ? "Eliminazione in corso…" : "⚠️ Cancella il tuo profilo definitivamente"}
+                </button>
+                <button onClick={() => setDelStep(0)} className="btn-ghost mt-3 w-full justify-center text-sm">
+                  No, torna indietro
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

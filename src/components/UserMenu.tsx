@@ -226,14 +226,38 @@ export function UserMenu() {
               <Badge n={conte.prenotazioni} />
             </Link>
           )}
+          <div className="my-1 border-t border-[#eef3e6]" />
+          <div className="px-4 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-green-900/40">
+            Account
+          </div>
+          {[
+            { href: "/account", icon: "👤", label: "Informazioni account" },
+            { href: "/account#fatturazione", icon: "🧾", label: "Fatturazione" },
+            { href: "/account#geolocalizzazione", icon: "📍", label: "Geolocalizzazione" },
+            { href: "/account#notifiche", icon: "🔔", label: "Notifiche" },
+            { href: "/account#privacy", icon: "📜", label: "Termini & privacy" },
+          ].map((a) => (
+            <Link
+              key={a.href}
+              href={a.href}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
+            >
+              {a.icon} {a.label}
+            </Link>
+          ))}
           <Link
-            href="/account"
+            href="/account#elimina"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="block px-4 py-2 text-sm font-semibold text-green-800 hover:bg-leaf/50"
+            className="block px-4 py-2 text-sm font-semibold text-traffic-red hover:bg-red-50"
           >
-            ⚙️ Il mio account
+            🗑️ Elimina account
           </Link>
+          {isAdmin && (
+            <div className="my-1 border-t border-[#eef3e6]" />
+          )}
           {isAdmin && (
             <Link
               href="/admin"
