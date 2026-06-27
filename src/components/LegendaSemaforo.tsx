@@ -7,20 +7,21 @@ import { SEMAFORO, type Giudizio } from "@/lib/impronta";
  */
 const VOCI: { level: Giudizio; criterio: string }[] = [
   { level: "super_green", criterio: "Tutte le materie prime a km0 (entro 70 km). Es. un olio con olive dello stesso comune." },
-  { level: "verde", criterio: "Materie prime molto vicine, entro ~200 km. Filiera corta del territorio." },
+  { level: "verde", criterio: "Materie prime vicine, entro 400 km. Filiera corta del territorio." },
   {
     level: "verde_chiaro",
     criterio:
-      "Ingredienti entro l'Italia (≤ 1000 km). Per essere verde NON serve avere tutto verde: vanno bene dei gialli, purché non superino la metà.",
+      "Ingredienti entro i 1000 km. Per essere verde NON serve avere tutto verde: vanno bene dei gialli, purché non superino la metà.",
   },
-  { level: "giallo_chiaro", criterio: "Diverse materie prime oltre i 1000 km, ma ancora entro i confini italiani." },
-  { level: "giallo_scuro", criterio: "Materie prime oltre i 1000 km e fuori dall'Italia (Europa vicina). Pesa più del giallo chiaro." },
+  { level: "giallo_chiaro", criterio: "Materie prime tra i 1000 e i 1300 km." },
+  { level: "giallo", criterio: "Materie prime tra i 1300 e i 1600 km." },
+  { level: "giallo_scuro", criterio: "Materie prime tra i 1600 e i 2000 km. Pesa più del giallo chiaro." },
   { level: "rosso_chiaro", criterio: "Materie prime da oltre 2000 km, ma ancora in Europa." },
   { level: "rosso_scuro", criterio: "Materie prime da fuori Europa: America o Africa." },
   {
     level: "rosso_scurissimo",
     criterio:
-      "Materie prime dall'Asia: la filiera più lunga. Anche un solo ingrediente così impedisce il verde (al massimo giallo scuro).",
+      "Materie prime da Asia o Oceania: la filiera più lunga. Anche un solo ingrediente così impedisce il verde (al massimo giallo scuro).",
   },
 ];
 

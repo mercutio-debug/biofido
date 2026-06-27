@@ -1,6 +1,6 @@
 import type { Giudizio, TierIng } from "@/lib/impronta";
 
-/* Semaforo grande a 8 tonalità (gemello di ECO-VISA, mood BioFido): la lampada
+/* Semaforo grande a 9 tonalità (gemello di ECO-VISA, mood BioFido): la lampada
    accesa (verde/giallo/rosso) prende il COLORE della tonalità specifica. */
 type EcoCat = "verde" | "giallo" | "rosso";
 type Meta = { label: string; color: string; lampada: EcoCat; desc: string };
@@ -9,11 +9,12 @@ const META: Record<Giudizio, Meta> = {
   super_green: { label: "Super Green", color: "#2e9e0e", lampada: "verde", desc: "Tutte le materie prime sono a km0. Eccellente!" },
   verde: { label: "Verde — sostenibile", color: "#45a82f", lampada: "verde", desc: "Materie prime per lo più molto vicine." },
   verde_chiaro: { label: "Verde chiaro — buono", color: "#7cb342", lampada: "verde", desc: "Filiera corta: qualche ingrediente a media distanza, niente di critico." },
-  giallo_chiaro: { label: "Giallo chiaro — migliorabile", color: "#f6c416", lampada: "giallo", desc: "Diverse materie prime oltre i 1000 km, ma entro l'Italia." },
-  giallo_scuro: { label: "Giallo scuro", color: "#d99a00", lampada: "giallo", desc: "Materie prime oltre i 1000 km e fuori dall'Italia." },
+  giallo_chiaro: { label: "Giallo chiaro — migliorabile", color: "#f6c416", lampada: "giallo", desc: "Materie prime tra i 1000 e i 1300 km." },
+  giallo: { label: "Giallo", color: "#e7af0b", lampada: "giallo", desc: "Materie prime tra i 1300 e i 1600 km." },
+  giallo_scuro: { label: "Giallo scuro", color: "#d99a00", lampada: "giallo", desc: "Materie prime tra i 1600 e i 2000 km." },
   rosso_chiaro: { label: "Rosso chiaro — alto impatto", color: "#ef5350", lampada: "rosso", desc: "Materie prime da oltre 2000 km, ma in Europa." },
   rosso_scuro: { label: "Rosso scuro", color: "#c62828", lampada: "rosso", desc: "Materie prime da fuori Europa (America o Africa)." },
-  rosso_scurissimo: { label: "Rosso scurissimo — filiera lunghissima", color: "#9c0604", lampada: "rosso", desc: "Materie prime dall'Asia: la filiera più lunga." },
+  rosso_scurissimo: { label: "Rosso scurissimo — filiera lunghissima", color: "#9c0604", lampada: "rosso", desc: "Materie prime dall'Asia o dall'Oceania: la filiera più lunga." },
 };
 
 const COLORE_TIER: Record<TierIng, string> = {
@@ -21,6 +22,7 @@ const COLORE_TIER: Record<TierIng, string> = {
   verde: "#45a82f",
   verde_chiaro: "#7cb342",
   giallo_chiaro: "#f6c416",
+  giallo: "#e7af0b",
   giallo_scuro: "#d99a00",
   rosso_chiaro: "#ef5350",
   rosso_scuro: "#c62828",
@@ -28,7 +30,7 @@ const COLORE_TIER: Record<TierIng, string> = {
 };
 
 function categoriaDiTier(t: TierIng): EcoCat {
-  if (t === "giallo_chiaro" || t === "giallo_scuro") return "giallo";
+  if (t === "giallo_chiaro" || t === "giallo" || t === "giallo_scuro") return "giallo";
   if (t === "rosso_chiaro" || t === "rosso_scuro" || t === "rosso_scurissimo") return "rosso";
   return "verde";
 }

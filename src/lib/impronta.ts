@@ -21,12 +21,13 @@ function viaCamion(lat: number, lon: number): boolean {
 }
 
 /** Macro-regione di provenienza (da lat/lon, le materie prime non hanno country). */
-export type Regione = "italia" | "europa" | "america_africa" | "asia";
+export type Regione = "italia" | "europa" | "america_africa" | "asia" | "oceania";
 
 export function regioneDi(lat: number, lon: number): Regione {
   // bounding box approssimativo dell'Italia (isole comprese)
   const inItalia = lat >= 35.3 && lat <= 47.1 && lon >= 6.5 && lon <= 18.6;
   if (inItalia) return "italia";
+  if (lat < -10 && lon >= 110) return "oceania"; // Australia, Nuova Zelanda, Pacifico
   if (lon > 45) return "asia";
   if (lon < -25) return "america_africa";
   if (lat < 34) return "america_africa"; // Africa
@@ -43,27 +44,32 @@ function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-/* Scala a 8 tonalità (per ingrediente E per prodotto). */
+/* Scala a 9 tonalità (3 verdi · 3 gialli · 3 rossi), per ingrediente E per prodotto. */
 export type TierIng =
   | "super_green"
   | "verde"
   | "verde_chiaro"
   | "giallo_chiaro"
+  | "giallo"
   | "giallo_scuro"
   | "rosso_chiaro"
   | "rosso_scuro"
   | "rosso_scurissimo";
 
-/** Il prodotto è giudicato sulla stessa scala a 8 tonalità. */
+/** Il prodotto è giudicato sulla stessa scala a 9 tonalità. */
 export type Giudizio = TierIng;
 
-/** Tonalità di una materia prima in base a distanza (km) + regione. */
+/** Tonalità di una materia prima in base a distanza (km) + regione.
+ *  Verde fino a 400 km; i 3 gialli per pura distanza (1000–2000 km);
+ *  i 3 rossi oltre 2000 km, distinti per geografia. */
 export function tierIngrediente(km: number, reg: Regione): TierIng {
   if (km <= 70) return "super_green";
-  if (km <= 200) return "verde";
+  if (km <= 400) return "verde";
   if (km <= 1000) return "verde_chiaro";
-  if (km <= 2000) return reg === "italia" ? "giallo_chiaro" : "giallo_scuro";
-  if (reg === "asia") return "rosso_scurissimo";
+  if (km <= 1300) return "giallo_chiaro";
+  if (km <= 1600) return "giallo";
+  if (km <= 2000) return "giallo_scuro";
+  if (reg === "asia" || reg === "oceania") return "rosso_scurissimo";
   if (reg === "america_africa") return "rosso_scuro";
   return "rosso_chiaro";
 }
@@ -74,8 +80,9 @@ const QUALITA: Record<TierIng, number> = {
   super_green: 100,
   verde: 92,
   verde_chiaro: 82,
-  giallo_chiaro: 62,
-  giallo_scuro: 48,
+  giallo_chiaro: 65,
+  giallo: 55,
+  giallo_scuro: 45,
   rosso_chiaro: 34,
   rosso_scuro: 24,
   rosso_scurissimo: 8,
@@ -84,9 +91,10 @@ const QUALITA: Record<TierIng, number> = {
 function bandaDaPunteggio(score: number): Giudizio {
   if (score >= 95) return "super_green";
   if (score >= 86) return "verde";
-  if (score >= 70) return "verde_chiaro";
-  if (score >= 56) return "giallo_chiaro";
-  if (score >= 42) return "giallo_scuro";
+  if (score >= 72) return "verde_chiaro";
+  if (score >= 60) return "giallo_chiaro";
+  if (score >= 50) return "giallo";
+  if (score >= 40) return "giallo_scuro";
   if (score >= 30) return "rosso_chiaro";
   if (score >= 16) return "rosso_scuro";
   return "rosso_scurissimo";
@@ -101,7 +109,7 @@ export function giudizioProdotto(tiers: TierIng[]): { level: Giudizio; score: nu
 
 function categoriaDi(t: TierIng): "verde" | "giallo" | "rosso" {
   if (t === "super_green" || t === "verde" || t === "verde_chiaro") return "verde";
-  if (t === "giallo_chiaro" || t === "giallo_scuro") return "giallo";
+  if (t === "giallo_chiaro" || t === "giallo" || t === "giallo_scuro") return "giallo";
   return "rosso";
 }
 
@@ -194,11 +202,12 @@ export function calcolaImpronta(
 
 export const SEMAFORO: Record<Giudizio, { colore: string; testo: string; label: string }> = {
   super_green: { colore: "#2e9e0e", label: "Super Green", testo: "Super Green — materie prime a km0 / locali" },
-  verde: { colore: "#45a82f", label: "Verde", testo: "Verde — filiera corta" },
-  verde_chiaro: { colore: "#7cb342", label: "Verde chiaro", testo: "Verde chiaro — distanze contenute" },
-  giallo_chiaro: { colore: "#f6c416", label: "Giallo chiaro", testo: "Giallo chiaro — oltre 1000 km, ma in Italia" },
-  giallo_scuro: { colore: "#d99a00", label: "Giallo scuro", testo: "Giallo scuro — oltre 1000 km e fuori Italia" },
+  verde: { colore: "#45a82f", label: "Verde", testo: "Verde — entro 400 km, filiera corta" },
+  verde_chiaro: { colore: "#7cb342", label: "Verde chiaro", testo: "Verde chiaro — entro 1000 km" },
+  giallo_chiaro: { colore: "#f6c416", label: "Giallo chiaro", testo: "Giallo chiaro — 1000–1300 km" },
+  giallo: { colore: "#e7af0b", label: "Giallo", testo: "Giallo — 1300–1600 km" },
+  giallo_scuro: { colore: "#d99a00", label: "Giallo scuro", testo: "Giallo scuro — 1600–2000 km" },
   rosso_chiaro: { colore: "#ef5350", label: "Rosso chiaro", testo: "Rosso chiaro — oltre 2000 km, in Europa" },
-  rosso_scuro: { colore: "#c62828", label: "Rosso scuro", testo: "Rosso scuro — fuori Europa (America/Africa)" },
-  rosso_scurissimo: { colore: "#9c0604", label: "Rosso scurissimo", testo: "Rosso scurissimo — materie prime dall'Asia" },
+  rosso_scuro: { colore: "#c62828", label: "Rosso scuro", testo: "Rosso scuro — oltre 2000 km (America/Africa)" },
+  rosso_scurissimo: { colore: "#9c0604", label: "Rosso scurissimo", testo: "Rosso scurissimo — Asia / Oceania" },
 };
