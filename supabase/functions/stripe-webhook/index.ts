@@ -258,7 +258,7 @@ async function avvisaOrdineShop(ordineId: string) {
   const { data: o } = await admin
     .from("ordini_shop")
     .select(
-      "owner, cliente_nome, cliente_email, azienda_nome, articoli, controproposta, portale, indirizzo_spedizione, telefono, totale_cents",
+      "owner, cliente_nome, cliente_email, azienda_nome, articoli, controproposta, portale, indirizzo_spedizione, telefono, codice_fiscale, totale_cents",
     )
     .eq("id", ordineId)
     .maybeSingle();
@@ -294,6 +294,7 @@ async function avvisaOrdineShop(ordineId: string) {
     <p style="margin:0;">
       ${esc(o.cliente_nome ?? "—")}<br/>
       ${esc(o.cliente_email ?? "—")}<br/>
+      Cod. fiscale: ${o.codice_fiscale ? esc(o.codice_fiscale) : "—"}<br/>
       Spedire a: ${spediz}
     </p>${importo ? `<p style="margin:10px 0 0;"><strong>Incassato:</strong> ${esc(importo)}</p>` : ""}`;
 
@@ -567,6 +568,10 @@ Deno.serve(async (req) => {
                   .filter(Boolean)
                   .join(", ")
               : null;
+            // codice fiscale raccolto come custom_field al checkout (per la fattura)
+            const cf = (s as { custom_fields?: { key: string; text?: { value?: string } }[] }).custom_fields ?? [];
+            const codiceFiscale =
+              cf.find((f) => f.key === "codice_fiscale")?.text?.value?.toUpperCase() ?? null;
             await admin
               .from("ordini_shop")
               .update({
@@ -574,6 +579,7 @@ Deno.serve(async (req) => {
                 totale_cents: s.amount_total ?? null,
                 indirizzo_spedizione: indirizzo,
                 telefono: det.customer_details?.phone ?? null,
+                codice_fiscale: codiceFiscale,
                 stripe_session_id: s.id,
                 updated_at: new Date().toISOString(),
               })

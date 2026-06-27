@@ -300,7 +300,7 @@ export default function DashboardPage() {
       id: "cat",
       section: "Lavoro",
       icon: "catalogo",
-      label: "Catalogo & esperienze",
+      label: "Esperienze in azienda",
       content: (
         <>
           <CatalogoCard ownerId={user.id} gold={pianoScelto === "gold"} />
@@ -486,7 +486,7 @@ function StartPanel({
           className="rounded-2xl border-2 border-badge-yellow bg-[#fdf7e6] p-5 text-left transition hover:-translate-y-0.5"
         >
           <div className="text-3xl">✨</div>
-          <div className="mt-1 font-display text-lg text-[#7a5b00]">Carica le ESPERIENZE in azienda</div>
+          <div className="mt-1 font-display text-lg text-[#7a5b00]">Carica le ESPERIENZE in azienda prenotabili</div>
           <div className="text-xs text-[#8a6f2e]">Visite, laboratori, degustazioni prenotabili.</div>
         </button>
       </div>
@@ -1316,9 +1316,9 @@ function SchedaMappaCard({
           {vista !== "dati" && (() => {
             const haSemaforo = (p: Product) =>
               p.mostraSemaforo !== false && (p.ingredients?.length ?? 0) > 0;
-            const conSem = products.filter(haSemaforo).length;
+            // prodotti che il cliente ha scelto di pubblicare su ECO-VISA (col semaforo)
+            const suEcovisa = products.filter((p) => p.pubblicaEcovisa && haSemaforo(p)).length;
             const tot = products.length;
-            const tutti = tot > 0 && conSem === tot;
             return (
               <div className="mt-5 rounded-2xl border-2 border-[#cfe0b0] bg-white p-4">
                 <label className="flex cursor-pointer items-start gap-3">
@@ -1334,26 +1334,27 @@ function SchedaMappaCard({
                         ECO-VISA
                       </span>
                       <span className="font-display text-base font-bold uppercase tracking-wide text-green-800">
-                        Pubblica anche sulla tua bacheca di ECO-VISA
+                        Pubblica la tua scheda anche su ECO-VISA
                       </span>
                     </span>
                     <span className="mt-1 block text-xs text-green-900/70">
-                      Su BioFido il semaforo è facoltativo. Per comparire <strong>anche su
-                      ECO-VISA</strong>, <strong>ogni prodotto deve avere il semaforo</strong> di
-                      sostenibilità (materie prime con la loro origine): è il criterio fondante
-                      di ECO-VISA. I prodotti senza semaforo restano solo su BioFido.
+                      La tua scheda azienda comparirà anche sul portale ECO-VISA. Lì appaiono solo
+                      i prodotti che hai scelto di pubblicare con la spunta{" "}
+                      <strong>«Pubblica anche su ECO-VISA»</strong> nella scheda di ogni prodotto.
+                      Su ECO-VISA il <strong>semaforo è obbligatorio</strong>: i prodotti senza
+                      restano solo su BioFido.
                     </span>
                     {pubblicaEcovisa && (
                       <span
                         className={`mt-2 block rounded-lg px-3 py-2 text-xs font-semibold ${
-                          tutti ? "bg-leaf/60 text-green-800" : "bg-amber-50 text-amber-800"
+                          suEcovisa > 0 ? "bg-leaf/60 text-green-800" : "bg-amber-50 text-amber-800"
                         }`}
                       >
                         {tot === 0
-                          ? "Aggiungi prodotti col semaforo per pubblicarli su ECO-VISA."
-                          : tutti
-                            ? `✅ Tutti i ${tot} prodotti hanno il semaforo: verranno pubblicati su ECO-VISA.`
-                            : `⚠️ ${conSem}/${tot} prodotti hanno il semaforo. Su ECO-VISA verranno pubblicati solo questi; i ${tot - conSem} senza semaforo restano solo su BioFido. Aggiungi le materie prime con la loro origine per pubblicarli tutti.`}
+                          ? "Aggiungi prodotti col semaforo e spunta «Pubblica anche su ECO-VISA» nella loro scheda."
+                          : suEcovisa > 0
+                            ? `✅ ${suEcovisa} ${suEcovisa === 1 ? "prodotto verrà pubblicato" : "prodotti verranno pubblicati"} su ECO-VISA.`
+                            : "⚠️ Nessun prodotto è ancora marcato per ECO-VISA. Apri la scheda di un prodotto col semaforo e spunta «Pubblica anche su ECO-VISA»."}
                       </span>
                     )}
                   </span>

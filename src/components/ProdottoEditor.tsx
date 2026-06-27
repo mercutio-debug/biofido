@@ -71,6 +71,8 @@ export function ProdottoEditor({
   );
   const [certs, setCerts] = useState<string[]>(initial?.certifications ?? []);
   const [mostraSemaforo, setMostraSemaforo] = useState(initial?.mostraSemaforo ?? true);
+  // pubblicare questo prodotto anche su ECO-VISA (richiede il semaforo)
+  const [pubblicaEcovisa, setPubblicaEcovisa] = useState(initial?.pubblicaEcovisa ?? false);
   // tipo voce: prodotto ordinario oppure servizio extra prenotabile dal cliente
   const [tipoVoce, setTipoVoce] = useState<"prodotto" | "servizio">(
     initial?.prenotabile ? "servizio" : "prodotto",
@@ -108,6 +110,8 @@ export function ProdottoEditor({
       ingredients: ingredients.filter((i) => i.nome.trim()),
       certifications: certs,
       mostraSemaforo,
+      // su ECO-VISA il semaforo è obbligatorio: senza, il prodotto resta solo su BioFido
+      pubblicaEcovisa: mostraSemaforo && pubblicaEcovisa,
       prenotabile: tipoVoce === "servizio" && accetta,
       in_shop: tipoVoce === "prodotto" && inShop,
       giacenza:
@@ -441,24 +445,48 @@ export function ProdottoEditor({
           </div>
         </div>
 
-        {/* flag: usare o no il semaforo di sostenibilità su questo prodotto */}
+        {/* flag 1: pubblicare il prodotto col semaforo di sostenibilità */}
         <label className="mt-3 flex items-start gap-2 rounded-xl border border-[#e3eed7] p-3 text-sm">
           <input
             type="checkbox"
             className="mt-0.5 h-5 w-5 accent-[var(--lime-500)]"
             checked={mostraSemaforo}
-            onChange={(e) => setMostraSemaforo(e.target.checked)}
+            onChange={(e) => {
+              const on = e.target.checked;
+              setMostraSemaforo(on);
+              if (!on) setPubblicaEcovisa(false); // senza semaforo non si pubblica su ECO-VISA
+            }}
           />
           <span className="text-green-900/85">
-            <strong>Mostra il semaforo di sostenibilità</strong> su questo prodotto.
-            Togli la spunta se vuoi tenerlo solo in vetrina, senza semaforo.
+            <strong>Voglio pubblicare questo prodotto con il semaforo di sostenibilità.</strong>{" "}
+            Togli la spunta per tenerlo nello shop di BioFido <em>senza</em> semaforo.
+          </span>
+        </label>
+
+        {/* flag 2: pubblicare anche su ECO-VISA (richiede il semaforo) */}
+        <label
+          className={`mt-2 flex items-start gap-2 rounded-xl border p-3 text-sm ${
+            mostraSemaforo ? "border-[#e3eed7]" : "border-[#eee] bg-[#fafafa] opacity-60"
+          }`}
+        >
+          <input
+            type="checkbox"
+            className="mt-0.5 h-5 w-5 accent-[var(--lime-500)]"
+            disabled={!mostraSemaforo}
+            checked={mostraSemaforo && pubblicaEcovisa}
+            onChange={(e) => setPubblicaEcovisa(e.target.checked)}
+          />
+          <span className="text-green-900/85">
+            <strong>Pubblica anche su ECO-VISA.</strong> Questo prodotto comparirà anche sul
+            portale ECO-VISA, col suo semaforo. {mostraSemaforo
+              ? "Lascia disattivato per tenerlo solo su BioFido."
+              : ""}
           </span>
         </label>
         {!mostraSemaforo && (
           <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            🚦 Ricorda: per essere pubblicato anche su <strong>ECO-VISA</strong> questo prodotto
-            deve avere il <strong>semaforo di sostenibilità</strong> (materie prime con la loro
-            origine). Senza, resta solo su BioFido.
+            🚦 Per pubblicare su <strong>ECO-VISA</strong> serve il <strong>semaforo</strong>{" "}
+            (materie prime con la loro origine). Senza, il prodotto resta solo su BioFido.
           </p>
         )}
         </>

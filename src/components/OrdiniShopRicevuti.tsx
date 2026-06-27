@@ -94,6 +94,7 @@ export function OrdiniShopRicevuti() {
                   <div className="mt-1 space-y-0.5">
                     <div>👤 {o.clienteNome || "—"}</div>
                     <div>✉️ {o.clienteEmail || "—"}</div>
+                    <div>🧾 CF: {o.codiceFiscale || "— (non fornito)"}</div>
                     <div>📞 {o.telefono || "— (non fornito)"}</div>
                     <div>📍 {o.indirizzoSpedizione || "— (indirizzo non fornito)"}</div>
                   </div>

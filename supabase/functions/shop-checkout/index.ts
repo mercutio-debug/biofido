@@ -104,9 +104,19 @@ Deno.serve(async (req) => {
       },
       metadata: { kind: "order_shop", ordine_shop_id: String(o.id) },
       // l'azienda deve sapere DOVE spedire e poter emettere fattura → raccolgo
-      // indirizzo di spedizione + telefono direttamente in Stripe Checkout.
+      // indirizzo di spedizione + telefono + codice fiscale in Stripe Checkout.
       shipping_address_collection: { allowed_countries: ["IT"] },
       phone_number_collection: { enabled: true },
+      // codice fiscale del cliente: serve all'azienda per emettere la fattura
+      custom_fields: [
+        {
+          key: "codice_fiscale",
+          label: { type: "custom", custom: "Codice Fiscale (per la fattura)" },
+          type: "text",
+          optional: false,
+          text: { minimum_length: 11, maximum_length: 16 },
+        },
+      ],
       success_url: `${base}/ordini/?pagamento=ok`,
       cancel_url: `${base}/ordini/?pagamento=annullato`,
     });

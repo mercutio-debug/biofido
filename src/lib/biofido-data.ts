@@ -35,6 +35,9 @@ export type Product = {
   /** se false, il prodotto resta in vetrina SENZA semaforo di sostenibilità.
    *  Default: true (mostra il semaforo calcolato dagli ingredienti). */
   mostraSemaforo?: boolean;
+  /** true = pubblica questo prodotto ANCHE su ECO-VISA (richiede il semaforo).
+   *  Default: false (resta solo su BioFido). */
+  pubblicaEcovisa?: boolean;
   /** "servizio extra" prenotabile dal cliente nel widget (visite, laboratori,
    *  esperienze). Se true l'azienda ha accettato di renderlo prenotabile. */
   prenotabile?: boolean;

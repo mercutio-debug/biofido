@@ -49,13 +49,13 @@ export function CatalogoCard({ ownerId, gold }: { ownerId: string; gold: boolean
     return (
       <section id="catalogo" className="card mt-6 p-6 scroll-mt-20">
         <h2 className="font-display text-2xl text-green-800">
-          Catalogo prodotti e servizi
+          Esperienze in azienda prenotabili
         </h2>
         <p className="mt-1 text-sm text-green-900/70">
-          Carica prodotti e servizi (visite guidate, laboratori didattici,
-          esperienze) con prezzo e foto: i clienti li vedono in anteprima e
-          possono contattarti per info o prenotazioni. È una funzione del piano{" "}
-          <strong>Gold</strong>.
+          Carica le tue esperienze in azienda (visite guidate, laboratori
+          didattici, degustazioni) con prezzo e foto: i clienti le vedono in
+          anteprima e possono contattarti per info o prenotazioni. È una funzione
+          del piano <strong>Gold</strong>.
         </p>
       </section>
     );
@@ -77,12 +77,12 @@ export function CatalogoCard({ ownerId, gold }: { ownerId: string; gold: boolean
   return (
     <section className="card mt-6 p-6">
       <h2 className="font-display text-2xl text-green-800">
-        Catalogo prodotti e servizi{" "}
+        Esperienze in azienda prenotabili{" "}
         <span className="text-sm font-normal text-green-900/60">(Gold)</span>
       </h2>
       <p className="mt-1 text-sm text-green-900/70">
-        Prodotti e servizi che vendi. I clienti li vedono in anteprima sul widget
-        e ti contattano per info o prenotazione.
+        Le esperienze che offri in azienda. I clienti le vedono in anteprima sul
+        widget e ti contattano per info o prenotazione.
       </p>
 
       {!loading && voci.length > 0 && (
