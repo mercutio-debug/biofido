@@ -53,6 +53,9 @@ type Prod = {
   ingredients?: Ingr[];
   mostraSemaforo?: boolean;
   pubblicaEcovisa?: boolean;
+  in_shop?: boolean;
+  giacenza?: number;
+  giacenza_iniziale?: number;
 };
 
 /** un prodotto va su ECO-VISA solo se marcato e col semaforo (origini presenti). */
@@ -90,7 +93,7 @@ Deno.serve(async (req) => {
     // scheda nativa BioFido di questo owner
     const { data: biz } = await admin
       .from("biofido_businesses")
-      .select("name, category, lat, lon, city, address, description, website, products, pubblica_ecovisa")
+      .select("name, category, plan, lat, lon, city, address, description, website, products, pubblica_ecovisa")
       .eq("owner", owner)
       .maybeSingle();
     if (!biz) return json({ ok: true, skipped: "nessuna scheda biofido" });
@@ -109,6 +112,7 @@ Deno.serve(async (req) => {
     const b = biz as {
       name: string;
       category?: string | null;
+      plan?: string | null;
       lat?: number | null;
       lon?: number | null;
       city?: string | null;
@@ -136,6 +140,8 @@ Deno.serve(async (req) => {
       lon: b.lon ?? null,
       sito_web: b.website ?? null,
       descrizione: b.description ?? null,
+      // copio il piano: su ECO-VISA gating foto/prezzo/Ordina rispetta il piano reale
+      plan: b.plan ?? "free",
       origine: "biofido",
     };
     let aziendaId = mirrorId;
@@ -174,6 +180,15 @@ Deno.serve(async (req) => {
         ...(p.confezione ? { confezione: p.confezione } : {}),
         ...(p.contenuto != null ? { contenuto: p.contenuto } : {}),
         ...(p.unita ? { unita: p.unita } : {}),
+        // se è ordinabile su BioFido lo è anche su ECO-VISA (stesso magazzino):
+        // la giacenza viene poi scalata dal webhook su entrambe le tabelle.
+        ...(p.in_shop
+          ? {
+              in_shop: true,
+              giacenza: p.giacenza ?? null,
+              giacenza_iniziale: p.giacenza_iniziale ?? p.giacenza ?? null,
+            }
+          : {}),
       };
       const { data: pr, error: prErr } = await admin
         .from("prodotti")

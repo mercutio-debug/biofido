@@ -1026,6 +1026,13 @@ function SchedaMappaCard({
       setPubblicaEcovisa(b.pubblicaEcovisa === true);
       setCoord({ lat: b.lat, lon: b.lon });
     } else {
+      // prima scheda: eredito la preferenza «pubblica su ECO-VISA» scelta in
+      // fase di registrazione (salvata nei metadati dell'utente).
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        const pref = (user?.user_metadata as { pubblica_ecovisa?: boolean } | undefined)
+          ?.pubblica_ecovisa;
+        if (pref !== undefined) setPubblicaEcovisa(pref);
+      });
       // Nessuna scheda salvata: ripristina l'eventuale bozza locale (anti perdita-dati)
       try {
         const raw = window.localStorage.getItem(BOZZA_SCHEDA);

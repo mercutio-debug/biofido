@@ -29,6 +29,8 @@ export default function RegistratiPage() {
   const [loading, setLoading] = useState(false);
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [captchaKey, setCaptchaKey] = useState(0);
+  // preferenza: pubblicare la scheda anche su ECO-VISA (vale per le aziende)
+  const [condividiEcovisa, setCondividiEcovisa] = useState(true);
 
   const isAzienda = tipo === "azienda";
 
@@ -50,7 +52,7 @@ export default function RegistratiPage() {
       email,
       password,
       options: {
-        data: { tipo },
+        data: { tipo, ...(isAzienda ? { pubblica_ecovisa: condividiEcovisa } : {}) },
         captchaToken: captcha ?? undefined,
         emailRedirectTo: `${window.location.origin}${BASE}/benvenuto/`,
       },
@@ -155,6 +157,21 @@ export default function RegistratiPage() {
             required
           />
         </label>
+
+        {isAzienda && (
+          <label className="flex items-start gap-2 rounded-xl border-2 border-[#cfe6b0] bg-leaf/50 p-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-5 w-5 accent-[var(--lime-500)]"
+              checked={condividiEcovisa}
+              onChange={(e) => setCondividiEcovisa(e.target.checked)}
+            />
+            <span className="text-green-900/85">
+              <strong>🌐 Pubblica la mia scheda anche su ECO-VISA</strong>, il portale gemello
+              della sostenibilità. Potrai cambiare idea quando vuoi dal cruscotto.
+            </span>
+          </label>
+        )}
 
         {error && <p className="text-sm font-semibold text-traffic-red">{error}</p>}
         {info && (

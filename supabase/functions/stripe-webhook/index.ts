@@ -379,7 +379,7 @@ async function setPlan(
   }
 }
 
-type ArtMag = { prodottoId?: string; qta?: number };
+type ArtMag = { prodottoId?: string; qta?: number; nome?: string };
 type Livello = "meta" | "terzo" | "esaurito";
 type AvvisoScorta = { nome: string; giacenza: number; livello: Livello };
 
@@ -451,6 +451,29 @@ async function scalaMagazzino(ord: {
           const liv = livelloScorta(row.giacenza, g, row.giacenza_iniziale ?? row.giacenza);
           if (liv) avvisi.push({ nome: row.nome ?? "(prodotto)", giacenza: g, livello: liv });
         }
+      }
+      // Se questi prodotti sono lo SPECCHIO di una scheda nata su BioFido, scalo
+      // anche la fonte (biofido_businesses, per nome): così il magazzino resta
+      // sincronizzato e il prossimo re-mirror non riazzera lo scarico. No-op per
+      // le aziende native ECO-VISA (nessuna riga biofido_businesses corrispondente).
+      const { data: bizM } = await admin
+        .from("biofido_businesses")
+        .select("id, products")
+        .eq("owner", ord.owner)
+        .maybeSingle();
+      const prodsM =
+        (bizM?.products as { name?: string; giacenza?: number }[] | null) ?? null;
+      if (bizM && prodsM) {
+        let changed = false;
+        const next = prodsM.map((p) => {
+          const art = items.find((a) => a.nome && p.name && a.nome === p.name);
+          if (art && typeof p.giacenza === "number") {
+            changed = true;
+            return { ...p, giacenza: Math.max(0, p.giacenza - (art.qta || 0)) };
+          }
+          return p;
+        });
+        if (changed) await admin.from("biofido_businesses").update({ products: next }).eq("id", bizM.id);
       }
     }
     if (avvisi.length) await avvisaScorte(ord.owner, avvisi);
