@@ -10,6 +10,8 @@ import { registraEvento } from "@/lib/statistiche";
 import type { Business, Product } from "@/lib/biofido-data";
 import { businessSlug, elencoBusinessConSlug } from "@/lib/biofido-data";
 import { ProdottoDettaglioBio } from "@/components/ProdottoDettaglioBio";
+import { EsperienzaDettaglio } from "@/components/EsperienzaDettaglio";
+import type { Experience } from "@/lib/bookings";
 import { SegnalaModal } from "@/components/SegnalaModal";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -62,6 +64,7 @@ export function SchedaImpresaModal({
     .slice(0, plan.maxProducts);
   // prodotto "aperto" (espanso): mostra descrizione completa + foto grande
   const [prodottoAperto, setProdottoAperto] = useState<{ p: Product; i: number } | null>(null);
+  const [esperienzaAperta, setEsperienzaAperta] = useState<Experience | null>(null);
   const sede = { lat: b.lat, lon: b.lon };
   const esperienze = plan.canSell ? b.experiences?.filter((e) => e.attiva) ?? [] : [];
   const router = useRouter();
@@ -524,7 +527,11 @@ export function SchedaImpresaModal({
             <ul className="mt-2 space-y-2">
               {esperienze.map((e) => (
                 <li key={e.id} className="rounded-xl border border-badge-yellow bg-[#fffbe9] p-3">
-                  <div className="flex items-start gap-3">
+                  <div
+                    className="flex cursor-pointer items-start gap-3"
+                    onClick={() => setEsperienzaAperta(e)}
+                    title="Tocca per i dettagli dell'esperienza"
+                  >
                     {e.immagine && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={e.immagine} alt={e.titolo} className="h-16 w-16 shrink-0 rounded-lg object-cover" />
@@ -536,9 +543,6 @@ export function SchedaImpresaModal({
                           {euroCents(e.prezzoCents)}
                         </span>
                       </div>
-                      {e.descrizione && (
-                        <p className="mt-0.5 text-xs text-green-900/70">{e.descrizione}</p>
-                      )}
                       <div className="mt-0.5 text-[11px] text-green-900/55">
                         {e.durataMin ? `~${e.durataMin} min · ` : ""}max {e.maxPersone} persone
                         {e.giorniSettimana?.length
@@ -548,11 +552,9 @@ export function SchedaImpresaModal({
                           : ""}
                         {e.orario ? ` · ${e.orario}` : ""}
                       </div>
-                      {e.lingue?.length ? (
-                        <div className="text-[11px] text-green-900/55">
-                          {e.lingue.join(", ").toUpperCase()}
-                        </div>
-                      ) : null}
+                      <div className="text-[10px] font-semibold text-green-700">
+                        tocca per i dettagli, la foto e le lingue ▾
+                      </div>
                     </div>
                   </div>
                   {onPrenota && (
@@ -684,6 +686,21 @@ export function SchedaImpresaModal({
               aggiungiCarrello(prodottoAperto.p, prodottoAperto.i);
               setProdottoAperto(null);
             }}
+          />
+        )}
+
+        {esperienzaAperta && (
+          <EsperienzaDettaglio
+            e={esperienzaAperta}
+            onClose={() => setEsperienzaAperta(null)}
+            onPrenota={
+              onPrenota
+                ? () => {
+                    setEsperienzaAperta(null);
+                    apriPrenota();
+                  }
+                : undefined
+            }
           />
         )}
 

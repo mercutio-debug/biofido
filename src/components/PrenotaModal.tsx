@@ -296,12 +296,16 @@ export function PrenotaModal({
               <p className="mt-3 text-sm font-semibold text-traffic-red">{err}</p>
             )}
 
-            <button className="btn-lime mt-4 w-full justify-center" onClick={submit} disabled={saving}>
-              {saving ? "Invio…" : "Invia richiesta di prenotazione"}
+            <div className="mt-4 rounded-xl bg-leaf/60 p-3 text-xs text-green-900/80">
+              💳 <strong>Come funziona il pagamento:</strong> paghi ora, ma l&apos;importo resta{" "}
+              <strong>bloccato</strong> (non ti viene addebitato) finché l&apos;azienda non{" "}
+              <strong>approva</strong> la prenotazione. Quando approva, l&apos;importo viene
+              incassato; se <strong>rifiuta</strong>, il blocco si libera e <strong>non paghi
+              nulla</strong>.
+            </div>
+            <button className="btn-lime mt-3 w-full justify-center" onClick={submit} disabled={saving}>
+              {saving ? "Attendi…" : "Prenota e paga (bloccato fino all'approvazione)"}
             </button>
-            <p className="mt-2 text-center text-[11px] text-green-900/55">
-              Nessun pagamento ora: invii una richiesta, il produttore conferma.
-            </p>
           </>
         )}
       </div>
