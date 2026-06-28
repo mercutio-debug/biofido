@@ -1,4 +1,9 @@
 import { supabase } from "./supabase";
+import {
+  loadAnagraficaCliente,
+  anagraficaClienteCompleta,
+  indirizzoClienteUnaRiga,
+} from "./clienti";
 
 /**
  * Ordini "shop" (Fase C): flusso RICHIESTA → CONFERMA/CONTROPROPOSTA → ACCETTA →
@@ -90,13 +95,21 @@ export async function createOrdineShop(input: {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Accedi come cliente per ordinare." };
+  // anagrafica cliente obbligatoria + snapshot sull'ordine (per fattura/spedizione)
+  const anag = await loadAnagraficaCliente();
+  if (!anagraficaClienteCompleta(anag)) {
+    return { error: "Completa prima i tuoi dati (anagrafica) per ordinare." };
+  }
   const { data, error } = await supabase
     .from("ordini_shop")
     .insert({
       owner: input.owner,
       cliente_user_id: user.id,
       cliente_email: user.email ?? null,
-      cliente_nome: (user.user_metadata?.nome as string) || user.email || null,
+      cliente_nome: anag.nome || (user.user_metadata?.nome as string) || user.email || null,
+      codice_fiscale: anag.codiceFiscale || null,
+      indirizzo_spedizione: indirizzoClienteUnaRiga(anag) || null,
+      telefono: anag.telefono || null,
       azienda_nome: input.aziendaNome,
       portale: input.portale,
       articoli: input.articoli,

@@ -7,6 +7,8 @@ import { createBookingRequest, euroCents } from "@/lib/bookings";
 import { payBooking } from "@/lib/connect";
 import { billingEnabled } from "@/lib/billing";
 import { supabase } from "@/lib/supabase";
+import { loadAnagraficaCliente, anagraficaClienteCompleta } from "@/lib/clienti";
+import Link from "next/link";
 
 /**
  * Modulo "Prenota un'esperienza" (MVP: richiesta da confermare, nessun
@@ -39,6 +41,11 @@ export function PrenotaModal({
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // anagrafica cliente: obbligatoria per prenotare (null = sto controllando)
+  const [anagOk, setAnagOk] = useState<boolean | null>(null);
+  useEffect(() => {
+    loadAnagraficaCliente().then((a) => setAnagOk(anagraficaClienteCompleta(a)));
+  }, []);
 
   // agenda dell'esperienza: giorni ammessi (1=lun…7=dom) e orario fisso, se impostati
   const GIORNI_LAB = ["", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
@@ -62,6 +69,10 @@ export function PrenotaModal({
   const totaleCents = exp ? exp.prezzoCents * persone : 0;
 
   async function submit() {
+    if (anagOk === false) {
+      setErr("Completa prima i tuoi dati (anagrafica) per poter prenotare.");
+      return;
+    }
     if (!exp) {
       setErr("Nessuna esperienza disponibile da prenotare. Ricarica la pagina o riprova.");
       return;
@@ -300,16 +311,32 @@ export function PrenotaModal({
               <p className="mt-3 text-sm font-semibold text-traffic-red">{err}</p>
             )}
 
-            <div className="mt-4 rounded-xl bg-leaf/60 p-3 text-xs text-green-900/80">
-              💳 <strong>Come funziona il pagamento:</strong> paghi ora, ma l&apos;importo resta{" "}
-              <strong>bloccato</strong> (non ti viene addebitato) finché l&apos;azienda non{" "}
-              <strong>approva</strong> la prenotazione. Quando approva, l&apos;importo viene
-              incassato; se <strong>rifiuta</strong>, il blocco si libera e <strong>non paghi
-              nulla</strong>.
-            </div>
-            <button className="btn-lime mt-3 w-full justify-center" onClick={submit} disabled={saving}>
-              {saving ? "Attendi…" : "Prenota e paga (bloccato fino all'approvazione)"}
-            </button>
+            {anagOk === false ? (
+              <div className="mt-4 rounded-xl border-2 border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+                ⚠️ Per prenotare devi prima <strong>completare i tuoi dati</strong> (nome, codice
+                fiscale, indirizzo): servono all&apos;azienda per la fattura.{" "}
+                <Link href="/account#anagrafica-cliente" className="font-bold underline">
+                  Completa ora i tuoi dati →
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="mt-4 rounded-xl bg-leaf/60 p-3 text-xs text-green-900/80">
+                  💳 <strong>Come funziona il pagamento:</strong> paghi ora, ma l&apos;importo resta{" "}
+                  <strong>bloccato</strong> (non ti viene addebitato) finché l&apos;azienda non{" "}
+                  <strong>approva</strong> la prenotazione. Quando approva, l&apos;importo viene
+                  incassato; se <strong>rifiuta</strong>, il blocco si libera e <strong>non paghi
+                  nulla</strong>.
+                </div>
+                <button
+                  className="btn-lime mt-3 w-full justify-center"
+                  onClick={submit}
+                  disabled={saving || anagOk === null}
+                >
+                  {saving ? "Attendi…" : "Prenota e paga (bloccato fino all'approvazione)"}
+                </button>
+              </>
+            )}
           </>
         )}
       </div>

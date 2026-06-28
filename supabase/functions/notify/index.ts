@@ -194,7 +194,17 @@ Deno.serve(async (req) => {
         userId: rec.owner,
         email: await emailOf(rec.owner),
         title: "Nuova richiesta di prenotazione",
-        body: `${rec.cliente_nome} ha richiesto «${titolo}» per ${rec.persone} persone.`,
+        body:
+          `${rec.cliente_nome} ha richiesto «${titolo}» per ${rec.persone} persone` +
+          `${rec.data_richiesta ? ` il ${rec.data_richiesta}` : ""}` +
+          `${rec.orario_richiesto ? ` alle ${rec.orario_richiesto}` : ""}.\n\n` +
+          `Dati cliente (per fattura e contatto):\n` +
+          `${rec.cliente_nome ?? "—"}\n` +
+          `Email: ${rec.cliente_email ?? "—"}\n` +
+          `Tel: ${rec.cliente_tel ?? "—"}\n` +
+          `Codice fiscale: ${rec.cliente_cf ?? "—"}\n` +
+          `Indirizzo: ${rec.cliente_indirizzo ?? "—"}` +
+          `${rec.note ? `\n\nNote: ${rec.note}` : ""}`,
         url: `${SITE_URL}/dashboard/`,
         replyTo: rec.cliente_email ?? undefined,
       });

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import { DatiFatturazioneForm } from "@/components/DatiFatturazioneForm";
+import { AnagraficaClienteForm } from "@/components/AnagraficaClienteForm";
 import { NotificheToggle } from "@/components/NotificheToggle";
 import { SmsNotificheToggle } from "@/components/SmsNotificheToggle";
 import { LEGALE } from "@/lib/legale";
@@ -112,6 +113,21 @@ export default function AccountPage() {
         Aggiorna l&apos;email di accesso, la password e i dati di fatturazione. Lo stesso
         account vale su ECO-VISA e BioFido.
       </p>
+
+      {/* Anagrafica CLIENTE: obbligatoria per ordinare/prenotare */}
+      {(user?.user_metadata as { tipo?: string } | undefined)?.tipo === "cliente" && (
+        <section id="anagrafica-cliente" className="card mt-8 p-6 scroll-mt-20">
+          <h2 className="font-display text-2xl text-green-800">I miei dati</h2>
+          <p className="mt-1 text-sm text-green-900/70">
+            Nome, codice fiscale e indirizzo: ti servono per <strong>ordinare prodotti</strong> e{" "}
+            <strong>prenotare esperienze</strong>. L&apos;azienda li usa per emettere la fattura e
+            per la spedizione/il contatto.
+          </p>
+          <div className="mt-4">
+            <AnagraficaClienteForm />
+          </div>
+        </section>
+      )}
 
       {/* Email */}
       <section className="card mt-8 p-6">

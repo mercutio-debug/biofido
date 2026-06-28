@@ -2068,11 +2068,20 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
                     {b.titolo ?? "Esperienza"} · {b.persone} persone
                   </div>
                   <div className="text-xs text-green-900/60">
-                    {b.clienteNome} · {b.clienteEmail}
-                    {b.clienteTel ? ` · ${b.clienteTel}` : ""}
-                  </div>
-                  <div className="text-xs text-green-900/60">
                     Data richiesta: {b.dataRichiesta}
+                  </div>
+                  {/* scheda cliente per fattura/contatto */}
+                  <div className="mt-2 rounded-xl bg-leaf/40 p-2.5 text-xs text-green-900/85">
+                    <div className="font-bold uppercase tracking-wide text-green-700">
+                      Dati cliente
+                    </div>
+                    <div className="mt-0.5 space-y-0.5">
+                      <div>👤 {b.clienteNome || "—"}</div>
+                      <div>✉️ {b.clienteEmail || "—"}</div>
+                      <div>📞 {b.clienteTel || "— (non fornito)"}</div>
+                      <div>🧾 CF: {b.clienteCf || "— (non fornito)"}</div>
+                      <div>📍 {b.clienteIndirizzo || "— (non fornito)"}</div>
+                    </div>
                   </div>
                   {b.note && (
                     <div className="mt-1 text-xs italic text-green-900/55">“{b.note}”</div>
