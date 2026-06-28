@@ -5,10 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Turnstile, turnstileAttivo } from "@/components/Turnstile";
-
-// base path del portale (vuoto su ecovisa.it, "/biofido" su GitHub Pages):
-// serve per far tornare il link di conferma email sulla pagina di benvenuto.
-const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+import { URL_BIOFIDO } from "@/lib/portale";
 
 type Tipo = "azienda" | "cliente";
 
@@ -54,7 +51,9 @@ export default function RegistratiPage() {
       options: {
         data: { tipo, ...(isAzienda ? { pubblica_ecovisa: condividiEcovisa } : {}) },
         captchaToken: captcha ?? undefined,
-        emailRedirectTo: `${window.location.origin}${BASE}/benvenuto/`,
+        // il link di conferma email deve sempre tornare sul dominio di produzione
+        // biofido.it (non su github.io), così l'utente atterra sul sito vero.
+        emailRedirectTo: `${URL_BIOFIDO}benvenuto/`,
       },
     });
     setLoading(false);

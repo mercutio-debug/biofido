@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import type { CategoryId, Plan } from "./categories";
-import type { Experience } from "./bookings";
+import { experiencesByOwners, type Experience } from "./bookings";
 
 /**
  * Un'attività biologica mostrata sulla mappa di BioFido.
@@ -247,6 +247,14 @@ export async function businessByOwnerLive(owner: string): Promise<Business | nul
     if (!data) return null;
     if ((data as Row).archiviato_il) return null; // scheda archiviata: non più pubblica
     const b = fromRow(data as Row);
+    // esperienze prenotabili (stanno nella tabella `esperienze`, NON in
+    // biofido_businesses): vanno attaccate qui o la scheda/booking le perde.
+    try {
+      const byOwner = await experiencesByOwners([owner]);
+      b.experiences = byOwner[owner] ?? [];
+    } catch {
+      /* esperienze non leggibili: lascio quelle eventuali del fromRow */
+    }
     // posizione precisa dall'anagrafica (come in loadBusinesses)
     try {
       const { data: az } = await supabase

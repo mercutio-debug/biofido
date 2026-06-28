@@ -62,7 +62,11 @@ export function PrenotaModal({
   const totaleCents = exp ? exp.prezzoCents * persone : 0;
 
   async function submit() {
-    if (!exp || !nome.trim() || !email.trim() || !data) {
+    if (!exp) {
+      setErr("Nessuna esperienza disponibile da prenotare. Ricarica la pagina o riprova.");
+      return;
+    }
+    if (!nome.trim() || !email.trim() || !data) {
       setErr("Compila nome, email e data.");
       return;
     }
