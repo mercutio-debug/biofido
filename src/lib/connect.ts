@@ -42,6 +42,24 @@ export function payBooking(prenotazioneId: string): Promise<void> {
   return callAndRedirect("booking-pay", { prenotazioneId });
 }
 
+/**
+ * true se l'azienda (owner) può RICEVERE pagamenti (Stripe Connect attivo,
+ * charges_enabled). Usato per bloccare prenotazioni verso aziende che non hanno
+ * ancora completato l'onboarding. Legge la vista pubblica `stripe_accounts_public`
+ * (solo user_id + charges_enabled). FAIL-OPEN: se la vista non esiste o c'è un
+ * errore, ritorna true (non blocca → degrada al comportamento precedente).
+ */
+export async function ownerPuoIncassare(owner: string | null | undefined): Promise<boolean> {
+  if (!owner) return false;
+  const { data, error } = await supabase
+    .from("stripe_accounts_public")
+    .select("charges_enabled")
+    .eq("user_id", owner)
+    .maybeSingle();
+  if (error) return true; // vista assente / errore → non blocco
+  return Boolean((data as { charges_enabled?: boolean } | null)?.charges_enabled);
+}
+
 /** Chiamata semplice a una edge function (no redirect): lancia errore se fallisce. */
 async function callFunction(fn: string, body?: unknown): Promise<void> {
   const {
