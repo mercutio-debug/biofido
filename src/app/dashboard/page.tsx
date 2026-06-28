@@ -48,6 +48,7 @@ import { startOnboarding, refreshConnectStatus, captureBooking, cancelBooking } 
 import {
   listMyExperiences,
   createExperience,
+  updateExperience,
   deleteExperience,
   listMyBookings,
   setBookingStatus,
@@ -1470,6 +1471,7 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
   const [caricando, setCaricando] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const toggleGiorno = (g: number) =>
     setGiorni((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g].sort()));
   const toggleLingua = (code: string) =>
@@ -1494,7 +1496,37 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
   const info = PLAN_MAP[plan];
   const atLimit = items.length >= info.maxEvents;
 
-  async function add() {
+  function reset() {
+    setEditId(null);
+    setTitolo("");
+    setDescrizione("");
+    setPrezzo("");
+    setDurata("");
+    setMaxP("10");
+    setGiorni([]);
+    setOrario("");
+    setImmagine("");
+    setLingue(["it"]);
+    setMsg(null);
+  }
+
+  function modifica(e: Experience) {
+    setEditId(e.id);
+    setTitolo(e.titolo);
+    setDescrizione(e.descrizione ?? "");
+    setPrezzo((e.prezzoCents / 100).toLocaleString("it-IT", { minimumFractionDigits: 2 }));
+    setDurata(e.durataMin != null ? String(e.durataMin) : "");
+    setMaxP(String(e.maxPersone));
+    setGiorni(e.giorniSettimana ?? []);
+    setOrario(e.orario ?? "");
+    setImmagine(e.immagine ?? "");
+    setLingue(e.lingue && e.lingue.length ? e.lingue : ["it"]);
+    setMsg(null);
+    if (typeof document !== "undefined")
+      document.getElementById("esperienze")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function salva() {
     const cents = euroToCents(prezzo);
     if (!titolo.trim() || cents == null) {
       setMsg("Inserisci almeno titolo e prezzo.");
@@ -1502,7 +1534,7 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
     }
     setSaving(true);
     setMsg(null);
-    const { error } = await createExperience(ownerId, {
+    const dati = {
       titolo,
       descrizione,
       prezzoCents: cents,
@@ -1513,21 +1545,16 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
       orario: orario || undefined,
       lingue: lingue.length ? lingue : undefined,
       immagine: immagine || undefined,
-    });
+    };
+    const { error } = editId
+      ? await updateExperience(editId, dati)
+      : await createExperience(ownerId, dati);
     setSaving(false);
     if (error) {
       setMsg("Errore: " + error);
       return;
     }
-    setTitolo("");
-    setDescrizione("");
-    setPrezzo("");
-    setDurata("");
-    setMaxP("10");
-    setGiorni([]);
-    setOrario("");
-    setImmagine("");
-    setLingue(["it"]);
+    reset();
     load();
   }
 
@@ -1562,42 +1589,67 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
                 {items.map((e) => (
                   <li
                     key={e.id}
-                    className="flex items-center justify-between rounded-xl border border-[#e3eed7] bg-white px-4 py-2"
+                    className="flex items-start justify-between gap-3 rounded-xl border border-[#e3eed7] bg-white p-3"
                   >
-                    <span className="min-w-0">
-                      <span className="font-semibold text-green-800">{e.titolo}</span>
-                      <span className="ml-2 text-sm text-green-900/60">
-                        {euroCents(e.prezzoCents)}
-                        {e.durataMin ? ` · ${e.durataMin} min` : ""} · max {e.maxPersone}
-                      </span>
-                      {(e.giorniSettimana?.length || e.orario) && (
-                        <span className="ml-2 text-xs font-semibold text-green-700">
-                          🗓{" "}
-                          {e.giorniSettimana?.length
-                            ? e.giorniSettimana
-                                .map((g) => ["", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"][g])
-                                .join(", ")
-                            : "ogni giorno"}
-                          {e.orario ? ` · ${e.orario}` : ""}
+                    <div className="flex min-w-0 items-start gap-3">
+                      {e.immagine ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={e.immagine} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                      ) : (
+                        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-leaf text-[10px] text-green-900/40">
+                          no foto
                         </span>
                       )}
-                    </span>
-                    <button
-                      className="text-xs font-bold text-traffic-red hover:underline"
-                      onClick={async () => {
-                        await deleteExperience(e.id);
-                        load();
-                      }}
-                    >
-                      Elimina
-                    </button>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-green-800">{e.titolo}</div>
+                        <div className="text-sm text-green-900/60">
+                          {euroCents(e.prezzoCents)}
+                          {e.durataMin ? ` · ${e.durataMin} min` : ""} · max {e.maxPersone}
+                        </div>
+                        {(e.giorniSettimana?.length || e.orario) && (
+                          <div className="text-xs font-semibold text-green-700">
+                            🗓{" "}
+                            {e.giorniSettimana?.length
+                              ? e.giorniSettimana
+                                  .map((g) => ["", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"][g])
+                                  .join(", ")
+                              : "ogni giorno"}
+                            {e.orario ? ` · ${e.orario}` : ""}
+                          </div>
+                        )}
+                        {e.lingue?.length ? (
+                          <div className="text-[11px] text-green-900/55">
+                            {e.lingue.join(", ").toUpperCase()}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <button
+                        className="text-xs font-bold text-green-700 hover:underline"
+                        onClick={() => modifica(e)}
+                      >
+                        Modifica
+                      </button>
+                      <button
+                        className="text-xs font-bold text-traffic-red hover:underline"
+                        onClick={async () => {
+                          if (confirm("Eliminare questa esperienza?")) {
+                            await deleteExperience(e.id);
+                            load();
+                          }
+                        }}
+                      >
+                        Elimina
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
             )
           )}
 
-          {atLimit ? (
+          {atLimit && !editId ? (
             <p className="mt-4 rounded-xl bg-leaf p-3 text-sm font-semibold text-green-800">
               Hai raggiunto il limite di esperienze del piano {info.label}. Passa
               a Gold per esperienze illimitate.
@@ -1605,7 +1657,7 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
           ) : (
             <div className="mt-5 rounded-2xl border-2 border-dashed border-[#cfe3b4] bg-leaf/40 p-5">
               <h3 className="font-display text-xl text-green-800">
-                Aggiungi un&apos;esperienza
+                {editId ? "Modifica l'esperienza" : "Aggiungi un'esperienza"}
               </h3>
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 <label className="block md:col-span-2">
@@ -1761,16 +1813,19 @@ function EsperienzeCard({ ownerId, plan }: { ownerId: string; plan: Plan }) {
                   </span>
                 </label>
               </div>
-              <button
-                className="btn-lime mt-4"
-                onClick={add}
-                disabled={saving || !titolo.trim()}
-              >
-                {saving ? "Salvataggio…" : "Salva esperienza"}
-              </button>
-              {msg && (
-                <span className="ml-3 text-sm font-semibold text-traffic-red">{msg}</span>
-              )}
+              <div className="mt-4 flex items-center gap-3">
+                <button className="btn-lime" onClick={salva} disabled={saving || !titolo.trim()}>
+                  {saving ? "Salvataggio…" : editId ? "Aggiorna esperienza" : "Salva esperienza"}
+                </button>
+                {editId && (
+                  <button type="button" className="btn-ghost text-sm" onClick={reset}>
+                    Annulla
+                  </button>
+                )}
+                {msg && (
+                  <span className="text-sm font-semibold text-traffic-red">{msg}</span>
+                )}
+              </div>
             </div>
           )}
         </>

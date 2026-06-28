@@ -134,6 +134,33 @@ export async function createExperience(
   return { error: error?.message };
 }
 
+export async function updateExperience(
+  id: string,
+  e: Omit<Experience, "id" | "owner">,
+): Promise<{ error?: string }> {
+  const payload: Record<string, unknown> = {
+    titolo: e.titolo,
+    descrizione: e.descrizione || null,
+    prezzo_cents: e.prezzoCents,
+    durata_min: e.durataMin ?? null,
+    max_persone: e.maxPersone,
+    attiva: e.attiva,
+    giorni_settimana: e.giorniSettimana && e.giorniSettimana.length ? e.giorniSettimana : null,
+    orario: e.orario || null,
+    lingue: e.lingue && e.lingue.length ? e.lingue : null,
+    immagine: e.immagine || null,
+  };
+  let { error } = await supabase.from("esperienze").update(payload).eq("id", id);
+  if (error && /giorni_settimana|orario|lingue|immagine/i.test(error.message)) {
+    delete payload.giorni_settimana;
+    delete payload.orario;
+    delete payload.lingue;
+    delete payload.immagine;
+    ({ error } = await supabase.from("esperienze").update(payload).eq("id", id));
+  }
+  return { error: error?.message };
+}
+
 export async function deleteExperience(id: string): Promise<void> {
   await supabase.from("esperienze").delete().eq("id", id);
 }
