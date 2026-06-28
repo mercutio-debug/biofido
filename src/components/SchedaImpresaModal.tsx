@@ -12,6 +12,7 @@ import { businessSlug, elencoBusinessConSlug } from "@/lib/biofido-data";
 import { ProdottoDettaglioBio } from "@/components/ProdottoDettaglioBio";
 import { SegnalaModal } from "@/components/SegnalaModal";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import { addToCart } from "@/lib/carrello";
 
 /** prezzo numerico → "€ 9,50" (it-IT). */
@@ -63,6 +64,28 @@ export function SchedaImpresaModal({
   const [prodottoAperto, setProdottoAperto] = useState<{ p: Product; i: number } | null>(null);
   const sede = { lat: b.lat, lon: b.lon };
   const esperienze = plan.canSell ? b.experiences?.filter((e) => e.attiva) ?? [] : [];
+  const router = useRouter();
+
+  // Prenotazione con login OBBLIGATORIO: ospiti → messaggio + iscrizione cliente,
+  // salvando il ritorno alla scheda con ?prenota=1 (al rientro il modale si riapre).
+  async function apriPrenota() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      try {
+        sessionStorage.setItem("postLoginRedirect", `/azienda/${businessSlug(b.name)}/?prenota=1`);
+      } catch {
+        /* ignore */
+      }
+      alert(
+        "Per prenotare un'esperienza in azienda devi accedere o creare un account cliente (è gratis). Dopo l'accesso riprendi da dove eri.",
+      );
+      router.push("/registrati?tipo=cliente");
+      return;
+    }
+    onPrenota?.(b);
+  }
 
   // "Condividi scheda": utile soprattutto in app (TWA), dove non c'è la barra
   // dell'URL da copiare. Condivide l'URL CANONICO /azienda/{slug} (che ha
@@ -535,7 +558,7 @@ export function SchedaImpresaModal({
                   {onPrenota && (
                     <button
                       type="button"
-                      onClick={() => onPrenota(b)}
+                      onClick={apriPrenota}
                       className="mt-2 rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white hover:bg-green-800"
                     >
                       🗓️ Prenota

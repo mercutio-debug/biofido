@@ -7,6 +7,7 @@ import { SchedaImpresaModal } from "./SchedaImpresaModal";
 import { PrenotaModal } from "./PrenotaModal";
 import { RichiestaServizioModal } from "./RichiestaServizioModal";
 import { ContattaAziendaModal } from "./ContattaAziendaModal";
+import { supabase } from "@/lib/supabase";
 
 /**
  * Scheda azienda RICCA e interattiva per la pagina pubblica /azienda/[slug]
@@ -28,6 +29,20 @@ export function SchedaPubblicaClient({
   // così prodotti/ingredienti/semaforo sono sempre l'ultima versione.
   const [biz, setBiz] = useState<Business>(business);
   const vistaContata = useRef(false);
+  // ripresa automatica: se torno dal login con ?prenota=1 e sono loggato, riapro
+  // il modale di prenotazione (per completare il pagamento da dove ero rimasto).
+  const ripresaFatta = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || ripresaFatta.current) return;
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("prenota") !== "1") return;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        ripresaFatta.current = true;
+        setPrenota(biz);
+      }
+    });
+  }, [biz]);
   useEffect(() => {
     if (business.owner) {
       businessByOwnerLive(business.owner).then((live) => {
