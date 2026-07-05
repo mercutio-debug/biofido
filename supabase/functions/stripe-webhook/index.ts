@@ -717,6 +717,153 @@ Deno.serve(async (req) => {
         }
         break;
       }
+
+      case "charge.dispute.created": {
+        // Contestazione (chargeback): la perdita è a carico della piattaforma
+        // (destination charges) → SOSPENDO in automatico l'azienda coinvolta e
+        // avviso Admin, azienda e cliente. La riattivazione è manuale (Admin),
+        // dopo che l'azienda ha regolarizzato la posizione.
+        const dispute = event.data.object as Stripe.Dispute;
+        let owner = "";
+        let piId = "";
+        try {
+          const ch = await stripe.charges.retrieve(dispute.charge as string);
+          piId = (ch.payment_intent as string) ?? "";
+          const acctId =
+            ((ch.transfer_data?.destination as string) ||
+              (ch as unknown as { destination?: string }).destination ||
+              "") as string;
+          if (acctId) {
+            const { data: sa } = await admin
+              .from("stripe_accounts")
+              .select("user_id")
+              .eq("account_id", acctId)
+              .maybeSingle();
+            owner = (sa as { user_id?: string } | null)?.user_id ?? "";
+          }
+        } catch (e) {
+          console.error("dispute charge lookup", (e as Error).message);
+        }
+
+        // cliente + descrizione dal pagamento contestato (prenotazione o ordine)
+        let clienteEmail = "";
+        let descr = "un pagamento";
+        if (piId) {
+          const { data: pr } = await admin
+            .from("prenotazioni")
+            .select("owner, cliente_email, titolo")
+            .eq("stripe_payment_intent", piId)
+            .maybeSingle();
+          const p = pr as { owner?: string; cliente_email?: string; titolo?: string } | null;
+          if (p?.owner) {
+            if (!owner) owner = p.owner;
+            clienteEmail = p.cliente_email ?? "";
+            descr = p.titolo ? `la prenotazione «${p.titolo}»` : "una prenotazione";
+          } else {
+            const { data: os } = await admin
+              .from("ordini_shop")
+              .select("owner, cliente_email")
+              .eq("stripe_payment_intent", piId)
+              .maybeSingle();
+            const o = os as { owner?: string; cliente_email?: string } | null;
+            if (o?.owner) {
+              if (!owner) owner = o.owner;
+              clienteEmail = o.cliente_email ?? "";
+              descr = "un ordine";
+            }
+          }
+        }
+
+        if (owner) {
+          const importoCents = dispute.amount ?? null;
+          const importoStr =
+            importoCents != null
+              ? (importoCents / 100).toLocaleString("it-IT", { style: "currency", currency: "EUR" })
+              : "—";
+          // 1) sospendo l'azienda (blocca ordini + prenotazioni su entrambi i portali)
+          await admin.from("aziende_sospese").upsert({
+            owner,
+            motivo: `Contestazione di pagamento (chargeback) su ${descr}`,
+            importo_cents: importoCents,
+            dispute_id: dispute.id,
+            created_at: new Date().toISOString(),
+          });
+
+          const { data: u } = await admin.auth.admin.getUserById(owner);
+          const emailAzienda = u?.user?.email ?? "";
+          const { data: biz } = await admin
+            .from("biofido_businesses")
+            .select("name")
+            .eq("owner", owner)
+            .maybeSingle();
+          const nomeAzienda =
+            (biz as { name?: string } | null)?.name ??
+            (u?.user?.user_metadata?.nome as string) ??
+            emailAzienda ??
+            "Azienda";
+
+          const postEmail = async (to: string, subject: string, html: string) => {
+            if (!RESEND_API_KEY || !to) return;
+            try {
+              await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${RESEND_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ from: NOTIFY_FROM, to, subject, html }),
+              });
+            } catch (e) {
+              console.error("dispute email", (e as Error).message);
+            }
+          };
+
+          // 2) Admin (tu)
+          await postEmail(
+            ADMIN_EMAIL,
+            "⚠️ Contestazione — azienda sospesa in automatico",
+            emailLayout({
+              title: "Contestazione di pagamento: azienda sospesa",
+              bodyHtml: `<p style="margin:0 0 10px;"><strong>${esc(nomeAzienda)}</strong> ha ricevuto una contestazione (chargeback) su ${esc(descr)}.</p>
+                <p style="margin:0 0 10px;">Importo contestato: <strong>${esc(importoStr)}</strong></p>
+                <p style="margin:0;">L'azienda è stata <strong>sospesa automaticamente</strong> (vendite bloccate) finché non regolarizza. Riferimento Stripe: ${esc(dispute.id)}.</p>`,
+            }),
+          );
+
+          // 3) Azienda sospesa
+          await sendPush(owner, {
+            title: "⚠️ Account sospeso — contestazione",
+            body: `Una contestazione ha bloccato le tue vendite. Regolarizza ${importoStr} per riattivarle.`,
+            url: SITE_URL ? `${SITE_URL}/dashboard/` : undefined,
+          });
+          await postEmail(
+            emailAzienda,
+            "⚠️ Vendite sospese: contestazione da regolarizzare",
+            emailLayout({
+              title: "Le tue vendite sono state sospese",
+              bodyHtml: `<p style="margin:0 0 10px;">È arrivata una <strong>contestazione di pagamento</strong> su ${esc(descr)} (${esc(importoStr)}).</p>
+                <p style="margin:0 0 10px;">Per tutela della piattaforma il tuo account è <strong>temporaneamente sospeso</strong>: ordini e prenotazioni sono bloccati finché la posizione non è regolarizzata.</p>
+                <p style="margin:0;">Ti contatteremo per i dettagli. Riferimento: ${esc(dispute.id)}.</p>`,
+              ctaLabel: SITE_URL ? "Vai alla dashboard" : undefined,
+              ctaUrl: SITE_URL ? `${SITE_URL}/dashboard/` : undefined,
+            }),
+          );
+
+          // 4) Cliente che ha contestato
+          if (clienteEmail) {
+            await postEmail(
+              clienteEmail,
+              "Abbiamo ricevuto la tua contestazione",
+              emailLayout({
+                title: "La tua contestazione è in gestione",
+                bodyHtml: `<p style="margin:0 0 10px;">Abbiamo registrato la contestazione relativa a ${esc(descr)}.</p>
+                  <p style="margin:0;">La stiamo gestendo con l'azienda e con Stripe: ti aggiorneremo appena ci sono novità.</p>`,
+              }),
+            );
+          }
+        }
+        break;
+      }
     }
     return new Response(JSON.stringify({ received: true }), {
       headers: { "Content-Type": "application/json" },

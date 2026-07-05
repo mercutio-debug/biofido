@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import { PLAN_MAP, type Plan } from "./categories";
 import { loadAnagraficaCliente, indirizzoClienteUnaRiga } from "./clienti";
+import { aziendaSospesa } from "./connect";
 
 /**
  * Motore prenotazioni (MVP): esperienze prenotabili + richieste da confermare.
@@ -242,6 +243,12 @@ export async function createBookingRequest(input: {
   note?: string;
 }): Promise<{ error?: string; totaleCents: number; id?: string }> {
   const totaleCents = input.esperienza.prezzoCents * input.persone;
+  if (await aziendaSospesa(input.esperienza.owner)) {
+    return {
+      error: "Questa azienda è momentaneamente sospesa e non può accettare prenotazioni.",
+      totaleCents,
+    };
+  }
   const commCents = commissionCents(input.ownerPlan, totaleCents);
   // se il cliente è loggato, lego la prenotazione al suo account: così avrà la
   // chat in-app con il produttore. Da ospite resta gestita via email.

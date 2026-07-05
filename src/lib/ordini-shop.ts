@@ -4,6 +4,7 @@ import {
   anagraficaClienteCompleta,
   indirizzoClienteUnaRiga,
 } from "./clienti";
+import { aziendaSospesa } from "./connect";
 
 /**
  * Ordini "shop" (Fase C): flusso RICHIESTA → CONFERMA/CONTROPROPOSTA → ACCETTA →
@@ -95,6 +96,10 @@ export async function createOrdineShop(input: {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Accedi come cliente per ordinare." };
+  // azienda sospesa (contestazione/insoluto) → vendite bloccate
+  if (await aziendaSospesa(input.owner)) {
+    return { error: "Questa azienda è momentaneamente sospesa e non può ricevere ordini." };
+  }
   // anagrafica cliente obbligatoria + snapshot sull'ordine (per fattura/spedizione)
   const anag = await loadAnagraficaCliente();
   if (!anagraficaClienteCompleta(anag)) {

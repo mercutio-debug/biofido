@@ -60,6 +60,23 @@ export async function ownerPuoIncassare(owner: string | null | undefined): Promi
   return Boolean((data as { charges_enabled?: boolean } | null)?.charges_enabled);
 }
 
+/**
+ * true se l'azienda (owner) è SOSPESA (contestazione/insoluto in corso): le sue
+ * vendite — ordini e prenotazioni — sono bloccate finché non regolarizza. Legge
+ * la vista pubblica `aziende_sospese_public`. FAIL-OPEN: se la vista manca o c'è
+ * un errore, ritorna false (non blocco).
+ */
+export async function aziendaSospesa(owner: string | null | undefined): Promise<boolean> {
+  if (!owner) return false;
+  const { data, error } = await supabase
+    .from("aziende_sospese_public")
+    .select("owner")
+    .eq("owner", owner)
+    .maybeSingle();
+  if (error) return false; // vista assente / errore → non blocco
+  return Boolean(data);
+}
+
 /** Chiamata semplice a una edge function (no redirect): lancia errore se fallisce. */
 async function callFunction(fn: string, body?: unknown): Promise<void> {
   const {
