@@ -38,15 +38,17 @@ Deno.serve(async (req) => {
 
     let accountId = row?.account_id as string | undefined;
     if (!accountId) {
-      // Controller ESPLICITO, allineato al Profilo piattaforma (Impostazioni →
-      // Connect): perdite e commissioni a carico della PIATTAFORMA (application),
-      // dashboard Express per il produttore. Sostituisce `type: "express"`, i cui
-      // default (perdite→stripe, commissioni→account) NON combaciano col profilo
-      // → Stripe bloccava con "review the responsibilities of managing losses".
+      // Controller ESPLICITO con le responsabilità scelte per il progetto:
+      //  - perdite/chargeback → a carico di STRIPE (la piattaforma non è loss
+      //    collector: meno rischio + niente attestazione sulle perdite da firmare);
+      //  - commissioni Stripe → a carico del VENDITORE (account);
+      //  - dashboard Express per il produttore.
+      // Impostandole qui esplicitamente NON dipendiamo dai default del profilo
+      // piattaforma → risolve "review the responsibilities of managing losses".
       const account = await stripe.accounts.create({
         controller: {
-          losses: { payments: "application" },
-          fees: { payer: "application" },
+          losses: { payments: "stripe" },
+          fees: { payer: "account" },
           stripe_dashboard: { type: "express" },
         },
         email: user.email,
