@@ -19,18 +19,26 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
-    const supabase = createClient(
+    // client col token UTENTE: serve solo a identificare chi chiama
+    const userClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
       { global: { headers: { Authorization: authHeader } } },
     );
+    // client SERVICE ROLE (senza header utente) per leggere/scrivere stripe_accounts
+    // bypassando la RLS. Col client "utente" l'upsert gira come authenticated e la
+    // RLS lo blocca in silenzio → la riga non si salva e il collegamento non risulta.
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await userClient.auth.getUser();
     if (!user) return json({ error: "Non autenticato" }, 401);
 
     // riusa l'account esistente o ne crea uno nuovo
-    const { data: row } = await supabase
+    const { data: row } = await admin
       .from("stripe_accounts")
       .select("account_id")
       .eq("user_id", user.id)
@@ -61,9 +69,10 @@ Deno.serve(async (req) => {
         },
       });
       accountId = account.id;
-      await supabase
+      const { error: upErr } = await admin
         .from("stripe_accounts")
         .upsert({ user_id: user.id, account_id: accountId });
+      if (upErr) console.error("connect-onboard: upsert stripe_accounts fallito:", upErr.message);
     }
 
     const link = await stripe.accountLinks.create({
