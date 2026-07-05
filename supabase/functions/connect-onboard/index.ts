@@ -53,9 +53,11 @@ Deno.serve(async (req) => {
         },
         email: user.email,
         metadata: { user_id: user.id },
+        // solo `transfers`: col modello destination charges il produttore deve
+        // RICEVERE i trasferimenti, non incassare carte in proprio. Niente
+        // card_payments → onboarding più leggero e prontezza più pulita.
         capabilities: {
           transfers: { requested: true },
-          card_payments: { requested: true },
         },
       });
       accountId = account.id;

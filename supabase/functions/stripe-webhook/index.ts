@@ -707,10 +707,13 @@ Deno.serve(async (req) => {
         const acc = event.data.object as Stripe.Account;
         const userId = acc.metadata?.user_id ?? "";
         if (userId) {
+          // destination charges → prontezza = transfers attivo (o payouts), NON charges_enabled
+          const transfersActive = acc.capabilities?.transfers === "active";
+          const ready = transfersActive || acc.charges_enabled || acc.payouts_enabled;
           await admin.from("stripe_accounts").upsert({
             user_id: userId,
             account_id: acc.id,
-            charges_enabled: acc.charges_enabled,
+            charges_enabled: ready,
             payouts_enabled: acc.payouts_enabled,
             updated_at: new Date().toISOString(),
           });

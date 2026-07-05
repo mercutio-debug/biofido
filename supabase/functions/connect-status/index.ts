@@ -41,15 +41,21 @@ Deno.serve(async (req) => {
     if (!accountId) return json({ connected: false });
 
     const account = await stripe.accounts.retrieve(accountId);
+    // Modello DESTINATION CHARGES: al produttore serve poter RICEVERE i
+    // trasferimenti → conta la capacità `transfers` attiva (o payouts abilitati),
+    // NON `charges_enabled` (che dipende da card_payments, capacità che non usiamo
+    // e che può restare pending → falso negativo). Salvo la prontezza reale.
+    const transfersActive = account.capabilities?.transfers === "active";
+    const ready = transfersActive || account.charges_enabled || account.payouts_enabled;
     await admin.from("stripe_accounts").upsert({
       user_id: user.id,
       account_id: accountId,
-      charges_enabled: account.charges_enabled,
+      charges_enabled: ready, // "pronto a ricevere pagamenti" nel nostro modello
       payouts_enabled: account.payouts_enabled,
       updated_at: new Date().toISOString(),
     });
 
-    return json({ connected: account.charges_enabled });
+    return json({ connected: ready });
   } catch (e) {
     console.error(e);
     return json({ error: (e as Error).message }, 500);
