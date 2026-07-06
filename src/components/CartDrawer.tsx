@@ -8,6 +8,7 @@ import {
   getCart,
   setQty,
   removeItem,
+  clearGroup,
   type CartItem,
 } from "@/lib/carrello";
 
@@ -83,6 +84,10 @@ export function CartDrawer({ portale }: { portale: string }) {
       setMsg("Ordine non riuscito: " + (error ?? "riprova"));
       return;
     }
+    // ordine creato → svuoto SUBITO il carrello di questo produttore: gli articoli
+    // sono ora "legati" all'ordine, non devono restare nel carrello per il prossimo.
+    clearGroup(aziendaId);
+    refresh();
     // Addebito immediato: vai SUBITO a Stripe. In caso di successo pagaOrdineShop
     // reindirizza alla pagina di pagamento (il codice sotto non viene eseguito).
     const pay = await pagaOrdineShop(id);
