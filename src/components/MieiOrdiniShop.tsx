@@ -1,43 +1,59 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  listMieiOrdiniShop,
-  accettaContropropostaShop,
-  rifiutaContropropostaShop,
-  annullaOrdineShop,
-  pagaOrdineShop,
-  type OrdineShop,
-} from "@/lib/ordini-shop";
+import { listMieiOrdiniShop, type OrdineShop } from "@/lib/ordini-shop";
 
-const STATO: Record<string, { label: string; cls: string }> = {
-  richiesto: { label: "In attesa dell'azienda", cls: "bg-badge-yellow text-green-900" },
-  confermato: { label: "Confermato dall'azienda", cls: "bg-leaf text-green-800" },
-  controproposta: { label: "L'azienda propone una modifica", cls: "bg-[#fff3d4] text-[#7a5a00]" },
-  accettato: { label: "Accettato · in attesa di pagamento", cls: "bg-leaf text-green-800" },
-  rifiutato: { label: "Rifiutato", cls: "bg-[#f3dada] text-traffic-red" },
-  annullato: { label: "Annullato", cls: "bg-[#eee] text-green-900/60" },
-  pagato: { label: "Pagato", cls: "bg-green-700 text-white" },
-  spedito: { label: "Spedito 📦", cls: "bg-green-800 text-white" },
+// stato → etichetta badge + colore box + messaggio al cliente
+const STATO: Record<
+  string,
+  { label: string; cls: string; box: string; msg?: string }
+> = {
+  autorizzato: {
+    label: "💳 Pagato · in attesa di conferma",
+    cls: "bg-badge-yellow text-green-900",
+    box: "border-[#e6dca6] bg-[#fffdf3]",
+    msg: "Hai pagato: l'importo resta bloccato (non addebitato) finché l'azienda non conferma l'ordine.",
+  },
+  confermato: {
+    label: "✓ Confermato",
+    cls: "bg-green-700 text-white",
+    box: "border-green-300 bg-leaf/40",
+    msg: "Siamo in attesa che l'azienda spedisca il tuo ordine.",
+  },
+  spedito: {
+    label: "📦 Spedito",
+    cls: "bg-green-800 text-white",
+    box: "border-green-500 bg-leaf/70",
+    msg: "Ordine spedito! Arriverà a breve. Grazie per aver scelto un piccolo produttore 🌱",
+  },
+  rifiutato: {
+    label: "Non accettato · rimborsato",
+    cls: "bg-[#f3dada] text-traffic-red",
+    box: "border-[#e9caca] bg-[#fdf3f3]",
+  },
+  // stati legacy (vecchio flusso), tollerati in lettura
+  richiesto: {
+    label: "In attesa di pagamento",
+    cls: "bg-[#fff3d4] text-[#7a5a00]",
+    box: "border-[#e3eed7] bg-white",
+  },
+  pagato: {
+    label: "Pagato · da spedire",
+    cls: "bg-green-700 text-white",
+    box: "border-green-300 bg-leaf/40",
+    msg: "Siamo in attesa che l'azienda spedisca il tuo ordine.",
+  },
 };
 
-/** Sezione cliente: i propri ordini shop, con accetta/rifiuta della controproposta. */
+/** Sezione cliente: i propri ordini shop. Nel nuovo modello il pagamento avviene
+ *  già al momento dell'ordine (fondi bloccati), quindi qui non ci sono azioni: il
+ *  cliente segue solo lo stato (in attesa di conferma → di spedizione → spedito). */
 export function MieiOrdiniShop() {
   const [ordini, setOrdini] = useState<OrdineShop[] | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
 
-  const reload = () => listMieiOrdiniShop().then(setOrdini);
   useEffect(() => {
-    reload();
+    listMieiOrdiniShop().then(setOrdini);
   }, []);
-
-  async function azione(fn: () => Promise<{ error?: string }>, id: string) {
-    setBusy(id);
-    const { error } = await fn();
-    setBusy(null);
-    if (error) alert(error);
-    else reload();
-  }
 
   if (ordini === null || ordini.length === 0) return null;
 
@@ -46,19 +62,20 @@ export function MieiOrdiniShop() {
       <h2 className="title-pangea text-2xl text-green-700">Ordini dallo shop</h2>
       <ul className="mt-4 space-y-3">
         {ordini.map((o) => {
-          const s = STATO[o.stato] ?? STATO.richiesto;
-          const lista = o.controproposta ?? o.articoli;
+          const s = STATO[o.stato] ?? STATO.autorizzato;
           return (
-            <li key={o.id} className="rounded-2xl border border-[#e3eed7] bg-white p-4">
+            <li key={o.id} className={`rounded-2xl border p-4 ${s.box}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="font-display text-lg text-green-800">{o.aziendaNome || "Azienda"}</div>
+                <div className="font-display text-lg text-green-800">
+                  {o.aziendaNome || "Azienda"}
+                </div>
                 <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${s.cls}`}>
                   {s.label}
                 </span>
               </div>
 
               <ul className="mt-2 text-sm text-green-900/80">
-                {lista.map((a, i) => (
+                {o.articoli.map((a, i) => (
                   <li key={i}>
                     • {a.qta}× {a.nome}
                     {a.prezzo ? ` (${a.prezzo})` : ""}
@@ -66,53 +83,15 @@ export function MieiOrdiniShop() {
                 ))}
               </ul>
 
-              {o.stato === "controproposta" && (
-                <div className="mt-3 rounded-xl bg-[#fff8e6] p-3">
-                  <p className="text-xs text-[#7a5a00]">
-                    L&apos;azienda propone le quantità qui sopra. Accetti?
-                  </p>
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      className="btn-lime text-sm"
-                      disabled={busy === o.id}
-                      onClick={() => azione(() => accettaContropropostaShop(o.id), o.id)}
-                    >
-                      ✓ Accetta
-                    </button>
-                    <button
-                      className="text-sm font-bold text-traffic-red hover:underline"
-                      disabled={busy === o.id}
-                      onClick={() => azione(() => rifiutaContropropostaShop(o.id), o.id)}
-                    >
-                      Rifiuta
-                    </button>
-                  </div>
-                </div>
+              {s.msg && (
+                <p className="mt-3 text-sm font-semibold text-green-800">{s.msg}</p>
               )}
 
-              {(o.stato === "confermato" || o.stato === "accettato") && (
-                <div className="mt-3 rounded-xl bg-leaf/50 p-3">
-                  <p className="text-xs text-green-900/70">
-                    ✓ Ordine confermato dall&apos;azienda. Completa il pagamento sicuro:
-                  </p>
-                  <button
-                    className="btn-lime mt-2 text-sm"
-                    disabled={busy === o.id}
-                    onClick={() => azione(() => pagaOrdineShop(o.id), o.id)}
-                  >
-                    {busy === o.id ? "Avvio…" : "💳 Paga ora"}
-                  </button>
-                </div>
-              )}
-
-              {o.stato === "richiesto" && (
-                <button
-                  className="mt-3 text-xs font-semibold text-green-900/45 hover:text-traffic-red"
-                  disabled={busy === o.id}
-                  onClick={() => azione(() => annullaOrdineShop(o.id), o.id)}
-                >
-                  Annulla richiesta
-                </button>
+              {o.stato === "rifiutato" && (
+                <p className="mt-2 rounded-xl bg-white/70 p-2.5 text-xs text-traffic-red">
+                  {o.nota ? <>Motivo dell&apos;azienda: «{o.nota}». </> : null}
+                  <strong>Rimborso automatico</strong>: non ti è stato addebitato nulla.
+                </p>
               )}
             </li>
           );

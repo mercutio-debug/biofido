@@ -5,29 +5,31 @@ import {
   listOrdiniRicevutiShop,
   confermaOrdineShop,
   rifiutaOrdineShop,
-  controproponiOrdineShop,
   segnaOrdineSpedito,
   type OrdineShop,
-  type ArticoloOrdine,
 } from "@/lib/ordini-shop";
 
 const STATO: Record<string, { label: string; cls: string }> = {
-  richiesto: { label: "Nuovo · da confermare", cls: "bg-badge-yellow text-green-900" },
-  confermato: { label: "Confermato", cls: "bg-leaf text-green-800" },
-  controproposta: { label: "Controproposta inviata", cls: "bg-[#fff3d4] text-[#7a5a00]" },
-  accettato: { label: "Accettato dal cliente", cls: "bg-leaf text-green-800" },
-  rifiutato: { label: "Rifiutato", cls: "bg-[#f3dada] text-traffic-red" },
-  annullato: { label: "Annullato", cls: "bg-[#eee] text-green-900/60" },
-  pagato: { label: "Pagato · da spedire", cls: "bg-green-700 text-white" },
+  autorizzato: { label: "💳 Pagato · da accettare", cls: "bg-badge-yellow text-green-900" },
+  confermato: { label: "✓ Accettato · da spedire", cls: "bg-green-700 text-white" },
+  rifiutato: { label: "Non accettato", cls: "bg-[#f3dada] text-traffic-red" },
   spedito: { label: "Spedito ✓", cls: "bg-green-800 text-white" },
+  // stati legacy (vecchio flusso): li mostro senza rompere nulla
+  richiesto: { label: "In attesa di pagamento", cls: "bg-[#fff3d4] text-[#7a5a00]" },
+  pagato: { label: "Pagato · da spedire", cls: "bg-green-700 text-white" },
+  accettato: { label: "Accettato", cls: "bg-leaf text-green-800" },
+  controproposta: { label: "In lavorazione", cls: "bg-[#fff3d4] text-[#7a5a00]" },
+  annullato: { label: "Annullato", cls: "bg-[#eee] text-green-900/60" },
 };
 
-/** Card dashboard: ordini ricevuti dallo shop, con conferma/controproposta/rifiuto. */
+/** Card dashboard: ordini ricevuti dallo shop. Il cliente ha GIÀ pagato (fondi
+ *  bloccati): l'azienda accetta (incassa) o non accetta indicando il motivo → al
+ *  cliente viene rimborsato tutto in automatico. */
 export function OrdiniShopRicevuti() {
   const [ordini, setOrdini] = useState<OrdineShop[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [edit, setEdit] = useState<string | null>(null);
-  const [bozza, setBozza] = useState<ArticoloOrdine[]>([]);
+  const [rifiuto, setRifiuto] = useState<string | null>(null); // id ordine in fase di rifiuto
+  const [motivo, setMotivo] = useState("");
 
   const reload = () => listOrdiniRicevutiShop().then(setOrdini);
   useEffect(() => {
@@ -40,7 +42,8 @@ export function OrdiniShopRicevuti() {
     setBusy(null);
     if (error) alert(error);
     else {
-      setEdit(null);
+      setRifiuto(null);
+      setMotivo("");
       reload();
     }
   }
@@ -51,8 +54,9 @@ export function OrdiniShopRicevuti() {
     <section className="card mt-6 p-6">
       <h2 className="font-display text-2xl text-green-800">🛒 Ordini ricevuti (shop)</h2>
       <p className="mt-1 text-sm text-green-900/70">
-        Quando un cliente ordina i tuoi prodotti, l&apos;ordine arriva qui: confermalo,
-        oppure proponi un&apos;alternativa sulle quantità se qualcosa non è disponibile.
+        Il cliente ha <strong>già pagato</strong> (fondi bloccati): <strong>accetta</strong> per
+        incassare e spedire, oppure <strong>non accettare</strong> indicando il motivo — al cliente
+        viene rimborsato tutto in automatico.
       </p>
 
       {ordini.length === 0 ? (
@@ -62,7 +66,10 @@ export function OrdiniShopRicevuti() {
       ) : (
         <ul className="mt-4 space-y-3">
           {ordini.map((o) => {
-            const s = STATO[o.stato] ?? STATO.richiesto;
+            const s = STATO[o.stato] ?? STATO.autorizzato;
+            const daAccettare = o.stato === "autorizzato";
+            const daSpedire =
+              o.stato === "confermato" || o.stato === "pagato" || o.stato === "accettato";
             return (
               <li key={o.id} className="rounded-2xl border border-[#e3eed7] bg-white p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -100,44 +107,75 @@ export function OrdiniShopRicevuti() {
                   </div>
                 </div>
 
-                {o.controproposta && (
-                  <div className="mt-2 rounded-xl bg-[#fff8e6] p-2 text-xs text-[#7a5a00]">
-                    Controproposta inviata:{" "}
-                    {o.controproposta.map((a) => `${a.qta}× ${a.nome}`).join(", ")}
+                {/* ordine rifiutato: mostro il motivo comunicato al cliente */}
+                {o.stato === "rifiutato" && o.nota && (
+                  <div className="mt-2 rounded-xl bg-[#fdf0f0] p-2 text-xs text-traffic-red">
+                    Motivo comunicato al cliente: «{o.nota}»
                   </div>
                 )}
 
-                {/* azioni: solo su ordine nuovo */}
-                {o.stato === "richiesto" && edit !== o.id && (
+                {/* AZIONI — ordine pagato in attesa di accettazione */}
+                {daAccettare && rifiuto !== o.id && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       className="btn-lime text-sm"
                       disabled={busy === o.id}
                       onClick={() => azione(() => confermaOrdineShop(o.id), o.id)}
                     >
-                      ✓ Conferma ordine
-                    </button>
-                    <button
-                      className="btn-ghost text-sm"
-                      onClick={() => {
-                        setEdit(o.id);
-                        setBozza(o.articoli.map((a) => ({ ...a })));
-                      }}
-                    >
-                      ✎ Controproposta
+                      ✓ Accetta e incassa
                     </button>
                     <button
                       className="text-sm font-bold text-traffic-red hover:underline"
-                      disabled={busy === o.id}
-                      onClick={() => azione(() => rifiutaOrdineShop(o.id), o.id)}
+                      onClick={() => {
+                        setRifiuto(o.id);
+                        setMotivo("");
+                      }}
                     >
-                      Rifiuta
+                      Non accetto
                     </button>
                   </div>
                 )}
 
-                {/* ordine pagato: l'azienda lo segna come spedito → avvisa il cliente */}
-                {o.stato === "pagato" && (
+                {/* form rifiuto con motivazione (→ storno automatico + messaggio al cliente) */}
+                {rifiuto === o.id && (
+                  <div className="mt-3 rounded-xl bg-[#fdf0f0] p-3">
+                    <div className="text-xs font-bold uppercase tracking-wide text-traffic-red">
+                      Perché non accetti l&apos;ordine?
+                    </div>
+                    <p className="mt-1 text-xs text-green-900/70">
+                      Il cliente riceverà questo messaggio e il <strong>rimborso automatico</strong>{" "}
+                      (nessun addebito).
+                    </p>
+                    <textarea
+                      className="field mt-2 w-full"
+                      rows={3}
+                      value={motivo}
+                      onChange={(e) => setMotivo(e.target.value)}
+                      placeholder="Es. prodotto terminato, problemi di reperimento della materia prima…"
+                    />
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        className="rounded-full bg-traffic-red px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+                        disabled={busy === o.id || !motivo.trim()}
+                        onClick={() => azione(() => rifiutaOrdineShop(o.id, motivo.trim()), o.id)}
+                      >
+                        Conferma rifiuto + rimborso
+                      </button>
+                      <button
+                        className="btn-ghost text-sm"
+                        onClick={() => {
+                          setRifiuto(null);
+                          setMotivo("");
+                        }}
+                      >
+                        Annulla
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ordine accettato: da spedire */}
+                {daSpedire && (
                   <div className="mt-3">
                     <button
                       className="btn-lime text-sm"
@@ -146,52 +184,6 @@ export function OrdiniShopRicevuti() {
                     >
                       📦 Segna come spedito
                     </button>
-                  </div>
-                )}
-
-                {/* editor controproposta */}
-                {edit === o.id && (
-                  <div className="mt-3 rounded-xl bg-leaf/50 p-3">
-                    <div className="text-xs font-bold uppercase tracking-wide text-green-700">
-                      Proponi nuove quantità
-                    </div>
-                    <ul className="mt-2 space-y-2">
-                      {bozza.map((a, i) => (
-                        <li key={i} className="flex items-center gap-2 text-sm">
-                          <span className="flex-1 truncate text-green-900/80">{a.nome}</span>
-                          <input
-                            type="number"
-                            min={0}
-                            value={a.qta}
-                            onChange={(e) =>
-                              setBozza((prev) =>
-                                prev.map((x, idx) =>
-                                  idx === i ? { ...x, qta: Math.max(0, Number(e.target.value)) } : x,
-                                ),
-                              )
-                            }
-                            className="field h-9 w-20 py-1"
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        className="btn-lime text-sm"
-                        disabled={busy === o.id}
-                        onClick={() =>
-                          azione(
-                            () => controproponiOrdineShop(o.id, bozza.filter((a) => a.qta > 0)),
-                            o.id,
-                          )
-                        }
-                      >
-                        Invia controproposta
-                      </button>
-                      <button className="btn-ghost text-sm" onClick={() => setEdit(null)}>
-                        Annulla
-                      </button>
-                    </div>
                   </div>
                 )}
               </li>

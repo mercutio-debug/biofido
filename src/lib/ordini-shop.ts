@@ -21,14 +21,16 @@ export type ArticoloOrdine = {
 };
 
 export type StatoOrdineShop =
-  | "richiesto"
-  | "confermato"
+  | "richiesto" // legacy (vecchio flusso richiesta→conferma→paga)
+  | "autorizzato" // NUOVO: cliente ha pagato, fondi BLOCCATI, in attesa che l'azienda accetti
+  | "confermato" // azienda ha accettato → pagamento catturato (incassato), prepara spedizione
+  | "rifiutato" // azienda non ha accettato → autorizzazione annullata (nessun addebito)
+  | "spedito" // azienda ha spedito il pacco
+  // stati legacy del vecchio flusso, non più prodotti ma tollerati in lettura
   | "controproposta"
   | "accettato"
-  | "rifiutato"
   | "annullato"
-  | "pagato"
-  | "spedito";
+  | "pagato";
 
 export type OrdineShop = {
   id: string;
@@ -153,24 +155,40 @@ export async function listMieiOrdiniShop(): Promise<OrdineShop[]> {
   return ((data as Row[]) ?? []).map(fromRow);
 }
 
-const upd = async (id: string, patch: Record<string, unknown>) => {
-  const { error } = await supabase
-    .from("ordini_shop")
-    .update({ ...patch, updated_at: new Date().toISOString() })
-    .eq("id", id);
-  return { error: error?.message };
-};
+// chiama una edge function con il token utente (verifica i permessi lato server)
+async function callOrdineFn(
+  fn: string,
+  body: Record<string, unknown>,
+): Promise<{ error?: string }> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return { error: "Accedi per continuare." };
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return { error: "Configurazione mancante." };
+  try {
+    const res = await fetch(`${base}/functions/v1/${fn}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) return { error: data.error || "Operazione non riuscita." };
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
 
-/* --- azioni dell'azienda --- */
-export const confermaOrdineShop = (id: string) => upd(id, { stato: "confermato" });
-export const rifiutaOrdineShop = (id: string) => upd(id, { stato: "rifiutato" });
-export const controproponiOrdineShop = (id: string, articoli: ArticoloOrdine[]) =>
-  upd(id, { stato: "controproposta", controproposta: articoli });
-
-/* --- azioni del cliente (sulla controproposta) --- */
-export const accettaContropropostaShop = (id: string) => upd(id, { stato: "accettato" });
-export const rifiutaContropropostaShop = (id: string) => upd(id, { stato: "rifiutato" });
-export const annullaOrdineShop = (id: string) => upd(id, { stato: "annullato" });
+/* --- azioni dell'azienda sull'ordine PAGATO (autorizzato) --- */
+// ACCETTA → cattura il pagamento (incasso) + avvisa il cliente
+export const confermaOrdineShop = (id: string) => callOrdineFn("ordine-accetta", { ordineId: id });
+// NON ACCETTA → annulla l'autorizzazione (nessun addebito) + motivazione al cliente
+export const rifiutaOrdineShop = (id: string, motivo?: string) =>
+  callOrdineFn("ordine-rifiuta", { ordineId: id, motivo: motivo ?? "" });
 
 /** Fase D: avvia il pagamento (Stripe Checkout) di un ordine confermato/accettato. */
 export async function pagaOrdineShop(ordineId: string): Promise<{ error?: string }> {

@@ -598,7 +598,11 @@ Deno.serve(async (req) => {
             await admin
               .from("ordini_shop")
               .update({
-                stato: "pagato",
+                // manual capture: il pagamento è AUTORIZZATO (fondi bloccati), non
+                // ancora incassato. Resta "autorizzato" finché l'azienda accetta
+                // (ordine-accetta → cattura) o rifiuta (ordine-rifiuta → annulla).
+                stato: "autorizzato",
+                stripe_payment_intent: s.payment_intent ? String(s.payment_intent) : null,
                 totale_cents: s.amount_total ?? null,
                 indirizzo_spedizione: indirizzo,
                 telefono: det.customer_details?.phone ?? null,

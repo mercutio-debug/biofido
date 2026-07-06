@@ -216,8 +216,14 @@ export function UserMenu() {
             </Link>
           )}
           {[
-            { href: "/account#fatturazione", icon: "card", label: "Anagrafica impresa" },
-            { href: "/account#geolocalizzazione", icon: "pin", label: "Geolocalizzazione" },
+            // «Anagrafica» per entrambi: il cliente va alla sua scheda dati, l'azienda ai dati fiscali
+            isCliente
+              ? { href: "/account#anagrafica-cliente", icon: "card", label: "Anagrafica" }
+              : { href: "/account#fatturazione", icon: "card", label: "Anagrafica" },
+            // geolocalizzazione: solo aziende (i clienti non hanno una sede da mostrare in mappa)
+            ...(!isCliente
+              ? [{ href: "/account#geolocalizzazione", icon: "pin", label: "Geolocalizzazione" }]
+              : []),
             { href: "/account#notifiche", icon: "bell", label: "Notifiche" },
             { href: "/account#privacy", icon: "shield", label: "Termini e privacy" },
           ].map((a) => (

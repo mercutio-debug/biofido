@@ -99,6 +99,11 @@ Deno.serve(async (req) => {
         },
       })),
       payment_intent_data: {
+        // CATTURA MANUALE: il cliente paga subito ma i fondi restano BLOCCATI
+        // (autorizzati). L'azienda poi ACCETTA → si catturano (ordine-accetta),
+        // oppure RIFIUTA → si annulla l'autorizzazione e il cliente non paga nulla
+        // (ordine-rifiuta). Come per le prenotazioni esperienze.
+        capture_method: "manual",
         application_fee_amount: commissioneCents,
         transfer_data: { destination: acc.account_id },
       },
