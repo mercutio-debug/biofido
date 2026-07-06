@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { createOrdineShop, pagaOrdineShop } from "@/lib/ordini-shop";
+import { loadAnagraficaCliente, anagraficaClienteCompleta } from "@/lib/clienti";
 import {
   getCart,
   setQty,
@@ -54,6 +55,15 @@ export function CartDrawer({ portale }: { portale: string }) {
     if (!user) {
       setSending(null);
       window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/accedi";
+      return;
+    }
+    // anagrafica cliente obbligatoria: se manca, porto SUBITO al form da completare
+    // (più utile del solo messaggio d'errore). Il carrello resta salvato.
+    const anag = await loadAnagraficaCliente();
+    if (!anagraficaClienteCompleta(anag)) {
+      setSending(null);
+      window.location.href =
+        (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/account#anagrafica-cliente";
       return;
     }
     const articoli = gruppo.map((it) => ({
