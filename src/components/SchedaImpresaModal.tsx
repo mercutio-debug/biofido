@@ -82,9 +82,10 @@ export function SchedaImpresaModal({
         /* ignore */
       }
       alert(
-        "Per prenotare un'esperienza in azienda devi accedere o creare un account cliente (è gratis). Dopo l'accesso riprendi da dove eri.",
+        "Per prenotare un'esperienza in azienda accedi (o crea un account cliente, è gratis). Dopo l'accesso riprendi da dove eri.",
       );
-      router.push("/registrati?tipo=cliente");
+      // login-first: chi ha già l'account entra subito; i nuovi trovano lì il link «Iscriviti come cliente»
+      router.push("/accedi");
       return;
     }
     onPrenota?.(b);
