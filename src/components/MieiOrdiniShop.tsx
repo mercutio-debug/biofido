@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { listMieiOrdiniShop, type OrdineShop } from "@/lib/ordini-shop";
+import { listMieiOrdiniShop, pagaOrdineShop, type OrdineShop } from "@/lib/ordini-shop";
 
 // stato → etichetta badge + colore box + messaggio al cliente
 const STATO: Record<
@@ -33,9 +33,10 @@ const STATO: Record<
   },
   // stati legacy (vecchio flusso), tollerati in lettura
   richiesto: {
-    label: "In attesa di pagamento",
+    label: "Pagamento da completare",
     cls: "bg-[#fff3d4] text-[#7a5a00]",
-    box: "border-[#e3eed7] bg-white",
+    box: "border-[#e6dca6] bg-[#fffdf3]",
+    msg: "Hai avviato l'ordine ma il pagamento non è stato concluso. Completa il pagamento per inviarlo all'azienda.",
   },
   pagato: {
     label: "Pagato · da spedire",
@@ -50,10 +51,21 @@ const STATO: Record<
  *  cliente segue solo lo stato (in attesa di conferma → di spedizione → spedito). */
 export function MieiOrdiniShop() {
   const [ordini, setOrdini] = useState<OrdineShop[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
     listMieiOrdiniShop().then(setOrdini);
   }, []);
+
+  // ordine "richiesto" = creato ma pagamento non concluso → riavvio il checkout Stripe
+  async function completaPagamento(id: string) {
+    setBusy(id);
+    const { error } = await pagaOrdineShop(id); // se ok reindirizza a Stripe
+    if (error) {
+      setBusy(null);
+      alert("Pagamento non riuscito: " + error);
+    }
+  }
 
   if (ordini === null || ordini.length === 0) return null;
 
@@ -85,6 +97,16 @@ export function MieiOrdiniShop() {
 
               {s.msg && (
                 <p className="mt-3 text-sm font-semibold text-green-800">{s.msg}</p>
+              )}
+
+              {o.stato === "richiesto" && (
+                <button
+                  className="btn-lime mt-3 text-sm"
+                  disabled={busy === o.id}
+                  onClick={() => completaPagamento(o.id)}
+                >
+                  {busy === o.id ? "Avvio…" : "💳 Completa il pagamento"}
+                </button>
               )}
 
               {o.stato === "rifiutato" && (
