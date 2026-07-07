@@ -106,6 +106,9 @@ export default function AccountPage() {
     return <p className="mx-auto max-w-3xl px-4 py-12 text-green-900/60">Caricamento…</p>;
   }
 
+  const isCliente =
+    (user?.user_metadata as { tipo?: string } | undefined)?.tipo === "cliente";
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
       <h1 className="title-pangea text-4xl text-green-700">Il mio account</h1>
@@ -189,10 +192,22 @@ export default function AccountPage() {
 
       {/* Anagrafica impresa (dati fiscali, sempre modificabili) */}
       <section id="fatturazione" className="mt-6 scroll-mt-20">
-        <h2 className="font-display text-2xl text-green-800">Anagrafica impresa</h2>
+        <h2 className="font-display text-2xl text-green-800">
+          {isCliente ? "Sei un'azienda?" : "Anagrafica impresa"}
+        </h2>
         <p className="mt-1 text-sm text-green-900/70">
-          Dati fiscali per la fattura dell&apos;abbonamento (ragione sociale, P.IVA, SDI/PEC).
-          Puoi correggerli quando vuoi.
+          {isCliente ? (
+            <>
+              Se ordini o prenoti come <strong>azienda</strong>, inserisci anche questi dati
+              (ragione sociale, P.IVA, SDI/PEC): serviranno all&apos;azienda venditrice per
+              emetterti la <strong>fattura</strong>. Se sei un privato, puoi lasciarli vuoti.
+            </>
+          ) : (
+            <>
+              Dati fiscali per la fattura dell&apos;abbonamento (ragione sociale, P.IVA, SDI/PEC).
+              Puoi correggerli quando vuoi.
+            </>
+          )}
         </p>
         <div className="mt-3">
           <DatiFatturazioneForm ownerId={user.id} />

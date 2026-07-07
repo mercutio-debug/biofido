@@ -4,6 +4,7 @@ import {
   anagraficaClienteCompleta,
   indirizzoClienteUnaRiga,
 } from "./clienti";
+import { datiAziendaliCliente } from "./fatturazione";
 import { aziendaSospesa } from "./connect";
 
 /**
@@ -45,6 +46,9 @@ export type OrdineShop = {
   /** SDI/PEC del cliente per la fattura elettronica (vuoto = privato → "0000000"). */
   clienteSdi: string | null;
   clientePec: string | null;
+  /** Dati aziendali del cliente (se ordina come impresa): per la fattura B2B. */
+  clienteRagioneSociale: string | null;
+  clientePiva: string | null;
   aziendaNome: string | null;
   portale: string | null;
   articoli: ArticoloOrdine[];
@@ -94,6 +98,8 @@ type Row = {
   codice_fiscale: string | null;
   cliente_sdi?: string | null;
   cliente_pec?: string | null;
+  cliente_ragione_sociale?: string | null;
+  cliente_piva?: string | null;
   azienda_nome: string | null;
   portale: string | null;
   articoli: ArticoloOrdine[] | null;
@@ -116,6 +122,8 @@ const fromRow = (r: Row): OrdineShop => ({
   codiceFiscale: r.codice_fiscale ?? null,
   clienteSdi: r.cliente_sdi ?? null,
   clientePec: r.cliente_pec ?? null,
+  clienteRagioneSociale: r.cliente_ragione_sociale ?? null,
+  clientePiva: r.cliente_piva ?? null,
   aziendaNome: r.azienda_nome,
   portale: r.portale,
   articoli: r.articoli ?? [],
@@ -147,6 +155,9 @@ export async function createOrdineShop(input: {
   if (!anagraficaClienteCompleta(anag)) {
     return { error: "Completa prima i tuoi dati (anagrafica) per ordinare." };
   }
+  // se il cliente ordina come impresa (fatturazione con P.IVA), fotografo anche
+  // ragione sociale/P.IVA e uso il suo recapito SDI/PEC aziendale per la fattura B2B
+  const azienda = await datiAziendaliCliente();
   const payload: Record<string, unknown> = {
     owner: input.owner,
     cliente_user_id: user.id,
@@ -155,18 +166,22 @@ export async function createOrdineShop(input: {
     codice_fiscale: anag.codiceFiscale || null,
     indirizzo_spedizione: indirizzoClienteUnaRiga(anag) || null,
     telefono: anag.telefono || null,
-    cliente_sdi: anag.codiceSdi || null,
-    cliente_pec: anag.pec || null,
+    cliente_sdi: (azienda ? azienda.codiceSdi : anag.codiceSdi) || null,
+    cliente_pec: (azienda ? azienda.pec : anag.pec) || null,
+    cliente_ragione_sociale: azienda?.ragioneSociale || null,
+    cliente_piva: azienda?.partitaIva || null,
     azienda_nome: input.aziendaNome,
     portale: input.portale,
     articoli: input.articoli,
     stato: "richiesto",
   };
   let { data, error } = await supabase.from("ordini_shop").insert(payload).select("id").single();
-  // colonne SDI/PEC non ancora presenti su DB più vecchi → le tolgo e riprovo
-  if (error && /cliente_sdi|cliente_pec/i.test(error.message)) {
+  // colonne fattura non ancora presenti su DB più vecchi → le tolgo e riprovo
+  if (error && /cliente_sdi|cliente_pec|cliente_ragione_sociale|cliente_piva/i.test(error.message)) {
     delete payload.cliente_sdi;
     delete payload.cliente_pec;
+    delete payload.cliente_ragione_sociale;
+    delete payload.cliente_piva;
     ({ data, error } = await supabase.from("ordini_shop").insert(payload).select("id").single());
   }
   return { id: (data as { id?: string } | null)?.id, error: error?.message };

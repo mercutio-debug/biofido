@@ -64,6 +64,30 @@ export async function caricaDatiFatturazione(): Promise<DatiFatturazione | null>
   return (data as DatiFatturazione) ?? null;
 }
 
+/**
+ * Dati AZIENDALI del cliente per la fattura, quando il cliente ordina/prenota
+ * come impresa (ha compilato la fatturazione con P.IVA valida). Null se privato.
+ * Serve a "fotografare" ragione sociale/P.IVA/SDI-PEC sull'ordine, così l'azienda
+ * venditrice vede a chi intestare la fattura B2B.
+ */
+export async function datiAziendaliCliente(): Promise<{
+  ragioneSociale: string;
+  partitaIva: string;
+  codiceSdi: string;
+  pec: string;
+} | null> {
+  const d = await caricaDatiFatturazione();
+  if (!d || !datiCompleti(d)) return null;
+  const sdi = (d.codice_sdi || "").toUpperCase();
+  return {
+    ragioneSociale: d.ragione_sociale.trim(),
+    partitaIva: (d.partita_iva || "").replace(/\D/g, ""),
+    // 0000000 = nessun recapito SDI → si usa la PEC (o cassetto fiscale)
+    codiceSdi: sdi && sdi !== "0000000" ? sdi : "",
+    pec: (d.pec || "").trim(),
+  };
+}
+
 export async function salvaDatiFatturazione(
   userId: string,
   d: DatiFatturazione,

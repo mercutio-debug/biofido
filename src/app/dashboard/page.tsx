@@ -2088,6 +2088,11 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
                       <div>📞 {b.clienteTel || "— (non fornito)"}</div>
                       <div>🧾 CF: {b.clienteCf || "— (non fornito)"}</div>
                       <div>📍 {b.clienteIndirizzo || "— (non fornito)"}</div>
+                      {b.clientePiva && (
+                        <div>
+                          🏢 {b.clienteRagioneSociale || "Azienda"} — P.IVA {b.clientePiva}
+                        </div>
+                      )}
                       <div>
                         📄 Fattura elettronica:{" "}
                         {b.clientePec

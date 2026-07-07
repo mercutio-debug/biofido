@@ -38,6 +38,7 @@ function stampaEtichetta(o: OrdineShop, m: Mittente | null) {
     : esc(o.aziendaNome ?? "Azienda");
   const dest = [
     o.clienteNome ?? "",
+    o.clientePiva ? `${o.clienteRagioneSociale ?? "Azienda"} — P.IVA ${o.clientePiva}` : "",
     o.indirizzoSpedizione ?? "",
     o.telefono ? `Tel. ${o.telefono}` : "",
     o.codiceFiscale ? `CF ${o.codiceFiscale}` : "",
@@ -200,6 +201,11 @@ export function OrdiniShopRicevuti() {
                     <div>🧾 CF: {o.codiceFiscale || "— (non fornito)"}</div>
                     <div>📞 {o.telefono || "— (non fornito)"}</div>
                     <div>📍 {o.indirizzoSpedizione || "— (indirizzo non fornito)"}</div>
+                    {o.clientePiva && (
+                      <div>
+                        🏢 {o.clienteRagioneSociale || "Azienda"} — P.IVA {o.clientePiva}
+                      </div>
+                    )}
                     <div>
                       📄 Fattura elettronica:{" "}
                       {o.clientePec

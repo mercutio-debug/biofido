@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import { PLAN_MAP, type Plan } from "./categories";
 import { loadAnagraficaCliente, indirizzoClienteUnaRiga } from "./clienti";
+import { datiAziendaliCliente } from "./fatturazione";
 import { aziendaSospesa } from "./connect";
 
 /**
@@ -42,6 +43,9 @@ export type Booking = {
   /** SDI/PEC del cliente per la fattura elettronica (vuoto = privato → "0000000"). */
   clienteSdi?: string;
   clientePec?: string;
+  /** Dati aziendali del cliente (se prenota come impresa): per la fattura B2B. */
+  clienteRagioneSociale?: string;
+  clientePiva?: string;
   dataRichiesta: string;
   persone: number;
   note?: string;
@@ -231,6 +235,8 @@ type BookRow = {
   cliente_indirizzo?: string | null;
   cliente_sdi?: string | null;
   cliente_pec?: string | null;
+  cliente_ragione_sociale?: string | null;
+  cliente_piva?: string | null;
   data_richiesta: string;
   persone: number;
   note: string | null;
@@ -256,6 +262,8 @@ const fromBookRow = (r: BookRow): Booking => ({
   clienteIndirizzo: r.cliente_indirizzo ?? undefined,
   clienteSdi: r.cliente_sdi ?? undefined,
   clientePec: r.cliente_pec ?? undefined,
+  clienteRagioneSociale: r.cliente_ragione_sociale ?? undefined,
+  clientePiva: r.cliente_piva ?? undefined,
   dataRichiesta: r.data_richiesta,
   persone: r.persone,
   note: r.note ?? undefined,
@@ -297,6 +305,7 @@ export async function createBookingRequest(input: {
 
   // snapshot dell'anagrafica cliente sulla prenotazione (l'azienda riceve la scheda)
   const anag = await loadAnagraficaCliente();
+  const azienda = await datiAziendaliCliente();
 
   const payload: Record<string, unknown> = {
     esperienza_id: input.esperienza.id,
@@ -307,8 +316,10 @@ export async function createBookingRequest(input: {
     cliente_tel: anag.telefono || input.clienteTel || null,
     cliente_cf: anag.codiceFiscale || null,
     cliente_indirizzo: indirizzoClienteUnaRiga(anag) || null,
-    cliente_sdi: anag.codiceSdi || null,
-    cliente_pec: anag.pec || null,
+    cliente_sdi: (azienda ? azienda.codiceSdi : anag.codiceSdi) || null,
+    cliente_pec: (azienda ? azienda.pec : anag.pec) || null,
+    cliente_ragione_sociale: azienda?.ragioneSociale || null,
+    cliente_piva: azienda?.partitaIva || null,
     data_richiesta: input.dataRichiesta,
     orario_richiesto: input.orario || null,
     persone: input.persone,
@@ -322,12 +333,19 @@ export async function createBookingRequest(input: {
   // rilettura della riga → array vuoto, ma l'insert è comunque andato a buon fine.
   let { data, error } = await supabase.from("prenotazioni").insert(payload).select("id");
   // colonne nuove non ancora presenti su DB più vecchi → le tolgo e riprovo
-  if (error && /orario_richiesto|cliente_cf|cliente_indirizzo|cliente_sdi|cliente_pec/i.test(error.message)) {
+  if (
+    error &&
+    /orario_richiesto|cliente_cf|cliente_indirizzo|cliente_sdi|cliente_pec|cliente_ragione_sociale|cliente_piva/i.test(
+      error.message,
+    )
+  ) {
     delete payload.orario_richiesto;
     delete payload.cliente_cf;
     delete payload.cliente_indirizzo;
     delete payload.cliente_sdi;
     delete payload.cliente_pec;
+    delete payload.cliente_ragione_sociale;
+    delete payload.cliente_piva;
     ({ data, error } = await supabase.from("prenotazioni").insert(payload).select("id"));
   }
   return { error: error?.message, totaleCents, id: (data as { id?: string }[] | null)?.[0]?.id };
@@ -362,6 +380,7 @@ export async function createServizioBooking(input: {
   } = await supabase.auth.getSession();
   // snapshot anagrafica cliente (stessa scheda per fattura/contatto degli ordini prodotto)
   const anag = await loadAnagraficaCliente();
+  const azienda = await datiAziendaliCliente();
   const payload: Record<string, unknown> = {
     esperienza_id: null,
     prodotto_id: input.prodottoId ?? null,
@@ -374,8 +393,10 @@ export async function createServizioBooking(input: {
     cliente_tel: anag.telefono || input.clienteTel || null,
     cliente_cf: anag.codiceFiscale || null,
     cliente_indirizzo: indirizzoClienteUnaRiga(anag) || null,
-    cliente_sdi: anag.codiceSdi || null,
-    cliente_pec: anag.pec || null,
+    cliente_sdi: (azienda ? azienda.codiceSdi : anag.codiceSdi) || null,
+    cliente_pec: (azienda ? azienda.pec : anag.pec) || null,
+    cliente_ragione_sociale: azienda?.ragioneSociale || null,
+    cliente_piva: azienda?.partitaIva || null,
     data_richiesta: input.dataRichiesta,
     persone: input.persone,
     note: input.note || null,
@@ -385,11 +406,18 @@ export async function createServizioBooking(input: {
     stato: "in_attesa",
   };
   let { error } = await supabase.from("prenotazioni").insert(payload);
-  if (error && /cliente_cf|cliente_indirizzo|cliente_sdi|cliente_pec/i.test(error.message)) {
+  if (
+    error &&
+    /cliente_cf|cliente_indirizzo|cliente_sdi|cliente_pec|cliente_ragione_sociale|cliente_piva/i.test(
+      error.message,
+    )
+  ) {
     delete payload.cliente_cf;
     delete payload.cliente_indirizzo;
     delete payload.cliente_sdi;
     delete payload.cliente_pec;
+    delete payload.cliente_ragione_sociale;
+    delete payload.cliente_piva;
     ({ error } = await supabase.from("prenotazioni").insert(payload));
   }
   return { error: error?.message };
