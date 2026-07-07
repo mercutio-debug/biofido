@@ -5,6 +5,8 @@ import {
   listMieiOrdiniShop,
   pagaOrdineShop,
   verificaOrdineShop,
+  numeroOrdineFmt,
+  dataOraOrdine,
   type OrdineShop,
 } from "@/lib/ordini-shop";
 
@@ -92,6 +94,12 @@ export function MieiOrdiniShop() {
           const s = STATO[o.stato] ?? STATO.autorizzato;
           return (
             <li key={o.id} className={`rounded-2xl border p-4 ${s.box}`}>
+              {numeroOrdineFmt(o) && (
+                <div className="mb-1.5 flex flex-wrap items-baseline gap-2 text-xs">
+                  <span className="font-bold text-green-700">Ordine {numeroOrdineFmt(o)}</span>
+                  <span className="text-green-900/55">{dataOraOrdine(o.createdAt)}</span>
+                </div>
+              )}
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="font-display text-lg text-green-800">
                   {o.aziendaNome || "Azienda"}

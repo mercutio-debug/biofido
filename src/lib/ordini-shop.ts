@@ -48,8 +48,37 @@ export type OrdineShop = {
   controproposta: ArticoloOrdine[] | null;
   stato: StatoOrdineShop;
   nota: string | null;
+  /** numero ordine consecutivo per azienda + anno (es. 1 → "0001/2026"). Assegnato
+   *  dal trigger DB quando l'ordine diventa "autorizzato" (pagato). */
+  numeroProgressivo: number | null;
+  numeroAnno: number | null;
   createdAt?: string;
 };
+
+/** "0001/2026" a partire dai campi numero. Vuoto se non ancora assegnato. */
+export function numeroOrdineFmt(o: {
+  numeroProgressivo: number | null;
+  numeroAnno: number | null;
+}): string {
+  if (!o.numeroProgressivo || !o.numeroAnno) return "";
+  return `${String(o.numeroProgressivo).padStart(4, "0")}/${o.numeroAnno}`;
+}
+
+/** data + ora leggibili dell'ordine (es. "07/07/2026, 14:30"). */
+export function dataOraOrdine(iso?: string): string {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleString("it-IT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
 
 type Row = {
   id: string;
@@ -66,6 +95,8 @@ type Row = {
   controproposta: ArticoloOrdine[] | null;
   stato: StatoOrdineShop;
   nota: string | null;
+  numero_progressivo: number | null;
+  numero_anno: number | null;
   created_at?: string;
 };
 
@@ -84,6 +115,8 @@ const fromRow = (r: Row): OrdineShop => ({
   controproposta: r.controproposta ?? null,
   stato: r.stato,
   nota: r.nota,
+  numeroProgressivo: r.numero_progressivo ?? null,
+  numeroAnno: r.numero_anno ?? null,
   createdAt: r.created_at,
 });
 

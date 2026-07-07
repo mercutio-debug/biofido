@@ -580,9 +580,14 @@ Deno.serve(async (req) => {
             // leggo l'ordine PRIMA, per scalare il magazzino (Fase E)
             const { data: ord } = await admin
               .from("ordini_shop")
-              .select("owner, portale, articoli, controproposta")
+              .select("owner, portale, articoli, controproposta, stato")
               .eq("id", ordineId)
               .maybeSingle();
+            // se l'ordine è GIÀ stato sbloccato (es. da verify-ordine-shop al ritorno
+            // dal pagamento), non rielaboro: evito doppio scarico magazzino / doppie email.
+            if (ord && (ord as { stato?: string }).stato !== "richiesto") {
+              break;
+            }
             // dati di spedizione/fatturazione raccolti da Stripe Checkout
             const det = (s as { shipping_details?: { address?: Record<string, string>; name?: string }; customer_details?: { address?: Record<string, string>; phone?: string } });
             const addr = det.shipping_details?.address ?? det.customer_details?.address ?? null;
