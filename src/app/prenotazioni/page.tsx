@@ -8,6 +8,8 @@ import {
   listBookingsForCustomer,
   euroCents,
   STATO_LABEL,
+  numeroPrenotazioneFmt,
+  dataOraPrenotazione,
   type Booking,
   type BookingStatus,
 } from "@/lib/bookings";
@@ -88,6 +90,11 @@ export default function PrenotazioniPage() {
                   <div className="font-semibold text-green-800">
                     {b.titolo ?? "Esperienza"} · {b.persone} persone
                   </div>
+                  {numeroPrenotazioneFmt(b) && (
+                    <div className="text-xs font-semibold text-green-900/70">
+                      Prenotazione {numeroPrenotazioneFmt(b)} · {dataOraPrenotazione(b.createdAt)}
+                    </div>
+                  )}
                   <div className="text-xs text-green-900/60">
                     Data richiesta: {b.dataRichiesta}
                   </div>

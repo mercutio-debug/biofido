@@ -41,6 +41,7 @@ function stampaEtichetta(o: OrdineShop, m: Mittente | null) {
     o.indirizzoSpedizione ?? "",
     o.telefono ? `Tel. ${o.telefono}` : "",
     o.codiceFiscale ? `CF ${o.codiceFiscale}` : "",
+    o.clientePec ? `PEC ${o.clientePec}` : `SDI ${o.clienteSdi || "0000000"}`,
   ]
     .filter((x) => x && x.trim())
     .map(esc)
@@ -199,6 +200,12 @@ export function OrdiniShopRicevuti() {
                     <div>🧾 CF: {o.codiceFiscale || "— (non fornito)"}</div>
                     <div>📞 {o.telefono || "— (non fornito)"}</div>
                     <div>📍 {o.indirizzoSpedizione || "— (indirizzo non fornito)"}</div>
+                    <div>
+                      📄 Fattura elettronica:{" "}
+                      {o.clientePec
+                        ? `PEC ${o.clientePec}`
+                        : `SDI ${o.clienteSdi || "0000000"}`}
+                    </div>
                   </div>
                 </div>
 

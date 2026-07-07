@@ -39,6 +39,9 @@ export type Booking = {
   clienteTel?: string;
   clienteCf?: string;
   clienteIndirizzo?: string;
+  /** SDI/PEC del cliente per la fattura elettronica (vuoto = privato → "0000000"). */
+  clienteSdi?: string;
+  clientePec?: string;
   dataRichiesta: string;
   persone: number;
   note?: string;
@@ -46,8 +49,36 @@ export type Booking = {
   commissioneCents: number;
   stato: BookingStatus;
   paymentStatus: "non_pagata" | "autorizzata" | "pagata" | "rimborsata";
+  /** numero prenotazione consecutivo per azienda + anno (es. "0001/E/2026"). */
+  numeroProgressivo?: number | null;
+  numeroAnno?: number | null;
   createdAt?: string;
 };
+
+/** "0001/E/2026" — numero prenotazione (la "E" distingue le esperienze dagli ordini prodotto). */
+export function numeroPrenotazioneFmt(b: {
+  numeroProgressivo?: number | null;
+  numeroAnno?: number | null;
+}): string {
+  if (!b.numeroProgressivo || !b.numeroAnno) return "";
+  return `${String(b.numeroProgressivo).padStart(4, "0")}/E/${b.numeroAnno}`;
+}
+
+/** data + ora leggibili (es. "07/07/2026, 14:30"). */
+export function dataOraPrenotazione(iso?: string): string {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleString("it-IT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
 
 /* --------------------------- commissioni & formato --------------------------- */
 
@@ -198,6 +229,8 @@ type BookRow = {
   cliente_tel: string | null;
   cliente_cf?: string | null;
   cliente_indirizzo?: string | null;
+  cliente_sdi?: string | null;
+  cliente_pec?: string | null;
   data_richiesta: string;
   persone: number;
   note: string | null;
@@ -205,6 +238,8 @@ type BookRow = {
   commissione_cents: number;
   stato: BookingStatus;
   payment_status?: "non_pagata" | "autorizzata" | "pagata" | "rimborsata" | null;
+  numero_progressivo?: number | null;
+  numero_anno?: number | null;
   created_at?: string;
   titolo?: string | null;
   esperienze?: { titolo: string } | null;
@@ -219,6 +254,8 @@ const fromBookRow = (r: BookRow): Booking => ({
   clienteTel: r.cliente_tel ?? undefined,
   clienteCf: r.cliente_cf ?? undefined,
   clienteIndirizzo: r.cliente_indirizzo ?? undefined,
+  clienteSdi: r.cliente_sdi ?? undefined,
+  clientePec: r.cliente_pec ?? undefined,
   dataRichiesta: r.data_richiesta,
   persone: r.persone,
   note: r.note ?? undefined,
@@ -226,6 +263,8 @@ const fromBookRow = (r: BookRow): Booking => ({
   commissioneCents: r.commissione_cents,
   stato: r.stato,
   paymentStatus: r.payment_status ?? "non_pagata",
+  numeroProgressivo: r.numero_progressivo ?? null,
+  numeroAnno: r.numero_anno ?? null,
   createdAt: r.created_at,
 });
 
@@ -268,6 +307,8 @@ export async function createBookingRequest(input: {
     cliente_tel: anag.telefono || input.clienteTel || null,
     cliente_cf: anag.codiceFiscale || null,
     cliente_indirizzo: indirizzoClienteUnaRiga(anag) || null,
+    cliente_sdi: anag.codiceSdi || null,
+    cliente_pec: anag.pec || null,
     data_richiesta: input.dataRichiesta,
     orario_richiesto: input.orario || null,
     persone: input.persone,
@@ -281,10 +322,12 @@ export async function createBookingRequest(input: {
   // rilettura della riga → array vuoto, ma l'insert è comunque andato a buon fine.
   let { data, error } = await supabase.from("prenotazioni").insert(payload).select("id");
   // colonne nuove non ancora presenti su DB più vecchi → le tolgo e riprovo
-  if (error && /orario_richiesto|cliente_cf|cliente_indirizzo/i.test(error.message)) {
+  if (error && /orario_richiesto|cliente_cf|cliente_indirizzo|cliente_sdi|cliente_pec/i.test(error.message)) {
     delete payload.orario_richiesto;
     delete payload.cliente_cf;
     delete payload.cliente_indirizzo;
+    delete payload.cliente_sdi;
+    delete payload.cliente_pec;
     ({ data, error } = await supabase.from("prenotazioni").insert(payload).select("id"));
   }
   return { error: error?.message, totaleCents, id: (data as { id?: string }[] | null)?.[0]?.id };
@@ -317,16 +360,22 @@ export async function createServizioBooking(input: {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  const { error } = await supabase.from("prenotazioni").insert({
+  // snapshot anagrafica cliente (stessa scheda per fattura/contatto degli ordini prodotto)
+  const anag = await loadAnagraficaCliente();
+  const payload: Record<string, unknown> = {
     esperienza_id: null,
     prodotto_id: input.prodottoId ?? null,
     voce_id: input.voceId ?? null,
     titolo: input.servizioNome,
     owner: input.ownerId,
     cliente_user_id: session?.user.id ?? null,
-    cliente_nome: input.clienteNome,
+    cliente_nome: anag.nome || input.clienteNome,
     cliente_email: input.clienteEmail,
-    cliente_tel: input.clienteTel || null,
+    cliente_tel: anag.telefono || input.clienteTel || null,
+    cliente_cf: anag.codiceFiscale || null,
+    cliente_indirizzo: indirizzoClienteUnaRiga(anag) || null,
+    cliente_sdi: anag.codiceSdi || null,
+    cliente_pec: anag.pec || null,
     data_richiesta: input.dataRichiesta,
     persone: input.persone,
     note: input.note || null,
@@ -334,7 +383,15 @@ export async function createServizioBooking(input: {
     commissione_rate: PLAN_MAP[input.ownerPlan].commissionRate,
     commissione_cents: commCents,
     stato: "in_attesa",
-  });
+  };
+  let { error } = await supabase.from("prenotazioni").insert(payload);
+  if (error && /cliente_cf|cliente_indirizzo|cliente_sdi|cliente_pec/i.test(error.message)) {
+    delete payload.cliente_cf;
+    delete payload.cliente_indirizzo;
+    delete payload.cliente_sdi;
+    delete payload.cliente_pec;
+    ({ error } = await supabase.from("prenotazioni").insert(payload));
+  }
   return { error: error?.message };
 }
 

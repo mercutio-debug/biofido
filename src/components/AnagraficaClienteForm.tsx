@@ -97,6 +97,35 @@ export function AnagraficaClienteForm({ onSaved }: { onSaved?: () => void }) {
           <span className="label">Provincia</span>
           <input className="field mt-1 uppercase" value={a.provincia} maxLength={2} onChange={(e) => set({ provincia: e.target.value.toUpperCase() })} placeholder="GE" />
         </label>
+        <label className="block">
+          <span className="label">
+            Codice destinatario SDI <span className="font-normal text-green-900/40">(facoltativo)</span>
+          </span>
+          <input
+            className="field mt-1 uppercase"
+            value={a.codiceSdi}
+            maxLength={7}
+            onChange={(e) => set({ codiceSdi: e.target.value.toUpperCase() })}
+            placeholder="es. ABCDEFG"
+          />
+        </label>
+        <label className="block">
+          <span className="label">
+            PEC <span className="font-normal text-green-900/40">(facoltativo)</span>
+          </span>
+          <input
+            className="field mt-1"
+            type="email"
+            value={a.pec}
+            onChange={(e) => set({ pec: e.target.value })}
+            placeholder="nome@pec.it"
+          />
+        </label>
+        <p className="sm:col-span-2 text-xs text-green-900/55">
+          💡 <strong>SDI o PEC</strong> servono per ricevere la <strong>fattura elettronica</strong>.
+          Se non li hai (privato), lascia vuoto: l&apos;azienda userà <strong>0000000</strong> e la
+          fattura arriverà nel tuo Cassetto Fiscale tramite il codice fiscale.
+        </p>
       </div>
       <div className="mt-4 flex items-center gap-3">
         <button className="btn-lime" onClick={salva} disabled={saving || !a.nome.trim()}>

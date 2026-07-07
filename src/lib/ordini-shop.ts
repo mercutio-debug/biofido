@@ -42,6 +42,9 @@ export type OrdineShop = {
   indirizzoSpedizione: string | null;
   telefono: string | null;
   codiceFiscale: string | null;
+  /** SDI/PEC del cliente per la fattura elettronica (vuoto = privato → "0000000"). */
+  clienteSdi: string | null;
+  clientePec: string | null;
   aziendaNome: string | null;
   portale: string | null;
   articoli: ArticoloOrdine[];
@@ -89,6 +92,8 @@ type Row = {
   indirizzo_spedizione: string | null;
   telefono: string | null;
   codice_fiscale: string | null;
+  cliente_sdi?: string | null;
+  cliente_pec?: string | null;
   azienda_nome: string | null;
   portale: string | null;
   articoli: ArticoloOrdine[] | null;
@@ -109,6 +114,8 @@ const fromRow = (r: Row): OrdineShop => ({
   indirizzoSpedizione: r.indirizzo_spedizione ?? null,
   telefono: r.telefono ?? null,
   codiceFiscale: r.codice_fiscale ?? null,
+  clienteSdi: r.cliente_sdi ?? null,
+  clientePec: r.cliente_pec ?? null,
   aziendaNome: r.azienda_nome,
   portale: r.portale,
   articoli: r.articoli ?? [],
@@ -140,23 +147,28 @@ export async function createOrdineShop(input: {
   if (!anagraficaClienteCompleta(anag)) {
     return { error: "Completa prima i tuoi dati (anagrafica) per ordinare." };
   }
-  const { data, error } = await supabase
-    .from("ordini_shop")
-    .insert({
-      owner: input.owner,
-      cliente_user_id: user.id,
-      cliente_email: user.email ?? null,
-      cliente_nome: anag.nome || (user.user_metadata?.nome as string) || user.email || null,
-      codice_fiscale: anag.codiceFiscale || null,
-      indirizzo_spedizione: indirizzoClienteUnaRiga(anag) || null,
-      telefono: anag.telefono || null,
-      azienda_nome: input.aziendaNome,
-      portale: input.portale,
-      articoli: input.articoli,
-      stato: "richiesto",
-    })
-    .select("id")
-    .single();
+  const payload: Record<string, unknown> = {
+    owner: input.owner,
+    cliente_user_id: user.id,
+    cliente_email: user.email ?? null,
+    cliente_nome: anag.nome || (user.user_metadata?.nome as string) || user.email || null,
+    codice_fiscale: anag.codiceFiscale || null,
+    indirizzo_spedizione: indirizzoClienteUnaRiga(anag) || null,
+    telefono: anag.telefono || null,
+    cliente_sdi: anag.codiceSdi || null,
+    cliente_pec: anag.pec || null,
+    azienda_nome: input.aziendaNome,
+    portale: input.portale,
+    articoli: input.articoli,
+    stato: "richiesto",
+  };
+  let { data, error } = await supabase.from("ordini_shop").insert(payload).select("id").single();
+  // colonne SDI/PEC non ancora presenti su DB più vecchi → le tolgo e riprovo
+  if (error && /cliente_sdi|cliente_pec/i.test(error.message)) {
+    delete payload.cliente_sdi;
+    delete payload.cliente_pec;
+    ({ data, error } = await supabase.from("ordini_shop").insert(payload).select("id").single());
+  }
   return { id: (data as { id?: string } | null)?.id, error: error?.message };
 }
 

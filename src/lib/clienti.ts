@@ -13,6 +13,10 @@ export type AnagraficaCliente = {
   citta: string;
   provincia: string;
   telefono: string;
+  /** OPZIONALI per la fattura elettronica: codice destinatario SDI (7 caratteri)
+   *  o PEC. Se il cliente non li ha, l'azienda userà "0000000" in fattura. */
+  codiceSdi: string;
+  pec: string;
 };
 
 const VUOTA: AnagraficaCliente = {
@@ -23,6 +27,8 @@ const VUOTA: AnagraficaCliente = {
   citta: "",
   provincia: "",
   telefono: "",
+  codiceSdi: "",
+  pec: "",
 };
 
 type Row = {
@@ -33,6 +39,8 @@ type Row = {
   citta: string | null;
   provincia: string | null;
   telefono: string | null;
+  codice_sdi: string | null;
+  pec: string | null;
 };
 
 /** Carica l'anagrafica del cliente loggato (vuota se non compilata). */
@@ -41,9 +49,10 @@ export async function loadAnagraficaCliente(): Promise<AnagraficaCliente> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ...VUOTA };
+  // select("*") così non si rompe se le colonne SDI/PEC non esistono ancora
   const { data } = await supabase
     .from("clienti")
-    .select("nome, codice_fiscale, indirizzo, cap, citta, provincia, telefono")
+    .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
   const r = data as Row | null;
@@ -56,6 +65,8 @@ export async function loadAnagraficaCliente(): Promise<AnagraficaCliente> {
     citta: r.citta ?? "",
     provincia: r.provincia ?? "",
     telefono: r.telefono ?? "",
+    codiceSdi: r.codice_sdi ?? "",
+    pec: r.pec ?? "",
   };
 }
 
@@ -65,7 +76,7 @@ export async function saveAnagraficaCliente(a: AnagraficaCliente): Promise<{ err
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Accedi per salvare i tuoi dati." };
-  const { error } = await supabase.from("clienti").upsert({
+  const payload: Record<string, unknown> = {
     user_id: user.id,
     nome: a.nome.trim() || null,
     codice_fiscale: a.codiceFiscale.trim().toUpperCase() || null,
@@ -74,8 +85,17 @@ export async function saveAnagraficaCliente(a: AnagraficaCliente): Promise<{ err
     citta: a.citta.trim() || null,
     provincia: a.provincia.trim().toUpperCase() || null,
     telefono: a.telefono.trim() || null,
+    codice_sdi: a.codiceSdi.trim().toUpperCase() || null,
+    pec: a.pec.trim() || null,
     updated_at: new Date().toISOString(),
-  });
+  };
+  let { error } = await supabase.from("clienti").upsert(payload);
+  // colonne SDI/PEC non ancora presenti su DB più vecchi → le tolgo e riprovo
+  if (error && /codice_sdi|pec/i.test(error.message)) {
+    delete payload.codice_sdi;
+    delete payload.pec;
+    ({ error } = await supabase.from("clienti").upsert(payload));
+  }
   return { error: error?.message };
 }
 

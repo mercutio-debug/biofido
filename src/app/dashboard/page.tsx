@@ -55,6 +55,8 @@ import {
   sendMessage,
   euroCents,
   STATO_LABEL,
+  numeroPrenotazioneFmt,
+  dataOraPrenotazione,
   type Experience,
   type Booking,
   type BookingStatus,
@@ -2067,6 +2069,11 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
                   <div className="font-semibold text-green-800">
                     {b.titolo ?? "Esperienza"} · {b.persone} persone
                   </div>
+                  {numeroPrenotazioneFmt(b) && (
+                    <div className="text-xs font-semibold text-green-900/70">
+                      Prenotazione {numeroPrenotazioneFmt(b)} · {dataOraPrenotazione(b.createdAt)}
+                    </div>
+                  )}
                   <div className="text-xs text-green-900/60">
                     Data richiesta: {b.dataRichiesta}
                   </div>
@@ -2081,6 +2088,12 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
                       <div>📞 {b.clienteTel || "— (non fornito)"}</div>
                       <div>🧾 CF: {b.clienteCf || "— (non fornito)"}</div>
                       <div>📍 {b.clienteIndirizzo || "— (non fornito)"}</div>
+                      <div>
+                        📄 Fattura elettronica:{" "}
+                        {b.clientePec
+                          ? `PEC ${b.clientePec}`
+                          : `SDI ${b.clienteSdi || "0000000"}`}
+                      </div>
                     </div>
                   </div>
                   {b.note && (
