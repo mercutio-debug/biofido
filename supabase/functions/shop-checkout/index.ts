@@ -122,7 +122,9 @@ Deno.serve(async (req) => {
           text: { minimum_length: 11, maximum_length: 16 },
         },
       ],
-      success_url: `${base}/ordini/?pagamento=ok`,
+      // includo il session_id: al ritorno l'app chiama verify-ordine-shop per
+      // sbloccare l'ordine anche se il webhook non arriva (rete di sicurezza).
+      success_url: `${base}/ordini/?pagamento=ok&sid={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/ordini/?pagamento=annullato`,
     });
 

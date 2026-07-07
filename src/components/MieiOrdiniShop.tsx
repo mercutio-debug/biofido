@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { listMieiOrdiniShop, pagaOrdineShop, type OrdineShop } from "@/lib/ordini-shop";
+import {
+  listMieiOrdiniShop,
+  pagaOrdineShop,
+  verificaOrdineShop,
+  type OrdineShop,
+} from "@/lib/ordini-shop";
 
 // stato → etichetta badge + colore box + messaggio al cliente
 const STATO: Record<
@@ -54,7 +59,17 @@ export function MieiOrdiniShop() {
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
-    listMieiOrdiniShop().then(setOrdini);
+    (async () => {
+      // rete di sicurezza: se torno da Stripe (success_url con ?sid=…), verifico la
+      // sessione e sblocco l'ordine anche se il webhook non è arrivato.
+      try {
+        const sid = new URLSearchParams(window.location.search).get("sid");
+        if (sid) await verificaOrdineShop(sid);
+      } catch {
+        /* best-effort */
+      }
+      listMieiOrdiniShop().then(setOrdini);
+    })();
   }, []);
 
   // ordine "richiesto" = creato ma pagamento non concluso → riavvio il checkout Stripe

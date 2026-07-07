@@ -190,6 +190,12 @@ export const confermaOrdineShop = (id: string) => callOrdineFn("ordine-accetta",
 export const rifiutaOrdineShop = (id: string, motivo?: string) =>
   callOrdineFn("ordine-rifiuta", { ordineId: id, motivo: motivo ?? "" });
 
+/* --- rete di sicurezza lato cliente --- */
+// Al RITORNO dal pagamento Stripe (success_url con ?sid=…): verifica la sessione
+// e sblocca l'ordine a "autorizzato", anche se il webhook non è arrivato. Best-effort.
+export const verificaOrdineShop = (sessionId: string) =>
+  callOrdineFn("verify-ordine-shop", { sessionId });
+
 /** Fase D: avvia il pagamento (Stripe Checkout) di un ordine confermato/accettato. */
 export async function pagaOrdineShop(ordineId: string): Promise<{ error?: string }> {
   const {
