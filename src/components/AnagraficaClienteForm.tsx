@@ -7,6 +7,7 @@ import {
   anagraficaClienteCompleta,
   type AnagraficaCliente,
 } from "@/lib/clienti";
+import { IndirizzoAutocomplete } from "@/components/IndirizzoAutocomplete";
 
 /**
  * Form dell'anagrafica CLIENTE (nome, codice fiscale, indirizzo…). Obbligatoria
@@ -68,7 +69,21 @@ export function AnagraficaClienteForm({ onSaved }: { onSaved?: () => void }) {
         </label>
         <label className="block sm:col-span-2">
           <span className="label">Indirizzo (via e numero) *</span>
-          <input className="field mt-1" value={a.indirizzo} onChange={(e) => set({ indirizzo: e.target.value })} />
+          <div className="mt-1">
+            <IndirizzoAutocomplete
+              value={a.indirizzo}
+              onChange={(v) => set({ indirizzo: v })}
+              onSelect={(s) =>
+                set({
+                  indirizzo: s.via ?? s.label,
+                  ...(s.cap ? { cap: s.cap } : {}),
+                  ...(s.citta ? { citta: s.citta } : {}),
+                  ...(s.provincia ? { provincia: s.provincia } : {}),
+                })
+              }
+              placeholder="Inizia a digitare: es. Via Roma 1, Genova"
+            />
+          </div>
         </label>
         <label className="block">
           <span className="label">CAP *</span>
