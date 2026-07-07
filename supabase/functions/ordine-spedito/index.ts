@@ -60,8 +60,10 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!o) return json({ error: "Ordine non trovato" }, 404);
     if (o.owner !== user.id) return json({ error: "Non autorizzato" }, 403);
-    if (o.stato !== "pagato") {
-      return json({ error: "Solo un ordine pagato può essere segnato come spedito." }, 400);
+    // nuovo modello: l'ordine accettato dall'azienda è "confermato" (pagamento
+    // catturato). "pagato"/"accettato" restano validi dal vecchio flusso.
+    if (!["confermato", "pagato", "accettato"].includes(o.stato)) {
+      return json({ error: "Solo un ordine confermato può essere segnato come spedito." }, 400);
     }
 
     const now = new Date();
