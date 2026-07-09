@@ -577,35 +577,37 @@ Deno.serve(async (req) => {
         if (s.metadata?.kind === "order_shop") {
           const ordineId = s.metadata?.ordine_shop_id;
           if (ordineId) {
-            // leggo l'ordine PRIMA, per scalare il magazzino (Fase E)
-            const { data: ord } = await admin
+            // Gli effetti collaterali (mail all'azienda + scarico magazzino) devono
+            // avvenire UNA sola volta, di chiunque arrivi. verify-ordine-shop, al
+            // ritorno del cliente, può aver già portato l'ordine ad "autorizzato":
+            // NON basiamo più il "già elaborato" sullo stato (altrimenti il webhook
+            // verrebbe scavalcato e la mail/magazzino salterebbero), ma su un flag
+            // dedicato `elaborato`, rivendicato in modo ATOMICO.
+            const { data: claim } = await admin
               .from("ordini_shop")
-              .select("owner, portale, articoli, controproposta, stato")
+              .update({ elaborato: true, updated_at: new Date().toISOString() })
               .eq("id", ordineId)
-              .maybeSingle();
-            // se l'ordine è GIÀ stato sbloccato (es. da verify-ordine-shop al ritorno
-            // dal pagamento), non rielaboro: evito doppio scarico magazzino / doppie email.
-            if (ord && (ord as { stato?: string }).stato !== "richiesto") {
-              break;
-            }
-            // NB: indirizzo/telefono/CF NON si leggono da Stripe. La scheda cliente
-            // (anagrafica + eventuali dati azienda) è già "fotografata" sull'ordine
-            // alla creazione: sovrascriverla con i dati di Stripe Link porterebbe
-            // dentro il profilo salvato di un altro account (bug riscontrato in test).
+              .eq("elaborato", false)
+              .select("owner, portale, articoli, controproposta, stato");
+            // 0 righe = un'altra consegna del webhook l'ha già elaborato → esco
+            if (!claim || claim.length === 0) break;
+            const ord = claim[0];
+            // porto a "autorizzato" SOLO se ancora "richiesto" (se verify l'ha già
+            // sbloccato o l'azienda ha già accettato, non tocco lo stato successivo).
+            // NB: indirizzo/telefono/CF NON si leggono da Stripe (già fotografati alla
+            // creazione: Stripe Link porterebbe il profilo di un altro account).
             await admin
               .from("ordini_shop")
               .update({
-                // manual capture: il pagamento è AUTORIZZATO (fondi bloccati), non
-                // ancora incassato. Resta "autorizzato" finché l'azienda accetta
-                // (ordine-accetta → cattura) o rifiuta (ordine-rifiuta → annulla).
                 stato: "autorizzato",
                 stripe_payment_intent: s.payment_intent ? String(s.payment_intent) : null,
                 totale_cents: s.amount_total ?? null,
                 stripe_session_id: s.id,
                 updated_at: new Date().toISOString(),
               })
-              .eq("id", ordineId);
-            if (ord) await scalaMagazzino(ord);
+              .eq("id", ordineId)
+              .eq("stato", "richiesto");
+            await scalaMagazzino(ord);
             // mail all'azienda (ordine pagato + dati cliente/fattura/spedizione),
             // conferma al cliente e notifica all'admin
             await avvisaOrdineShop(ordineId);
