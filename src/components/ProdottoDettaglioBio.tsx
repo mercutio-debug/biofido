@@ -107,9 +107,9 @@ export function ProdottoDettaglioBio({
                 il suo colore, qui sotto), non una somma di CO₂.
               </p>
 
-              {/* impronta di trasporto + alberi per compensare */}
+              {/* impronta del trasporto + alberi per compensare */}
               <div className="mt-3 flex items-center justify-between border-t border-[#e3eed7] pt-3">
-                <span className="text-sm font-semibold text-green-800">Impronta di trasporto</span>
+                <span className="text-sm font-semibold text-green-800">Impronta del trasporto</span>
                 <span className="text-right">
                   <span className="font-display text-2xl text-green-800">
                     {imp.co2Kg.toLocaleString("it-IT")} kg

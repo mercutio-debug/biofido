@@ -26,7 +26,7 @@ export const SERVIZI_EXTRA: ServizioExtra[] = [
     key: "report",
     emoji: "📊",
     nome: "Report della Filiera",
-    desc: "Un PDF professionale della tua impronta di trasporto, col tuo marchio. Da mostrare a clienti, partner e bandi. Si rigenera ogni anno.",
+    desc: "Un PDF professionale della tua impronta del trasporto, col tuo marchio. Da mostrare a clienti, partner e bandi. Si rigenera ogni anno.",
     prezzo: "€ 19 / anno",
     prezzoNum: 19,
   },

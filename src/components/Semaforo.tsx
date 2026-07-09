@@ -14,7 +14,7 @@ const meta: Record<EcoLevel, { label: string; color: string; desc: string }> = {
   rosso: {
     label: "Alto impatto",
     color: "var(--traffic-red)",
-    desc: "Trasporti lunghi: l'impronta di trasporto è elevata.",
+    desc: "Trasporti lunghi: l'impronta del trasporto è elevata.",
   },
 };
 

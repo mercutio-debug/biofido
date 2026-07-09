@@ -102,7 +102,7 @@ export function emailLayout(opts: EmailOptions): string {
         </td></tr>
       </table>
       <p style="margin:14px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${MUTED};">
-        Impronta di trasporto delle materie prime · filiera corta e biologica
+        Impronta del trasporto delle materie prime · filiera corta e biologica
       </p>
     </td></tr>
   </table>

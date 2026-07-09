@@ -79,13 +79,23 @@ export default function Home() {
             </h2>
             <p className="mx-auto mt-2 max-w-2xl text-green-900/80">
               Ogni prodotto bio ha un semaforo della filiera che misura quanto le sue
-              materie prime arrivano da vicino — non una somma di CO₂, ma un giudizio
-              qualitativo della composizione. Ecco una scheda d&apos;esempio per ogni tonalità.
+              materie prime arrivano da vicino. Ecco una scheda d&apos;esempio per ogni tonalità.
+            </p>
+            <p className="mx-auto mt-3 max-w-2xl rounded-xl bg-leaf/50 px-4 py-2 text-sm text-green-900/80">
+              🚦 <strong>Cosa misura il semaforo:</strong> valuta <strong>solo la distanza
+              delle materie prime</strong> (quanto è corta la filiera). Non è un giudizio
+              ambientale complessivo del prodotto.
             </p>
           </div>
           <div className="mt-7">
             <LegendaSemaforo />
           </div>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-xs text-green-900/55">
+            I dati sono inseriti e dichiarati dalle aziende, uniche responsabili della loro
+            veridicità e del loro aggiornamento. ECO-VISA e BioFido sono una vetrina che
+            promuove la cultura della filiera corta: la verifica dei dati è a totale carico
+            delle aziende iscritte.
+          </p>
 
           {/* Com'è fatto il calcolatore (vive su ECO-VISA, il nostro riferimento) */}
           <div className="mx-auto mt-7 max-w-2xl rounded-2xl border border-[#cde3a8] bg-white/70 p-4 text-sm text-green-900/80">

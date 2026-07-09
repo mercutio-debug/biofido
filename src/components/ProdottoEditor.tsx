@@ -31,7 +31,7 @@ const UNITA = ["a cassetta", "al kg", "a pezzo", "a confezione", "al litro"];
 
 /**
  * Modulo completo per una scheda prodotto: guida il produttore a inserire tutti
- * i dati e mostra in tempo reale l'impronta di trasporto (distanza materie prime →
+ * i dati e mostra in tempo reale l'impronta del trasporto (distanza materie prime →
  * sede). Salva un oggetto Product nell'elenco prodotti della scheda.
  */
 export function ProdottoEditor({

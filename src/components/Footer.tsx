@@ -65,7 +65,7 @@ export function Footer() {
             </li>
             <li>
               <a href={`${ECOVISA}/calcola/`} className="hover:text-lime-500" target="_blank" rel="noopener noreferrer">
-                Come si calcola l&apos;impronta di trasporto
+                Come si calcola l&apos;impronta del trasporto
               </a>
             </li>
             <li>
