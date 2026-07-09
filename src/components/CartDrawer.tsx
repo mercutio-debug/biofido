@@ -55,7 +55,7 @@ export function CartDrawer({ portale }: { portale: string }) {
     } = await supabase.auth.getUser();
     if (!user) {
       setSending(null);
-      window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/accedi";
+      window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/accedi?tipo=cliente";
       return;
     }
     // anagrafica cliente obbligatoria: se manca, porto SUBITO al form da completare

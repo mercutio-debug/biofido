@@ -11,6 +11,18 @@ const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 export default function AccediPage() {
   const router = useRouter();
 
+  // Flusso "cliente": si arriva qui provando a ordinare/prenotare senza account.
+  // In quel caso mostro in cima un invito chiaro all'iscrizione come cliente
+  // (chi ha già l'account usa il form di accesso qui sotto).
+  const [isClienteFlow, setIsClienteFlow] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsClienteFlow(
+        new URLSearchParams(window.location.search).get("tipo") === "cliente",
+      );
+    }
+  }, []);
+
   // Se sei GIÀ loggato (es. torni indietro col tasto del browser dalla dashboard),
   // non rimostrare il login: rientra subito nell'area corretta. Evita il finto
   // "logout" che costringeva a riaccedere.
@@ -110,11 +122,25 @@ export default function AccediPage() {
       <div className="text-xs font-bold uppercase tracking-wide text-lime-500">
         Il tuo account
       </div>
-      <h1 className="title-pangea mt-2 text-4xl text-green-700">Accedi</h1>
+      <h1 className="title-pangea mt-2 text-4xl text-green-700">
+        {isClienteFlow ? "Accedi o iscriviti" : "Accedi"}
+      </h1>
       <p className="mt-3 text-green-900/80">
         Attività e clienti, stesso accesso. Stesse credenziali su BioFido ed
         ECO-VISA: un solo account per entrambi.
       </p>
+
+      {isClienteFlow && (
+        <div className="card mt-6 border-lime-500/40 bg-leaf/40 p-5">
+          <p className="text-sm text-green-900/85">
+            Per <strong>ordinare</strong> o <strong>prenotare</strong> ti serve un account
+            cliente — è gratis e bastano pochi secondi. Se ce l&apos;hai già, accedi qui sotto.
+          </p>
+          <Link href="/registrati?tipo=cliente" className="btn-lime mt-3 inline-block">
+            Iscriviti come cliente →
+          </Link>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="card mt-8 space-y-4 p-6">
         <label className="block">

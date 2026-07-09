@@ -84,8 +84,8 @@ export function SchedaImpresaModal({
       alert(
         "Per prenotare un'esperienza in azienda accedi (o crea un account cliente, è gratis). Dopo l'accesso riprendi da dove eri.",
       );
-      // login-first: chi ha già l'account entra subito; i nuovi trovano lì il link «Iscriviti come cliente»
-      router.push("/accedi");
+      // login-first: chi ha già l'account entra subito; i nuovi trovano in cima l'invito «Iscriviti come cliente»
+      router.push("/accedi?tipo=cliente");
       return;
     }
     onPrenota?.(b);
@@ -165,7 +165,7 @@ export function SchedaImpresaModal({
         }
         alert("Per ordinare un prodotto devi registrarti o accedere.");
         // su GitHub Pages il sito è servito sotto /biofido: senza basePath → 404
-        window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/accedi";
+        window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/accedi?tipo=cliente";
       }
       return false;
     }
