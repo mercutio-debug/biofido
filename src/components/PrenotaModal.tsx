@@ -91,8 +91,8 @@ export function PrenotaModal({
       setErr("Nessuna esperienza disponibile da prenotare. Ricarica la pagina o riprova.");
       return;
     }
-    if (!nome.trim() || !email.trim() || !data) {
-      setErr("Compila nome, email e data.");
+    if (!nome.trim() || !email.trim() || !tel.trim() || !data) {
+      setErr("Compila nome, email, telefono e data: il telefono serve all'azienda per confermare l'esperienza.");
       return;
     }
     if (!giornoOk) {
@@ -275,14 +275,32 @@ export function PrenotaModal({
               )}
               <label className="block">
                 <span className="label">Persone *</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={exp?.maxPersone ?? 20}
-                  className="field mt-1"
-                  value={persone}
-                  onChange={(e) => setPersone(Math.max(1, Number(e.target.value)))}
-                />
+                <div className="mt-1 flex items-center gap-3">
+                  <button
+                    type="button"
+                    aria-label="Diminuisci"
+                    onClick={() => setPersone((n) => Math.max(1, n - 1))}
+                    disabled={persone <= 1}
+                    className="flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-[#cfe3b8] bg-white text-2xl font-bold text-green-700 disabled:opacity-40"
+                  >
+                    −
+                  </button>
+                  <span className="min-w-[2.5rem] text-center font-display text-2xl text-green-800">
+                    {persone}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Aumenta"
+                    onClick={() => setPersone((n) => Math.min(exp?.maxPersone ?? 20, n + 1))}
+                    disabled={persone >= (exp?.maxPersone ?? 20)}
+                    className="flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-[#cfe3b8] bg-white text-2xl font-bold text-green-700 disabled:opacity-40"
+                  >
+                    +
+                  </button>
+                  {exp?.maxPersone ? (
+                    <span className="text-[11px] text-green-900/55">max {exp.maxPersone}</span>
+                  ) : null}
+                </div>
               </label>
               <label className="block">
                 <span className="label">Nome e cognome *</span>
@@ -298,8 +316,14 @@ export function PrenotaModal({
                 />
               </label>
               <label className="block sm:col-span-2">
-                <span className="label">Telefono</span>
-                <input className="field mt-1" value={tel} onChange={(e) => setTel(e.target.value)} />
+                <span className="label">Telefono *</span>
+                <input
+                  type="tel"
+                  className="field mt-1"
+                  value={tel}
+                  onChange={(e) => setTel(e.target.value)}
+                  placeholder="es. 333 1234567"
+                />
               </label>
               <label className="block sm:col-span-2">
                 <span className="label">Note (facoltative)</span>

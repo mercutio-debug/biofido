@@ -37,6 +37,17 @@ export function CartDrawer({ portale }: { portale: string }) {
     };
   }, []);
 
+  // col drawer aperto blocco lo scroll della pagina sotto: evita che lo sfondo
+  // scorra/si sposti (la "schermata rovinata") quando si apre il carrello.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   const count = items.reduce((n, x) => n + x.qta, 0);
   if (count === 0 && !open) return null;
 
@@ -105,11 +116,11 @@ export function CartDrawer({ portale }: { portale: string }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Apri il carrello"
-        className="fixed bottom-5 right-5 z-[150] flex items-center gap-2 rounded-full bg-green-700 px-4 py-3 font-bold text-white shadow-lg hover:bg-green-800"
+        className="fixed bottom-6 right-4 z-[160] flex items-center gap-2 rounded-full bg-green-700 px-5 py-4 text-base font-bold text-white shadow-xl ring-4 ring-lime-400/60 hover:bg-green-800"
       >
-        🛒 <span className="text-sm">Carrello</span>
+        🛒 <span>Carrello</span>
         {count > 0 && (
-          <span className="ml-1 rounded-full bg-lime-400 px-2 text-xs font-bold text-green-900">
+          <span className="ml-1 rounded-full bg-lime-400 px-2 py-0.5 text-sm font-bold text-green-900">
             {count}
           </span>
         )}
