@@ -165,7 +165,9 @@ export async function createOrdineShop(input: {
     cliente_nome: anag.nome || (user.user_metadata?.nome as string) || user.email || null,
     // se ordina come impresa, il CF di fattura è quello AZIENDALE (non personale)
     codice_fiscale: (azienda ? azienda.codiceFiscale : anag.codiceFiscale) || null,
-    indirizzo_spedizione: indirizzoClienteUnaRiga(anag) || null,
+    // impresa → indirizzo della SEDE aziendale (se compilato); privato → personale
+    indirizzo_spedizione:
+      (azienda && azienda.indirizzo ? azienda.indirizzo : indirizzoClienteUnaRiga(anag)) || null,
     telefono: anag.telefono || null,
     cliente_sdi: (azienda ? azienda.codiceSdi : anag.codiceSdi) || null,
     cliente_pec: (azienda ? azienda.pec : anag.pec) || null,

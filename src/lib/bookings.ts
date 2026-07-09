@@ -315,7 +315,8 @@ export async function createBookingRequest(input: {
     cliente_email: input.clienteEmail,
     cliente_tel: anag.telefono || input.clienteTel || null,
     cliente_cf: (azienda ? azienda.codiceFiscale : anag.codiceFiscale) || null,
-    cliente_indirizzo: indirizzoClienteUnaRiga(anag) || null,
+    cliente_indirizzo:
+      (azienda && azienda.indirizzo ? azienda.indirizzo : indirizzoClienteUnaRiga(anag)) || null,
     cliente_sdi: (azienda ? azienda.codiceSdi : anag.codiceSdi) || null,
     cliente_pec: (azienda ? azienda.pec : anag.pec) || null,
     cliente_ragione_sociale: azienda?.ragioneSociale || null,
@@ -392,7 +393,8 @@ export async function createServizioBooking(input: {
     cliente_email: input.clienteEmail,
     cliente_tel: anag.telefono || input.clienteTel || null,
     cliente_cf: (azienda ? azienda.codiceFiscale : anag.codiceFiscale) || null,
-    cliente_indirizzo: indirizzoClienteUnaRiga(anag) || null,
+    cliente_indirizzo:
+      (azienda && azienda.indirizzo ? azienda.indirizzo : indirizzoClienteUnaRiga(anag)) || null,
     cliente_sdi: (azienda ? azienda.codiceSdi : anag.codiceSdi) || null,
     cliente_pec: (azienda ? azienda.pec : anag.pec) || null,
     cliente_ragione_sociale: azienda?.ragioneSociale || null,

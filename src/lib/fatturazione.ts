@@ -77,11 +77,21 @@ export async function datiAziendaliCliente(): Promise<{
   codiceFiscale: string;
   codiceSdi: string;
   pec: string;
+  /** indirizzo della SEDE aziendale in una riga (vuoto se non compilato) */
+  indirizzo: string;
 } | null> {
   const d = await caricaDatiFatturazione();
   if (!d || !datiCompleti(d)) return null;
   const sdi = (d.codice_sdi || "").toUpperCase();
   const piva = (d.partita_iva || "").replace(/\D/g, "");
+  const indirizzo = [
+    d.indirizzo,
+    [d.cap, d.citta].filter(Boolean).join(" "),
+    d.provincia ? `(${d.provincia})` : "",
+  ]
+    .map((s) => (s ?? "").trim())
+    .filter(Boolean)
+    .join(", ");
   return {
     ragioneSociale: d.ragione_sociale.trim(),
     partitaIva: piva,
@@ -90,6 +100,7 @@ export async function datiAziendaliCliente(): Promise<{
     // 0000000 = nessun recapito SDI → si usa la PEC (o cassetto fiscale)
     codiceSdi: sdi && sdi !== "0000000" ? sdi : "",
     pec: (d.pec || "").trim(),
+    indirizzo,
   };
 }
 
