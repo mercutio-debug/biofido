@@ -13,6 +13,7 @@
 import Stripe from "npm:stripe@16.12.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { avvisaOrdineShop, scalaMagazzino } from "../_shared/ordine-side-effects.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2024-06-20",
@@ -88,6 +89,27 @@ Deno.serve(async (req) => {
       .eq("id", o.id)
       .eq("stato", "richiesto")
       .select("id");
+
+    // EFFETTI COLLATERALI (mail all'azienda + scarico magazzino) — UNA sola volta,
+    // rivendicati atomicamente sul flag `elaborato`. Storicamente il webhook non
+    // consegna mai (endpoint in un ambiente Stripe diverso dai pagamenti), perciò
+    // è QUI, nel percorso affidabile, che l'azienda viene davvero avvisata. Il
+    // webhook, se un giorno consegna, troverà `elaborato=true` e non raddoppierà.
+    // Non deve mai far fallire la risposta al cliente → tutto in try/catch.
+    try {
+      const { data: claim } = await admin
+        .from("ordini_shop")
+        .update({ elaborato: true, updated_at: new Date().toISOString() })
+        .eq("id", o.id)
+        .eq("elaborato", false)
+        .select("owner, portale, articoli, controproposta");
+      if (claim && claim.length) {
+        await scalaMagazzino(admin, claim[0]);
+        await avvisaOrdineShop(admin, String(o.id));
+      }
+    } catch (e) {
+      console.error("verify-ordine-shop: effetti collaterali:", (e as Error).message);
+    }
 
     return json({ ok: true, stato: "autorizzato", aggiornato: (upd?.length ?? 0) > 0 });
   } catch (e) {
