@@ -122,6 +122,8 @@ export default function BioFidoMap({ center, radiusKm, businesses, userLabel, on
         iconAnchor: [PLAN_MAP[b.plan].markerSize / 2, PLAN_MAP[b.plan].markerSize],
       });
       const marker = L.marker([b.lat, b.lon], { icon }).addTo(layer);
+      // nome (e città) in anteprima al passaggio del cursore, come su ECO-VISA
+      marker.bindTooltip(`${b.name}${b.city ? ` · ${b.city}` : ""}`);
       marker.on("click", () => onSelect?.(b));
     }
 
