@@ -54,6 +54,43 @@ export default function AccediPage() {
   const [recCaptcha, setRecCaptcha] = useState<string | null>(null);
   const [recCaptchaKey, setRecCaptchaKey] = useState(0);
 
+  // reinvio email di CONFERMA (account creato ma mai confermato: capita se l'email
+  // integrata di Supabase arriva in ritardo/finisce in spam)
+  const [nonConfermato, setNonConfermato] = useState(false);
+  const [reinvioMsg, setReinvioMsg] = useState<string | null>(null);
+  const [reinvioBusy, setReinvioBusy] = useState(false);
+  const [confCaptcha, setConfCaptcha] = useState<string | null>(null);
+  const [confCaptchaKey, setConfCaptchaKey] = useState(0);
+
+  async function reinviaConferma() {
+    setReinvioMsg(null);
+    if (!email.trim()) {
+      setReinvioMsg("Scrivi prima la tua email qui sopra.");
+      return;
+    }
+    if (turnstileAttivo && !confCaptcha) {
+      setReinvioMsg("Conferma di non essere un robot qui sotto.");
+      return;
+    }
+    setReinvioBusy(true);
+    const { error: err } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: {
+        emailRedirectTo: `${window.location.origin}${BASE}/benvenuto/`,
+        captchaToken: confCaptcha ?? undefined,
+      },
+    });
+    setReinvioBusy(false);
+    setConfCaptcha(null);
+    setConfCaptchaKey((k) => k + 1);
+    setReinvioMsg(
+      err
+        ? err.message
+        : "Fatto! Se l'indirizzo esiste e non è ancora confermato, ti è arrivata una nuova email di conferma. Controlla anche lo spam.",
+    );
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -69,9 +106,17 @@ export default function AccediPage() {
     });
     setLoading(false);
     if (err) {
-      const msg = /invalid login credentials/i.test(err.message)
-        ? "Email o password non corretti."
-        : err.message;
+      // email registrata ma mai confermata: Supabase blocca l'accesso. Lo distinguo
+      // dal "password sbagliata" e offro il reinvio della conferma.
+      const nonConf =
+        (err as { code?: string }).code === "email_not_confirmed" ||
+        /email not confirmed|not confirmed|confirm your email/i.test(err.message);
+      setNonConfermato(nonConf);
+      const msg = nonConf
+        ? "Questo indirizzo non è ancora confermato: apri l'email di conferma e clicca il link. Non è arrivata? Reinviala qui sotto."
+        : /invalid login credentials/i.test(err.message)
+          ? "Email o password non corretti."
+          : err.message;
       setError(msg);
       setFalliti((n) => n + 1);
       setCaptcha(null);
@@ -229,6 +274,31 @@ export default function AccediPage() {
           {recMsg && (
             <p className="rounded-lg bg-leaf p-3 text-sm font-semibold text-green-700">
               {recMsg}
+            </p>
+          )}
+        </div>
+      )}
+
+      {nonConfermato && (
+        <div className="card mt-4 space-y-3 border-amber-300 bg-amber-50 p-6">
+          <h2 className="font-display text-xl text-green-800">Conferma la tua email</h2>
+          <p className="text-sm text-green-900/75">
+            L&apos;account <strong>{email || "…"}</strong> risulta creato ma non ancora
+            confermato. Apri l&apos;email di conferma e clicca il link. Non l&apos;hai ricevuta?
+            Reinviala (controlla anche lo <strong>spam</strong>).
+          </p>
+          <Turnstile key={`conf-${confCaptchaKey}`} onToken={setConfCaptcha} />
+          <button
+            type="button"
+            className="btn-lime w-full"
+            onClick={reinviaConferma}
+            disabled={reinvioBusy || (turnstileAttivo && !confCaptcha)}
+          >
+            {reinvioBusy ? "Invio…" : "Reinvia email di conferma"}
+          </button>
+          {reinvioMsg && (
+            <p className="rounded-lg bg-white p-3 text-sm font-semibold text-green-700">
+              {reinvioMsg}
             </p>
           )}
         </div>

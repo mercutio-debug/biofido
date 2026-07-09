@@ -88,11 +88,15 @@ export default function RegistratiPage() {
       }
       router.push(isAzienda ? "/dashboard" : dest || "/");
     } else {
-      // conferma email attiva: bisogna confermare prima di accedere
+      // conferma email attiva: bisogna confermare prima di accedere.
+      // NB: se l'email esisteva già (iscrizione precedente non confermata), Supabase
+      // NON cambia la password → avviso l'utente per evitare login falliti dopo.
       setInfo(
         "Account creato! Ti abbiamo inviato un'email di conferma a " +
           email +
-          ". Conferma l'indirizzo, poi accedi.",
+          ". Conferma l'indirizzo (controlla anche lo spam), poi accedi. " +
+          "Se ti eri già iscritto con questa email, vale la password del primo tentativo: " +
+          "se non la ricordi, dopo la conferma usa «Password dimenticata» nella pagina di accesso.",
       );
     }
   }
