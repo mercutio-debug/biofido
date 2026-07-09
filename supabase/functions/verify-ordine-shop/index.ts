@@ -70,20 +70,10 @@ Deno.serve(async (req) => {
       return json({ ok: true, stato: o.stato, giaSbloccato: true });
     }
 
-    // dati di spedizione/fatturazione raccolti da Stripe Checkout
-    const det = s as {
-      shipping_details?: { address?: Record<string, string>; name?: string };
-      customer_details?: { address?: Record<string, string>; phone?: string };
-    };
-    const addr = det.shipping_details?.address ?? det.customer_details?.address ?? null;
-    const indirizzo = addr
-      ? [addr.line1, addr.line2, [addr.postal_code, addr.city].filter(Boolean).join(" "), addr.state, addr.country]
-          .filter(Boolean)
-          .join(", ")
-      : null;
-    const cf =
-      (s as { custom_fields?: { key: string; text?: { value?: string } }[] }).custom_fields ?? [];
-    const codiceFiscale = cf.find((f) => f.key === "codice_fiscale")?.text?.value?.toUpperCase() ?? null;
+    // NB: indirizzo/telefono/CF NON si leggono più da Stripe. La scheda cliente
+    // (anagrafica + eventuali dati azienda) è già "fotografata" sull'ordine alla
+    // creazione: sovrascriverla con i dati di Stripe Link porterebbe dentro il
+    // profilo salvato di un altro account (bug riscontrato in test).
 
     // aggiorno SOLO se ancora "richiesto" (condizione nel WHERE → niente race col webhook)
     const { data: upd } = await admin
@@ -92,9 +82,6 @@ Deno.serve(async (req) => {
         stato: "autorizzato",
         stripe_payment_intent: s.payment_intent ? String(s.payment_intent) : null,
         totale_cents: s.amount_total ?? null,
-        indirizzo_spedizione: indirizzo,
-        telefono: det.customer_details?.phone ?? null,
-        codice_fiscale: codiceFiscale,
         stripe_session_id: s.id,
         updated_at: new Date().toISOString(),
       })

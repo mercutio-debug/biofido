@@ -108,20 +108,13 @@ Deno.serve(async (req) => {
         transfer_data: { destination: acc.account_id },
       },
       metadata: { kind: "order_shop", ordine_shop_id: String(o.id) },
-      // l'azienda deve sapere DOVE spedire e poter emettere fattura → raccolgo
-      // indirizzo di spedizione + telefono + codice fiscale in Stripe Checkout.
-      shipping_address_collection: { allowed_countries: ["IT"] },
-      phone_number_collection: { enabled: true },
-      // codice fiscale del cliente: serve all'azienda per emettere la fattura
-      custom_fields: [
-        {
-          key: "codice_fiscale",
-          label: { type: "custom", custom: "Codice Fiscale (per la fattura)" },
-          type: "text",
-          optional: false,
-          text: { minimum_length: 11, maximum_length: 16 },
-        },
-      ],
+      // lego la sessione all'email del cliente loggato: così Stripe/Link mostra il
+      // SUO account e non ripesca il profilo salvato di un tester precedente.
+      ...(o.cliente_email ? { customer_email: String(o.cliente_email) } : {}),
+      // NB: NON raccolgo indirizzo/telefono/CF su Stripe. Nome, indirizzo, CF,
+      // SDI/PEC e dati azienda sono già raccolti dalla nostra anagrafica e
+      // "fotografati" sull'ordine: chiederli di nuovo qui è ridondante e, con
+      // Stripe Link, riempirebbe i campi col profilo salvato di un altro account.
       // includo il session_id: al ritorno l'app chiama verify-ordine-shop per
       // sbloccare l'ordine anche se il webhook non arriva (rete di sicurezza).
       success_url: `${base}/ordini/?pagamento=ok&sid={CHECKOUT_SESSION_ID}`,

@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
 
     const { data: p } = await admin
       .from("prenotazioni")
-      .select("id, owner, cliente_user_id, stato, payment_status, persone, esperienza_id, prodotto_id, voce_id, totale_cents, commissione_cents, titolo, esperienze(titolo)")
+      .select("id, owner, cliente_user_id, cliente_email, stato, payment_status, persone, esperienza_id, prodotto_id, voce_id, totale_cents, commissione_cents, titolo, esperienze(titolo)")
       .eq("id", prenotazioneId)
       .maybeSingle();
 
@@ -108,6 +108,11 @@ Deno.serve(async (req) => {
         transfer_data: { destination: acc.account_id },
       },
       metadata: { kind: "booking", prenotazione_id: String(p.id) },
+      // lego la sessione all'email del cliente: Stripe/Link mostra il SUO account
+      // e non il profilo salvato di un tester precedente sullo stesso dispositivo.
+      ...((p as { cliente_email?: string }).cliente_email
+        ? { customer_email: String((p as { cliente_email?: string }).cliente_email) }
+        : {}),
       success_url: `${SITE_URL}/prenotazioni/?pagamento=ok`,
       cancel_url: `${SITE_URL}/prenotazioni/?pagamento=annullato`,
     });
