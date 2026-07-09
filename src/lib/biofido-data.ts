@@ -32,7 +32,7 @@ export type Product = {
   image?: string;
   ingredients?: MateriaPrima[];
   certifications?: string[];
-  /** se false, il prodotto resta in vetrina SENZA semaforo di sostenibilità.
+  /** se false, il prodotto resta in vetrina SENZA semaforo della filiera.
    *  Default: true (mostra il semaforo calcolato dagli ingredienti). */
   mostraSemaforo?: boolean;
   /** true = pubblica questo prodotto ANCHE su ECO-VISA (richiede il semaforo).

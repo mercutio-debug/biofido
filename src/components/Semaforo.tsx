@@ -2,7 +2,7 @@ import type { EcoLevel } from "@/lib/footprint";
 
 const meta: Record<EcoLevel, { label: string; color: string; desc: string }> = {
   verde: {
-    label: "Sostenibile",
+    label: "Filiera corta",
     color: "var(--traffic-green)",
     desc: "Filiera corta: materie prime a basso impatto di trasporto.",
   },
@@ -14,7 +14,7 @@ const meta: Record<EcoLevel, { label: string; color: string; desc: string }> = {
   rosso: {
     label: "Alto impatto",
     color: "var(--traffic-red)",
-    desc: "Trasporti lunghi: l'impronta ecologica è elevata.",
+    desc: "Trasporti lunghi: l'impronta di trasporto è elevata.",
   },
 };
 
@@ -34,7 +34,7 @@ export function Semaforo({
     <div className="flex items-center gap-3">
       <div
         className="flex flex-col items-center gap-2 rounded-2xl bg-[#222] p-2"
-        aria-label={`Semaforo ecologico: ${m.label}`}
+        aria-label={`Semaforo della filiera: ${m.label}`}
       >
         {order.map((l) => {
           const on = l === level;

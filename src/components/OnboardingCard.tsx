@@ -204,7 +204,7 @@ export function OnboardingCard() {
             <p className="font-bold text-green-800">📋 Cosa mandarci (e a cosa serve):</p>
             <ul className="mt-2 space-y-1.5">
               <li>🧾 <strong>Listino prezzi</strong> — per inserire prodotti e prezzi giusti.</li>
-              <li>📝 <strong>Descrizione dei prodotti</strong> (ingredienti/origine) — per le schede e il <strong>semaforo di sostenibilità</strong>.</li>
+              <li>📝 <strong>Descrizione dei prodotti</strong> (ingredienti/origine) — per le schede e il <strong>semaforo della filiera</strong>.</li>
               <li>📷 <strong>Foto</strong> dei prodotti (e dell&apos;etichetta) — per una vetrina che invoglia all&apos;acquisto.</li>
               <li>📦 <strong>Quante unità hai a magazzino</strong> per ciascun prodotto — per impostare le giacenze ed evitare di vendere ciò che non c&apos;è.</li>
               <li>🏢 <strong>Dati attività</strong> (P.IVA, sede, contatti) — per fatture e spedizioni corrette.</li>

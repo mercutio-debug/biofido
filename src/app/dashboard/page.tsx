@@ -479,7 +479,7 @@ function StartPanel({
         >
           <div className="text-3xl">🚦</div>
           <div className="mt-1 font-display text-lg text-[#235d12]">Carica i tuoi PRODOTTI</div>
-          <div className="text-xs text-[#5c7a3f]">Col semaforo di sostenibilità (materie prime + origine).</div>
+          <div className="text-xs text-[#5c7a3f]">Col semaforo della filiera (materie prime + origine).</div>
         </button>
         <button
           type="button"
@@ -587,7 +587,7 @@ function ServiziAttivi() {
   }, []);
   const LABEL: Record<string, string> = {
     onboarding: "Ci pensiamo noi (onboarding negozio)",
-    report: "Report di sostenibilità",
+    report: "Report della filiera",
     badge: "Badge ECO-VISA",
   };
   return (
@@ -1229,7 +1229,7 @@ function SchedaMappaCard({
               return (
                 <div className="mt-5 rounded-2xl border-2 border-dashed border-[#cfe3b4] bg-leaf/40 p-5">
                   <h3 className="font-display text-xl text-green-800">
-                    I tuoi prodotti / semafori di sostenibilità{" "}
+                    I tuoi prodotti / semafori della filiera{" "}
                     <span className="text-sm font-normal text-green-900/60">
                       ({products.length}/{limite} · piano {PLAN_MAP[plan].label})
                     </span>
@@ -1281,7 +1281,7 @@ function SchedaMappaCard({
                         {!haSemaforoEcovisa && (
                           <p className="mt-1 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
                             🚦 Ricorda: per essere pubblicato anche su <strong>ECO-VISA</strong>,
-                            questo prodotto deve avere il <strong>semaforo di sostenibilità</strong>
+                            questo prodotto deve avere il <strong>semaforo della filiera</strong>
                             {" "}(materie prime con la loro origine).
                           </p>
                         )}

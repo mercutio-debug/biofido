@@ -67,7 +67,7 @@ function Legenda({ business: b }: { business: Business }) {
     {
       ic: "🚦",
       t: "Prodotti con prezzo + semaforo",
-      d: "Aggiungili in «I tuoi prodotti». Il prezzo lo metti nell'editor; il semaforo di sostenibilità appare se tieni attiva la spunta nel prodotto.",
+      d: "Aggiungili in «I tuoi prodotti». Il prezzo lo metti nell'editor; il semaforo della filiera appare se tieni attiva la spunta nel prodotto.",
     },
     {
       ic: "🗓️",

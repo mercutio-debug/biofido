@@ -10,7 +10,7 @@ import { useState } from "react";
  */
 const NOI = [
   "Negozio online + scheda-sito completa",
-  "Semaforo di sostenibilità incluso",
+  "Semaforo della filiera incluso",
   "Visibilità sulla mappa bio",
   "Prenotazioni, badge e statistiche",
   "Onboarding: lo shop lo carichiamo noi *",
@@ -19,7 +19,7 @@ const SHOP = [
   "Solo il negozio online",
   "Commissioni sulle vendite e app a parte",
   "Tema e configurazione a carico tuo",
-  "Nessun pubblico bio, nessuna sostenibilità",
+  "Nessun pubblico bio, nessuna filiera corta",
 ];
 
 function Card() {

@@ -6,8 +6,8 @@ type EcoCat = "verde" | "giallo" | "rosso";
 type Meta = { label: string; color: string; lampada: EcoCat; desc: string };
 
 const META: Record<Giudizio, Meta> = {
-  super_green: { label: "Super Green", color: "#2e9e0e", lampada: "verde", desc: "Tutte le materie prime sono a km0. Eccellente!" },
-  verde: { label: "Verde — sostenibile", color: "#45a82f", lampada: "verde", desc: "Materie prime per lo più molto vicine." },
+  super_green: { label: "KM0", color: "#2e9e0e", lampada: "verde", desc: "Tutte le materie prime a km0 (entro 70 km dallo stabilimento)." },
+  verde: { label: "Verde — filiera corta", color: "#45a82f", lampada: "verde", desc: "Materie prime per lo più molto vicine." },
   verde_chiaro: { label: "Verde chiaro — buono", color: "#7cb342", lampada: "verde", desc: "Filiera corta: qualche ingrediente a media distanza, niente di critico." },
   giallo_chiaro: { label: "Giallo chiaro — migliorabile", color: "#f6c416", lampada: "giallo", desc: "Materie prime tra i 1000 e i 1300 km." },
   giallo: { label: "Giallo", color: "#e7af0b", lampada: "giallo", desc: "Materie prime tra i 1300 e i 1600 km." },
@@ -51,7 +51,7 @@ export function SemaforoGrande({
   const m = META[level];
   return (
     <div className="flex items-center gap-3">
-      <div className="flex flex-col items-center gap-2 rounded-2xl bg-[#222] p-2" aria-label={`Semaforo ecologico: ${m.label}`}>
+      <div className="flex flex-col items-center gap-2 rounded-2xl bg-[#222] p-2" aria-label={`Semaforo della filiera: ${m.label}`}>
         {order.map((l) => {
           const on = l === m.lampada;
           return (
@@ -75,11 +75,11 @@ export function SemaforoGrande({
           <div className="flex items-center gap-2">
             <div className="font-display text-xl" style={{ color: m.color }}>{m.label}</div>
             {level === "super_green" && (
-              <span className="rounded-full bg-[#2e9e0e] px-2 py-0.5 text-[11px] font-bold text-white">🌱 SUPER GREEN · km0</span>
+              <span className="rounded-full bg-[#2e9e0e] px-2 py-0.5 text-[11px] font-bold text-white">🌱 KM0 · entro 70 km</span>
             )}
           </div>
           {typeof score === "number" && (
-            <div className="text-sm font-semibold text-green-900/70">Punteggio sostenibilità: {score}/100</div>
+            <div className="text-sm font-semibold text-green-900/70">Punteggio filiera: {score}/100</div>
           )}
           <p className="mt-0.5 max-w-xs text-xs text-green-900/70">{m.desc}</p>
 

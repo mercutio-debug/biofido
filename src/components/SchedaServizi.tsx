@@ -34,7 +34,7 @@ const SERVIZI: Servizio[] = [
     ecovisa: true,
   },
   { icona: "📷", nome: "Foto dei prodotti", descr: "Immagini caricate e alleggerite in automatico.", min: "silver", ancora: "scheda" },
-  { icona: "🗂️", nome: "Fino a 10 prodotti/semafori", descr: "Pubblica più prodotti (con semaforo di sostenibilità) sulla tua scheda.", min: "silver", ancora: "scheda" },
+  { icona: "🗂️", nome: "Fino a 10 prodotti/semafori", descr: "Pubblica più prodotti (con semaforo della filiera) sulla tua scheda.", min: "silver", ancora: "scheda" },
   { icona: "📝", nome: "Descrizione, sito web, contatti", descr: "Scheda più ricca e segnaposto più grande.", min: "silver", ancora: "scheda" },
   { icona: "🔍", nome: "Priorità nei risultati della zona", descr: "Sali nelle ricerche vicino a te.", min: "silver", ancora: "scheda" },
   { icona: "📊", nome: "Statistiche base", descr: "Quante visite riceve la tua scheda.", min: "silver", ancora: "scheda" },
@@ -67,7 +67,7 @@ export function SchedaServizi({ piano }: { piano: Plan; attivo?: Plan }) {
 
       <div className="mt-5 rounded-2xl border border-[#e3eed7] bg-leaf/30 p-4">
         <div className="text-sm font-bold text-green-800">
-          Prodotti / semafori di sostenibilità pubblicabili
+          Prodotti / semafori della filiera pubblicabili
         </div>
         <div className="mt-0.5 text-sm font-semibold text-green-700">
           Col piano {NOME[piano]} puoi pubblicarne fino a {limiteAttuale}.
@@ -96,7 +96,7 @@ export function SchedaServizi({ piano }: { piano: Plan; attivo?: Plan }) {
           </span>
         </div>
         <p className="mt-2 text-[11px] text-green-900/55">
-          Free: 1 · Silver: 10 · Gold: fino a 100 prodotti/semafori di sostenibilità.
+          Free: 1 · Silver: 10 · Gold: fino a 100 prodotti/semafori della filiera.
         </p>
       </div>
 

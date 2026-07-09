@@ -201,7 +201,7 @@ export function calcolaImpronta(
 }
 
 export const SEMAFORO: Record<Giudizio, { colore: string; testo: string; label: string }> = {
-  super_green: { colore: "#2e9e0e", label: "Super Green", testo: "Super Green — materie prime a km0 / locali" },
+  super_green: { colore: "#2e9e0e", label: "KM0", testo: "KM0 — materie prime entro 70 km" },
   verde: { colore: "#45a82f", label: "Verde", testo: "Verde — entro 400 km, filiera corta" },
   verde_chiaro: { colore: "#7cb342", label: "Verde chiaro", testo: "Verde chiaro — entro 1000 km" },
   giallo_chiaro: { colore: "#f6c416", label: "Giallo chiaro", testo: "Giallo chiaro — 1000–1300 km" },

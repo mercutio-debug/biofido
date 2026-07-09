@@ -1,7 +1,7 @@
 import { SEMAFORO, type Giudizio } from "@/lib/impronta";
 
 /**
- * Legenda del semaforo di sostenibilità: una scheda d'esempio per ogni tonalità,
+ * Legenda del semaforo della filiera: una scheda d'esempio per ogni tonalità,
  * con la spiegazione di cosa determina quel colore. Stesso criterio di ECO-VISA
  * (è ciò che distingue i nostri portali). Mostrata sotto la mappa di BioFido.
  */

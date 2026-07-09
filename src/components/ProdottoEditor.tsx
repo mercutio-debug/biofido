@@ -31,7 +31,7 @@ const UNITA = ["a cassetta", "al kg", "a pezzo", "a confezione", "al litro"];
 
 /**
  * Modulo completo per una scheda prodotto: guida il produttore a inserire tutti
- * i dati e mostra in tempo reale l'impronta ecologica (distanza materie prime →
+ * i dati e mostra in tempo reale l'impronta di trasporto (distanza materie prime →
  * sede). Salva un oggetto Product nell'elenco prodotti della scheda.
  */
 export function ProdottoEditor({
@@ -479,7 +479,7 @@ export function ProdottoEditor({
           </div>
         </div>
 
-        {/* flag 1: pubblicare il prodotto col semaforo di sostenibilità */}
+        {/* flag 1: pubblicare il prodotto col semaforo della filiera */}
         <label className="mt-3 flex items-start gap-2 rounded-xl border border-[#e3eed7] p-3 text-sm">
           <input
             type="checkbox"
@@ -492,7 +492,7 @@ export function ProdottoEditor({
             }}
           />
           <span className="text-green-900/85">
-            <strong>Voglio pubblicare questo prodotto con il semaforo di sostenibilità.</strong>{" "}
+            <strong>Voglio pubblicare questo prodotto con il semaforo della filiera.</strong>{" "}
             Togli la spunta per tenerlo nello shop di BioFido <em>senza</em> semaforo.
           </span>
         </label>

@@ -39,7 +39,7 @@ export function GoldPromoBanner({
     ["🛍️", "Vendi i tuoi prodotti", "I clienti ordinano online — ai pagamenti pensiamo noi."],
     ["✨", "Servizi extra prenotabili", "Visite guidate, laboratori didattici, esperienze."],
     ["🏷️", "La tua azienda raccontata", "Descrizione, foto e contatti: una scheda completa."],
-    ["📍", "Ti trovano nella community", "Visibilità tra chi cerca prodotti locali e sostenibili."],
+    ["📍", "Ti trovano nella community", "Visibilità tra chi cerca prodotti locali a km0."],
   ];
 
   return (

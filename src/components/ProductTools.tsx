@@ -67,10 +67,10 @@ export function ProductTools({
 
   return (
     <div className="panel-dark mt-8 rounded-2xl p-6 md:p-8">
-      <h2 className="font-display text-3xl">Trova alternative più ecologiche</h2>
+      <h2 className="font-display text-3xl">Trova alternative a filiera più corta</h2>
       <p className="mt-1 max-w-2xl text-[#e6f4d3]">
         Indica dove ti trovi: calcoleremo anche la CO₂ di consegna fino a te e ti
-        mostreremo prodotti simili più sostenibili, oltre agli spacci e ai negozi
+        mostreremo prodotti simili a filiera più corta, oltre agli spacci e ai negozi
         diretti entro {KM0_RADIUS} km (Spesa km0).
       </p>
 
@@ -82,7 +82,7 @@ export function ProductTools({
           onClick={() => setSubmitted(true)}
           disabled={!loc}
         >
-          🔎 Trova alternative più ecologiche
+          🔎 Trova alternative a filiera più corta
         </button>
       </div>
 

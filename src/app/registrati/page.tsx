@@ -171,7 +171,7 @@ export default function RegistratiPage() {
             />
             <span className="text-green-900/85">
               <strong>🌐 Pubblica la mia scheda anche su ECO-VISA</strong>, il portale gemello
-              della sostenibilità. Potrai cambiare idea quando vuoi dal cruscotto.
+              della filiera corta. Potrai cambiare idea quando vuoi dal cruscotto.
             </span>
           </label>
         )}

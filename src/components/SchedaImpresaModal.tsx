@@ -334,7 +334,7 @@ export function SchedaImpresaModal({
                           return (
                             <span
                               className="inline-flex flex-none items-center gap-1.5"
-                              title={`Semaforo di sostenibilità: ${sem.testo}`}
+                              title={`Semaforo della filiera: ${sem.testo}`}
                             >
                               <svg width="13" height="29" viewBox="0 0 13 29" className="flex-none" aria-hidden="true">
                                 <rect x="0.5" y="0.5" width="12" height="28" rx="4" fill="#33402c" />

@@ -41,7 +41,7 @@ export default function Home() {
                   <circle cx="7.5" cy="10.5" r="2.3" fill="#f6c416" />
                   <circle cx="7.5" cy="15" r="2.3" fill="#45a82f" />
                 </svg>
-                Calcola il tuo semaforo di sostenibilità
+                Calcola il tuo semaforo della filiera
               </a>
               <Link href="/registrati" className="btn-ghost">Hai un&apos;attività? Iscriviti</Link>
             </div>
@@ -78,7 +78,7 @@ export default function Home() {
               Che semaforo ha il tuo prodotto?
             </h2>
             <p className="mx-auto mt-2 max-w-2xl text-green-900/80">
-              Ogni prodotto bio ha un semaforo di sostenibilità che misura quanto le sue
+              Ogni prodotto bio ha un semaforo della filiera che misura quanto le sue
               materie prime arrivano da vicino — non una somma di CO₂, ma un giudizio
               qualitativo della composizione. Ecco una scheda d&apos;esempio per ogni tonalità.
             </p>

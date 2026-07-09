@@ -61,7 +61,7 @@ const FEATURES: Record<Plan, string[]> = {
   free: [
     "Segnaposto sulla mappa",
     "Categoria e città",
-    "Un tuo prodotto con semaforo di sostenibilità",
+    "Un tuo prodotto con semaforo della filiera",
   ],
   silver: [
     "Segnaposto più grande con icona",
@@ -73,7 +73,7 @@ const FEATURES: Record<Plan, string[]> = {
   ],
   gold: [
     "Una scheda-sito con URL dedicata: un vero negozio online, prodotti e servizi acquistabili da chiunque",
-    "Semaforo di sostenibilità su ogni prodotto",
+    "Semaforo della filiera su ogni prodotto",
     "Fino a 100 prodotti, con foto + 2ª foto etichetta",
     "Descrizione, sito web e contatti: scheda ricca",
     "Magazzino intelligente: stock anti-overselling",

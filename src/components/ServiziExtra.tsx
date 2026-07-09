@@ -8,7 +8,7 @@ import { getMyExtras, getStatoOnboarding } from "@/lib/onboarding";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-/** Il report di sostenibilità si può richiedere dopo 1 anno dall'iscrizione. */
+/** Il report della filiera si può richiedere dopo 1 anno dall'iscrizione. */
 const REPORT_GIORNI = 365;
 const GIORNO_MS = 24 * 60 * 60 * 1000;
 
@@ -34,7 +34,7 @@ function formatRimanente(ms: number): string {
 
 /**
  * Vetrina dei "servizi extra" (onboarding, report, badge). Ogni card ha un tasto
- * "Guarda la demo". Il REPORT di sostenibilità è speciale: si attiva solo dopo
+ * "Guarda la demo". Il REPORT della filiera è speciale: si attiva solo dopo
  * 365 giorni dall'iscrizione, con countdown prima e messaggio di auguri dopo.
  * Usata sia nella pagina pubblica /servizi-extra sia nella dashboard.
  */
@@ -175,7 +175,7 @@ export function ServiziExtra({
               ) : reportBloccato ? (
                 <div className="mt-2 rounded-xl border border-[#e3eed7] bg-leaf/40 p-3 text-center">
                   <div className="text-xs font-semibold text-green-900/70">
-                    Potrai richiedere il tuo report di sostenibilità tra
+                    Potrai richiedere il tuo report della filiera tra
                   </div>
                   <div className="mt-1 font-display text-lg tabular-nums text-green-800">
                     {formatRimanente(reportTarget! - now)}
@@ -185,7 +185,7 @@ export function ServiziExtra({
                 <>
                   <div className="mt-2 animate-pulse rounded-xl border-2 border-badge-yellow bg-[#fffbe9] p-3 text-center text-xs font-bold text-[#7a1f00]">
                     🎉 È trascorso un anno dalla tua iscrizione, complimenti! Ora puoi
-                    richiedere il tuo report di sostenibilità!!
+                    richiedere il tuo report della filiera!!
                   </div>
                   <Azione label={`🛒 Richiedi ${s.nome}`} />
                 </>
