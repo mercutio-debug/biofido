@@ -73,15 +73,20 @@ export async function caricaDatiFatturazione(): Promise<DatiFatturazione | null>
 export async function datiAziendaliCliente(): Promise<{
   ragioneSociale: string;
   partitaIva: string;
+  /** codice fiscale DELL'AZIENDA (spesso = P.IVA); mai quello della persona fisica */
+  codiceFiscale: string;
   codiceSdi: string;
   pec: string;
 } | null> {
   const d = await caricaDatiFatturazione();
   if (!d || !datiCompleti(d)) return null;
   const sdi = (d.codice_sdi || "").toUpperCase();
+  const piva = (d.partita_iva || "").replace(/\D/g, "");
   return {
     ragioneSociale: d.ragione_sociale.trim(),
-    partitaIva: (d.partita_iva || "").replace(/\D/g, ""),
+    partitaIva: piva,
+    // CF azienda: quello indicato, altrimenti = P.IVA (caso tipico delle società)
+    codiceFiscale: (d.codice_fiscale || "").trim().toUpperCase() || piva,
     // 0000000 = nessun recapito SDI → si usa la PEC (o cassetto fiscale)
     codiceSdi: sdi && sdi !== "0000000" ? sdi : "",
     pec: (d.pec || "").trim(),

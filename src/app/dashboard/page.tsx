@@ -2086,7 +2086,10 @@ function PrenotazioniCard({ ownerId }: { ownerId: string }) {
                       <div>👤 {b.clienteNome || "—"}</div>
                       <div>✉️ {b.clienteEmail || "—"}</div>
                       <div>📞 {b.clienteTel || "— (non fornito)"}</div>
-                      <div>🧾 CF: {b.clienteCf || "— (non fornito)"}</div>
+                      <div>
+                        🧾 {b.clientePiva ? "CF azienda" : "CF"}:{" "}
+                        {b.clienteCf || "— (non fornito)"}
+                      </div>
                       <div>📍 {b.clienteIndirizzo || "— (non fornito)"}</div>
                       {b.clientePiva && (
                         <div>

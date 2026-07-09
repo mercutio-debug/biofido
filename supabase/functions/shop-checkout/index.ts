@@ -83,10 +83,11 @@ Deno.serve(async (req) => {
       return json({ error: "Il venditore non ha ancora attivato i pagamenti online." }, 400);
     }
 
-    const base =
-      o.portale === "BioFido"
-        ? "https://mercutio-debug.github.io/biofido"
-        : "https://ecovisa.it";
+    // dominio di ritorno dopo il pagamento: DEVE essere lo stesso su cui è loggato
+    // il cliente, altrimenti la rete di sicurezza verify-ordine-shop (che richiede
+    // l'auth) non parte e l'ordine resta "in attesa di pagamento". BioFido ora vive
+    // sul suo dominio biofido.it (non più sul mirror github.io).
+    const base = o.portale === "BioFido" ? "https://biofido.it" : "https://ecovisa.it";
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

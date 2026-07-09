@@ -41,7 +41,7 @@ function stampaEtichetta(o: OrdineShop, m: Mittente | null) {
     o.clientePiva ? `${o.clienteRagioneSociale ?? "Azienda"} — P.IVA ${o.clientePiva}` : "",
     o.indirizzoSpedizione ?? "",
     o.telefono ? `Tel. ${o.telefono}` : "",
-    o.codiceFiscale ? `CF ${o.codiceFiscale}` : "",
+    o.codiceFiscale ? `${o.clientePiva ? "CF azienda" : "CF"} ${o.codiceFiscale}` : "",
     o.clientePec ? `PEC ${o.clientePec}` : `SDI ${o.clienteSdi || "0000000"}`,
   ]
     .filter((x) => x && x.trim())
@@ -198,7 +198,10 @@ export function OrdiniShopRicevuti() {
                   <div className="mt-1 space-y-0.5">
                     <div>👤 {o.clienteNome || "—"}</div>
                     <div>✉️ {o.clienteEmail || "—"}</div>
-                    <div>🧾 CF: {o.codiceFiscale || "— (non fornito)"}</div>
+                    <div>
+                      🧾 {o.clientePiva ? "CF azienda" : "CF"}:{" "}
+                      {o.codiceFiscale || "— (non fornito)"}
+                    </div>
                     <div>📞 {o.telefono || "— (non fornito)"}</div>
                     <div>📍 {o.indirizzoSpedizione || "— (indirizzo non fornito)"}</div>
                     {o.clientePiva && (
