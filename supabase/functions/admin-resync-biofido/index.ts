@@ -104,10 +104,14 @@ Deno.serve(async (req) => {
     if (ids.length) {
       const { data: ing } = await admin
         .from("ingredienti")
-        .select("prodotto_id,nome,origine")
+        .select("*")
         .in("prodotto_id", ids);
-      for (const r of (ing as { prodotto_id: string; nome: string; origine: string }[]) ?? []) {
-        const g = await geocode(r.origine);
+      for (const r of (ing as { prodotto_id: string; nome: string; origine: string; lat?: number | null; lon?: number | null }[]) ?? []) {
+        // se ECO-VISA ha già le coordinate salvate le uso (affidabili); altrimenti
+        // ripiego sulla geocodifica server-side (spesso bloccata nei datacenter).
+        const stored =
+          typeof r.lat === "number" && typeof r.lon === "number" ? { lat: r.lat, lon: r.lon } : null;
+        const g = stored ?? (await geocode(r.origine));
         const arr = ingByProd.get(r.prodotto_id) ?? [];
         arr.push({ nome: r.nome, origine: r.origine, ...(g ? { lat: g.lat, lon: g.lon } : {}) });
         ingByProd.set(r.prodotto_id, arr);

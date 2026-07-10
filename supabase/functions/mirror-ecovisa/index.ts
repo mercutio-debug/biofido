@@ -39,7 +39,7 @@ function prezzoNudo(raw: unknown): string | null {
   return s || null;
 }
 
-type Ingr = { nome?: string; origine?: string };
+type Ingr = { nome?: string; origine?: string; lat?: number | null; lon?: number | null };
 type Prod = {
   name?: string;
   category?: string;
@@ -196,10 +196,27 @@ Deno.serve(async (req) => {
         .select("id")
         .single();
       if (prErr || !pr) continue; // un prodotto problematico non blocca gli altri
+      // Copio anche lat/lon dell'origine (BioFido le ha già): su ECO-VISA il
+      // semaforo si calcola dalle coordinate salvate, non ri-geocodificando il
+      // testo (che dipende dalla cache del browser di chi guarda → 0 km).
       const ingRows = (p.ingredients ?? [])
         .filter((i) => (i.nome ?? "").trim() && (i.origine ?? "").trim())
-        .map((i) => ({ prodotto_id: (pr as { id: string }).id, nome: i.nome, origine: i.origine }));
-      if (ingRows.length) await admin.from("ingredienti").insert(ingRows);
+        .map((i) => ({
+          prodotto_id: (pr as { id: string }).id,
+          nome: i.nome,
+          origine: i.origine,
+          lat: i.lat ?? null,
+          lon: i.lon ?? null,
+        }));
+      if (ingRows.length) {
+        const { error: ingErr } = await admin.from("ingredienti").insert(ingRows);
+        if (ingErr && /\b(lat|lon)\b/i.test(ingErr.message)) {
+          // colonne coordinate non ancora presenti su ECO-VISA → inserisco senza
+          await admin
+            .from("ingredienti")
+            .insert(ingRows.map((r) => ({ prodotto_id: r.prodotto_id, nome: r.nome, origine: r.origine })));
+        }
+      }
     }
 
     return json({ ok: true, pubblicati: daPubblicare.length });
