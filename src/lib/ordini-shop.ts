@@ -170,8 +170,9 @@ export async function createOrdineShop(input: {
     (s, a) => s + (euroToCents(a.prezzo) ?? 0) * Math.max(1, a.qta),
     0,
   );
+  const numPezzi = input.articoli.reduce((n, a) => n + Math.max(1, a.qta), 0);
   const spedConfig = await loadSpedizioneConfig(input.owner);
-  const spedizioneCents = calcolaSpedizioneCents(spedConfig, subtotaleCents);
+  const spedizioneCents = calcolaSpedizioneCents(spedConfig, subtotaleCents, numPezzi);
   const payload: Record<string, unknown> = {
     owner: input.owner,
     spedizione_cents: spedizioneCents,

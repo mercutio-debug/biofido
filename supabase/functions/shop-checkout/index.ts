@@ -79,13 +79,31 @@ Deno.serve(async (req) => {
     // all'azienda (che paga il corriere): niente commissione sopra.
     const { data: sped } = await admin
       .from("spedizione_config")
-      .select("costo_cents, gratis_sopra_cents")
+      .select("*")
       .eq("owner", o.owner)
       .maybeSingle();
     const costoSped = (sped?.costo_cents as number | null) ?? 0;
     const sogliaGratis = (sped?.gratis_sopra_cents as number | null) ?? null;
-    const spedizioneCents =
-      sogliaGratis != null && totaleCents >= sogliaGratis ? 0 : Math.max(0, costoSped);
+    const perCollo = (sped?.pezzi_per_collo as number | null) ?? 0;
+    const costoExtra = (sped?.costo_collo_extra_cents as number | null) ?? null;
+    // n° pezzi totali dell'ordine (per il modello «a colli»)
+    const numPezzi = items.reduce((s, a) => s + Math.max(1, a.qta), 0);
+    // modello a colli (specchio di lib/spedizione.ts → calcolaSpedizioneCents):
+    // «gratis sopra» ha la precedenza; senza pezzi/collo è tariffa fissa; altrimenti
+    // base + (n° colli − 1) × costo collo extra, con n° colli = ceil(pezzi / perCollo).
+    let spedizioneCents: number;
+    if (sogliaGratis != null && totaleCents >= sogliaGratis) {
+      spedizioneCents = 0;
+    } else {
+      const base = Math.max(0, costoSped);
+      if (perCollo <= 0 || numPezzi <= perCollo) {
+        spedizioneCents = base;
+      } else {
+        const numColli = Math.ceil(numPezzi / perCollo);
+        const cx = costoExtra != null ? Math.max(0, costoExtra) : base;
+        spedizioneCents = base + (numColli - 1) * cx;
+      }
+    }
     // fotografo il valore autorevole sull'ordine (per le schede e le mail)
     await admin.from("ordini_shop").update({ spedizione_cents: spedizioneCents }).eq("id", o.id);
 

@@ -231,8 +231,9 @@ export function CartDrawer({ portale }: { portale: string }) {
                     </ul>
                     {(() => {
                       const sub = subtotaleGruppo(gruppo);
+                      const pezzi = gruppo.reduce((n, it) => n + Math.max(1, it.qta), 0);
                       const owner = gruppo[0]?.owner;
-                      const spedC = calcolaSpedizioneCents(owner ? sped[owner] : null, sub);
+                      const spedC = calcolaSpedizioneCents(owner ? sped[owner] : null, sub, pezzi);
                       return (
                         <div className="mt-3 border-t border-[#e3eed7] pt-2 text-sm">
                           <div className="flex justify-between text-green-900/70">
