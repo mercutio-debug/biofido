@@ -189,6 +189,11 @@ export function OrdiniShopRicevuti() {
                     </li>
                   ))}
                 </ul>
+                {o.spedizioneCents > 0 && (
+                  <p className="mt-1 text-xs font-semibold text-green-900/70">
+                    🚚 Spedizione incassata: {(o.spedizioneCents / 100).toLocaleString("it-IT", { style: "currency", currency: "EUR" })}
+                  </p>
+                )}
 
                 {/* dati del cliente: servono all'azienda per emettere fattura e spedire */}
                 <div className="mt-3 rounded-xl bg-leaf/40 p-3 text-xs text-green-900/85">

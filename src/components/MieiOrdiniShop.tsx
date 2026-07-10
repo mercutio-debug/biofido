@@ -117,6 +117,11 @@ export function MieiOrdiniShop() {
                   </li>
                 ))}
               </ul>
+              {o.spedizioneCents > 0 && (
+                <p className="mt-1 text-xs text-green-900/65">
+                  🚚 + spedizione {(o.spedizioneCents / 100).toLocaleString("it-IT", { style: "currency", currency: "EUR" })}
+                </p>
+              )}
 
               {s.msg && (
                 <p className="mt-3 text-sm font-semibold text-green-800">{s.msg}</p>

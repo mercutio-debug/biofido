@@ -5,12 +5,24 @@ import { supabase } from "@/lib/supabase";
 import { createOrdineShop, pagaOrdineShop } from "@/lib/ordini-shop";
 import { loadAnagraficaCliente, anagraficaClienteCompleta } from "@/lib/clienti";
 import {
+  loadSpedizioneConfig,
+  calcolaSpedizioneCents,
+  spedizioneLabel,
+  type SpedizioneConfig,
+} from "@/lib/spedizione";
+import { euroToCents } from "@/lib/prezzo";
+import {
   getCart,
   setQty,
   removeItem,
   clearGroup,
   type CartItem,
 } from "@/lib/carrello";
+
+const euro = (c: number) =>
+  new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(c / 100);
+const subtotaleGruppo = (g: CartItem[]) =>
+  g.reduce((s, it) => s + (euroToCents(it.prezzo) ?? 0) * Math.max(1, it.qta), 0);
 
 /**
  * Carrello e-commerce (Fase B): pulsante flottante + drawer. Raccoglie i
@@ -24,6 +36,8 @@ export function CartDrawer({ portale }: { portale: string }) {
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  // regola di spedizione per venditore (owner) — per mostrare il totale al cliente
+  const [sped, setSped] = useState<Record<string, SpedizioneConfig>>({});
 
   const refresh = () => setItems(getCart());
   useEffect(() => {
@@ -47,6 +61,21 @@ export function CartDrawer({ portale }: { portale: string }) {
       document.body.style.overflow = prev;
     };
   }, [open]);
+
+  // carico le tariffe di spedizione dei venditori presenti nel carrello
+  useEffect(() => {
+    const owners = [...new Set(items.map((i) => i.owner).filter(Boolean))] as string[];
+    if (!owners.length) return;
+    let vivo = true;
+    Promise.all(owners.map(async (o) => [o, await loadSpedizioneConfig(o)] as const)).then(
+      (entries) => {
+        if (vivo) setSped(Object.fromEntries(entries));
+      },
+    );
+    return () => {
+      vivo = false;
+    };
+  }, [items]);
 
   const count = items.reduce((n, x) => n + x.qta, 0);
   if (count === 0 && !open) return null;
@@ -200,6 +229,27 @@ export function CartDrawer({ portale }: { portale: string }) {
                         </li>
                       ))}
                     </ul>
+                    {(() => {
+                      const sub = subtotaleGruppo(gruppo);
+                      const owner = gruppo[0]?.owner;
+                      const spedC = calcolaSpedizioneCents(owner ? sped[owner] : null, sub);
+                      return (
+                        <div className="mt-3 border-t border-[#e3eed7] pt-2 text-sm">
+                          <div className="flex justify-between text-green-900/70">
+                            <span>Prodotti</span>
+                            <span>{euro(sub)}</span>
+                          </div>
+                          <div className="flex justify-between text-green-900/70">
+                            <span>Spedizione</span>
+                            <span>{spedizioneLabel(spedC)}</span>
+                          </div>
+                          <div className="mt-1 flex justify-between font-bold text-green-800">
+                            <span>Totale</span>
+                            <span>{euro(sub + spedC)}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <button
                       type="button"
                       onClick={() => inviaOrdine(aziendaId, gruppo)}

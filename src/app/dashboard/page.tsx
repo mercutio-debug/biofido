@@ -69,6 +69,7 @@ import { SmsNotificheToggle } from "@/components/SmsNotificheToggle";
 import { StatisticheCard } from "@/components/StatisticheCard";
 import { AnteprimaScheda } from "@/components/AnteprimaScheda";
 import { OrdiniShopRicevuti } from "@/components/OrdiniShopRicevuti";
+import { SpedizioneConfigCard } from "@/components/SpedizioneConfigCard";
 import { ImportoInput } from "@/components/ImportoInput";
 import { euroToCents } from "@/lib/prezzo";
 import { pushConfigured } from "@/lib/push";
@@ -357,7 +358,12 @@ export default function DashboardPage() {
       icon: "ordini",
       label: "Ordini shop",
       badge: conte.ordini || null,
-      content: <OrdiniShopRicevuti />,
+      content: (
+        <>
+          <SpedizioneConfigCard />
+          <OrdiniShopRicevuti />
+        </>
+      ),
     },
     {
       id: "stat",

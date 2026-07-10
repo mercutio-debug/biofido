@@ -71,7 +71,23 @@ Deno.serve(async (req) => {
       .maybeSingle();
     const plan = (sub?.plan as string) ?? "free";
     const rate = COMMISSION_RATE[plan] ?? 0;
+    // commissione SOLO sui prodotti (non sulla spedizione)
     const commissioneCents = Math.round(totaleCents * rate);
+
+    // SPEDIZIONE: tariffa del venditore (a carico del cliente), RICALCOLATA qui in
+    // modo autorevole (il valore salvato dal client non è affidabile). Passa intera
+    // all'azienda (che paga il corriere): niente commissione sopra.
+    const { data: sped } = await admin
+      .from("spedizione_config")
+      .select("costo_cents, gratis_sopra_cents")
+      .eq("owner", o.owner)
+      .maybeSingle();
+    const costoSped = (sped?.costo_cents as number | null) ?? 0;
+    const sogliaGratis = (sped?.gratis_sopra_cents as number | null) ?? null;
+    const spedizioneCents =
+      sogliaGratis != null && totaleCents >= sogliaGratis ? 0 : Math.max(0, costoSped);
+    // fotografo il valore autorevole sull'ordine (per le schede e le mail)
+    await admin.from("ordini_shop").update({ spedizione_cents: spedizioneCents }).eq("id", o.id);
 
     // account Connect del venditore
     const { data: acc } = await admin
@@ -91,14 +107,29 @@ Deno.serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      line_items: items.map((a) => ({
-        quantity: Math.max(1, a.qta),
-        price_data: {
-          currency: "eur",
-          unit_amount: euroToCents(a.prezzo),
-          product_data: { name: a.nome },
-        },
-      })),
+      line_items: [
+        ...items.map((a) => ({
+          quantity: Math.max(1, a.qta),
+          price_data: {
+            currency: "eur",
+            unit_amount: euroToCents(a.prezzo),
+            product_data: { name: a.nome },
+          },
+        })),
+        // riga spedizione (solo se dovuta): la paga il cliente, la incassa l'azienda
+        ...(spedizioneCents > 0
+          ? [
+              {
+                quantity: 1,
+                price_data: {
+                  currency: "eur",
+                  unit_amount: spedizioneCents,
+                  product_data: { name: "Spedizione" },
+                },
+              },
+            ]
+          : []),
+      ],
       payment_intent_data: {
         // CATTURA MANUALE: il cliente paga subito ma i fondi restano BLOCCATI
         // (autorizzati). L'azienda poi ACCETTA → si catturano (ordine-accetta),

@@ -6,6 +6,8 @@ import {
 } from "./clienti";
 import { datiAziendaliCliente } from "./fatturazione";
 import { aziendaSospesa } from "./connect";
+import { loadSpedizioneConfig, calcolaSpedizioneCents } from "./spedizione";
+import { euroToCents } from "./prezzo";
 
 /**
  * Ordini "shop" (Fase C): flusso RICHIESTA → CONFERMA/CONTROPROPOSTA → ACCETTA →
@@ -53,6 +55,8 @@ export type OrdineShop = {
   portale: string | null;
   articoli: ArticoloOrdine[];
   controproposta: ArticoloOrdine[] | null;
+  /** costo di spedizione (centesimi), a carico del cliente, incassato dall'azienda */
+  spedizioneCents: number;
   stato: StatoOrdineShop;
   nota: string | null;
   /** numero ordine consecutivo per azienda + anno (es. 1 → "0001/2026"). Assegnato
@@ -104,6 +108,7 @@ type Row = {
   portale: string | null;
   articoli: ArticoloOrdine[] | null;
   controproposta: ArticoloOrdine[] | null;
+  spedizione_cents?: number | null;
   stato: StatoOrdineShop;
   nota: string | null;
   numero_progressivo: number | null;
@@ -128,6 +133,7 @@ const fromRow = (r: Row): OrdineShop => ({
   portale: r.portale,
   articoli: r.articoli ?? [],
   controproposta: r.controproposta ?? null,
+  spedizioneCents: r.spedizione_cents ?? 0,
   stato: r.stato,
   nota: r.nota,
   numeroProgressivo: r.numero_progressivo ?? null,
@@ -158,8 +164,17 @@ export async function createOrdineShop(input: {
   // se il cliente ordina come impresa (fatturazione con P.IVA), fotografo anche
   // ragione sociale/P.IVA e uso il suo recapito SDI/PEC aziendale per la fattura B2B
   const azienda = await datiAziendaliCliente();
+  // spedizione: tariffa del venditore su questo sub-totale (a carico del cliente).
+  // shop-checkout la RICALCOLA in modo autorevole prima di addebitare (anti-manomissione).
+  const subtotaleCents = input.articoli.reduce(
+    (s, a) => s + (euroToCents(a.prezzo) ?? 0) * Math.max(1, a.qta),
+    0,
+  );
+  const spedConfig = await loadSpedizioneConfig(input.owner);
+  const spedizioneCents = calcolaSpedizioneCents(spedConfig, subtotaleCents);
   const payload: Record<string, unknown> = {
     owner: input.owner,
+    spedizione_cents: spedizioneCents,
     cliente_user_id: user.id,
     cliente_email: user.email ?? null,
     cliente_nome: anag.nome || (user.user_metadata?.nome as string) || user.email || null,
@@ -180,11 +195,12 @@ export async function createOrdineShop(input: {
   };
   let { data, error } = await supabase.from("ordini_shop").insert(payload).select("id").single();
   // colonne fattura non ancora presenti su DB più vecchi → le tolgo e riprovo
-  if (error && /cliente_sdi|cliente_pec|cliente_ragione_sociale|cliente_piva/i.test(error.message)) {
+  if (error && /cliente_sdi|cliente_pec|cliente_ragione_sociale|cliente_piva|spedizione_cents/i.test(error.message)) {
     delete payload.cliente_sdi;
     delete payload.cliente_pec;
     delete payload.cliente_ragione_sociale;
     delete payload.cliente_piva;
+    delete payload.spedizione_cents;
     ({ data, error } = await supabase.from("ordini_shop").insert(payload).select("id").single());
   }
   return { id: (data as { id?: string } | null)?.id, error: error?.message };
