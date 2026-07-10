@@ -14,7 +14,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 export type IconKey =
   | "start" | "piano" | "prodotti" | "catalogo" | "dati" | "bio" | "anteprima"
   | "messaggi" | "prenotazioni" | "ordini" | "statistiche" | "incassi"
-  | "extra" | "onboarding" | "attivi" | "spedizioni";
+  | "extra" | "onboarding" | "attivi" | "spedizioni" | "magazzino";
 
 export type DashPanel = {
   id: string;
@@ -23,6 +23,8 @@ export type DashPanel = {
   tone?: "verde" | "giallo";
   /** numero/stringa nel pallino rosso; null/0 = nessun badge */
   badge?: number | string | null;
+  /** pallino colorato (hex) accanto alla label, es. livello scorte del magazzino */
+  dot?: string | null;
   /** intestazione di gruppo mostrata SOPRA questa voce */
   section?: string;
   content: ReactNode;
@@ -49,6 +51,7 @@ const ICON: Record<IconKey, ReactNode> = {
   onboarding: <path d="M5 19l9-9M13 4.5l2 2M18 8l1.5 1.5M15.5 3l.6.6M9.5 5l.6.6" />,
   attivi: <><path d="M4 6h10M4 12h10M4 18h7" /><path d="M16 16.5l2 2 4-4" /></>,
   spedizioni: <><path d="M3 6h11v9H3zM14 9h4l3 3v3h-7z" /><circle cx="7.5" cy="18" r="1.6" /><circle cx="17" cy="18" r="1.6" /></>,
+  magazzino: <><path d="M3 21V9l9-5 9 5v12z" /><path d="M3 9h18" /><path d="M9 21v-6h6v6" /></>,
 };
 
 function Icona({ k }: { k: IconKey }) {
@@ -212,6 +215,13 @@ export function DashboardShell({
                       <Icona k={p.icon} />
                     </span>
                     <span className={`flex-1 truncate ${collassata ? "md:hidden" : ""}`}>{p.label}</span>
+                    {p.dot && (
+                      <span
+                        className="h-2.5 w-2.5 flex-none rounded-full ring-2 ring-white"
+                        style={{ background: p.dot }}
+                        aria-hidden
+                      />
+                    )}
                     {!!p.badge && p.badge !== 0 && (
                       <span
                         className={`flex h-[18px] min-w-[18px] flex-none items-center justify-center rounded-full px-1 text-[10px] font-bold text-white ${

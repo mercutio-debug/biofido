@@ -70,6 +70,8 @@ import { StatisticheCard } from "@/components/StatisticheCard";
 import { AnteprimaScheda } from "@/components/AnteprimaScheda";
 import { OrdiniShopRicevuti } from "@/components/OrdiniShopRicevuti";
 import { SpedizioneConfigCard } from "@/components/SpedizioneConfigCard";
+import { MagazzinoCard, type VoceMagazzino } from "@/components/MagazzinoCard";
+import { livelloMagazzino, peggiorLivello, COLORE_MAGAZZINO } from "@/lib/magazzino";
 import { ImportoInput } from "@/components/ImportoInput";
 import { euroToCents } from "@/lib/prezzo";
 import { pushConfigured } from "@/lib/push";
@@ -101,6 +103,8 @@ export default function DashboardPage() {
   const [conte, setConte] = useState({ ordini: 0, prenotazioni: 0 });
   // Acquisto in sospeso (pagamento avviato ma non completato): card "Completa".
   const [sospeso, setSospeso] = useState<AcquistoSospeso | null>(null);
+  // righe magazzino (prodotti shop con giacenza gestita) per la sezione + pallino
+  const [magVoci, setMagVoci] = useState<VoceMagazzino[]>([]);
 
   // badge sidebar + stato onboarding (best-effort, non bloccante)
   useEffect(() => {
@@ -108,6 +112,15 @@ export default function DashboardPage() {
     contaInSospeso().then(setConte).catch(() => {});
     getMyExtras()
       .then((ex) => setOnbAttivo(ex.includes("onboarding")))
+      .catch(() => {});
+    // magazzino: prodotti dello shop con giacenza gestita
+    loadMyBusiness(user.id)
+      .then((b) => {
+        const voci: VoceMagazzino[] = (b?.products ?? [])
+          .filter((p) => p.in_shop && p.giacenza != null)
+          .map((p) => ({ nome: p.name, giacenza: p.giacenza, iniziale: p.giacenza_iniziale }));
+        setMagVoci(voci);
+      })
       .catch(() => {});
   }, [user]);
 
@@ -281,6 +294,10 @@ export default function DashboardPage() {
       </div>
     ) : null;
 
+  // pallino accanto a «Magazzino»: livello peggiore tra i prodotti gestiti
+  const magLiv = peggiorLivello(magVoci.map((v) => livelloMagazzino(v.giacenza, v.iniziale)));
+  const magDot = magLiv ? COLORE_MAGAZZINO[magLiv] : null;
+
   const panels: DashPanel[] = [
     {
       id: "start",
@@ -366,6 +383,14 @@ export default function DashboardPage() {
       label: "Ordini shop",
       badge: conte.ordini || null,
       content: <OrdiniShopRicevuti />,
+    },
+    {
+      id: "mag",
+      section: "Attività",
+      icon: "magazzino",
+      label: "Magazzino",
+      dot: magDot,
+      content: <MagazzinoCard voci={magVoci} />,
     },
     {
       id: "stat",
