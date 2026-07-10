@@ -106,12 +106,19 @@ Deno.serve(async (req) => {
         .from("ingredienti")
         .select("*")
         .in("prodotto_id", ids);
-      for (const r of (ing as { prodotto_id: string; nome: string; origine: string; lat?: number | null; lon?: number | null }[]) ?? []) {
+      for (const r of (ing as { id?: string; prodotto_id: string; nome: string; origine: string; lat?: number | null; lon?: number | null }[]) ?? []) {
         // se ECO-VISA ha già le coordinate salvate le uso (affidabili); altrimenti
-        // ripiego sulla geocodifica server-side (spesso bloccata nei datacenter).
+        // ripiego sulla geocodifica (cache del browser dell'admin → poi Nominatim).
         const stored =
           typeof r.lat === "number" && typeof r.lon === "number" ? { lat: r.lat, lon: r.lon } : null;
         const g = stored ?? (await geocode(r.origine));
+        // BACKFILL ECO-VISA: se la riga non ha ancora le coordinate, scrivile ora nella
+        // tabella `ingredienti`. Così l'impronta ECO-VISA (che le legge dal DB) smette
+        // di dipendere dalla cache del browser di chi guarda (bug «0 km»). Un solo clic
+        // su «Re-sincronizza BioFido» allinea entrambi i portali.
+        if (!stored && g && r.id) {
+          await admin.from("ingredienti").update({ lat: g.lat, lon: g.lon }).eq("id", r.id);
+        }
         const arr = ingByProd.get(r.prodotto_id) ?? [];
         arr.push({ nome: r.nome, origine: r.origine, ...(g ? { lat: g.lat, lon: g.lon } : {}) });
         ingByProd.set(r.prodotto_id, arr);
