@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.pangea.biofido",
       "sha256_cert_fingerprints": [
-        "SOSTITUIRE_CON_SHA256_DA_PLAY_CONSOLE"
+        "1A:76:85:57:8E:12:F7:FD:B7:82:76:C5:2D:68:65:FE:AF:EF:CC:82:2D:A2:2B:FC:7C:B0:28:7D:74:DC:1A:44",
+        "SOSTITUIRE_CON_SHA256_APP_SIGNING_DA_PLAY_CONSOLE"
       ]
     }
   }
