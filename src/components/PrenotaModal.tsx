@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Business } from "@/lib/biofido-data";
-import { createBookingRequest, euroCents } from "@/lib/bookings";
+import { createBookingRequest, euroCents, fasceDisponibili } from "@/lib/bookings";
 import { payBooking, ownerPuoIncassare } from "@/lib/connect";
 import { billingEnabled } from "@/lib/billing";
 import { supabase } from "@/lib/supabase";
@@ -67,6 +67,37 @@ export function PrenotaModal({
   };
   const giornoOk = !data || giorniAmmessi.length === 0 || giorniAmmessi.includes(weekdayOf(data));
 
+  // fasce orarie con disponibilità (se l'azienda le ha impostate): quando il cliente
+  // sceglie la data, carico i posti liberi per fascia e nascondo/disabilito quelle piene.
+  const haFasce = (exp?.fasceOrarie?.length ?? 0) > 0;
+  const [fasceDisp, setFasceDisp] = useState<
+    { label: string; inizio: string; fine: string; postiLiberi: number; piena: boolean }[]
+  >([]);
+  const [fasciaSel, setFasciaSel] = useState("");
+  useEffect(() => {
+    setFasciaSel("");
+    if (!exp || !haFasce || !data || !giornoOk || demo) {
+      setFasceDisp([]);
+      return;
+    }
+    let vivo = true;
+    fasceDisponibili(exp, data).then((r) => {
+      if (vivo)
+        setFasceDisp(
+          r.map((x) => ({
+            label: x.label,
+            inizio: x.fascia.inizio,
+            fine: x.fascia.fine,
+            postiLiberi: x.postiLiberi,
+            piena: x.piena,
+          })),
+        );
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [exp, haFasce, data, giornoOk, demo]);
+
   // blocca lo scroll di sfondo finché il modale è aperto (no shift di pagina su mobile)
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -103,6 +134,10 @@ export function PrenotaModal({
       );
       return;
     }
+    if (haFasce && !fasciaSel) {
+      setErr("Scegli una fascia oraria disponibile.");
+      return;
+    }
     setSaving(true);
     setErr(null);
 
@@ -120,7 +155,7 @@ export function PrenotaModal({
       clienteEmail: email,
       clienteTel: tel,
       dataRichiesta: data,
-      orario: orarioFisso || orarioCliente || undefined,
+      orario: fasciaSel || orarioFisso || orarioCliente || undefined,
       persone,
       note,
     });
@@ -253,8 +288,40 @@ export function PrenotaModal({
                   </span>
                 )}
               </label>
-              {/* orario: fissato dall'azienda (bloccato) oppure preferenza del cliente */}
-              {orarioFisso ? (
+              {/* orario: fasce prenotabili (con disponibilità) > orario fisso > libero */}
+              {haFasce ? (
+                <div className="block sm:col-span-2">
+                  <span className="label">Fascia oraria *</span>
+                  {!data || !giornoOk ? (
+                    <p className="mt-1 text-[11px] text-green-900/55">Scegli prima una data valida.</p>
+                  ) : fasceDisp.length === 0 ? (
+                    <p className="mt-1 text-[11px] text-green-900/55">Carico le disponibilità…</p>
+                  ) : (
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {fasceDisp.map((f) => (
+                        <button
+                          key={f.label}
+                          type="button"
+                          disabled={f.piena}
+                          onClick={() => setFasciaSel(f.label)}
+                          className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
+                            f.piena
+                              ? "cursor-not-allowed border-[#e3eed7] bg-stone-100 text-stone-400 line-through"
+                              : fasciaSel === f.label
+                                ? "border-lime-500 bg-green-700 text-white"
+                                : "border-[#cfe3b8] bg-white text-green-800 hover:bg-leaf/50"
+                          }`}
+                        >
+                          {f.inizio}–{f.fine}
+                          <span className="ml-1 text-[11px] font-normal">
+                            {f.piena ? "· al completo" : `· ${f.postiLiberi} posti`}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : orarioFisso ? (
                 <label className="block">
                   <span className="label">Orario</span>
                   <input type="time" className="field mt-1 bg-leaf/40" value={orarioFisso} readOnly />

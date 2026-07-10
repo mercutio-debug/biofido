@@ -23,11 +23,21 @@ export type Experience = {
   giorniSettimana?: number[];
   /** orario fisso "HH:MM" deciso dall'azienda. Vuoto = orario libero per il cliente. */
   orario?: string;
+  /** fino a 3 fasce orarie prenotabili (es. 9:30–13:00). Se presenti, il cliente
+   *  sceglie una fascia e vengono nascoste quelle già al completo per quella data. */
+  fasceOrarie?: Fascia[];
+  /** posti totali per (data + fascia). Vuoto = usa maxPersone come capienza. */
+  capienzaSlot?: number;
   /** lingue in cui si svolge l'attività (codici ISO, es. ["it","en"]); per i turisti */
   lingue?: string[];
   /** foto dell'esperienza */
   immagine?: string;
 };
+
+/** Fascia oraria prenotabile: "HH:MM"–"HH:MM". L'etichetta salvata sulla
+ *  prenotazione (campo orario) è `${inizio}-${fine}`. */
+export type Fascia = { inizio: string; fine: string };
+export const fasciaLabel = (f: Fascia) => `${f.inizio}-${f.fine}`;
 
 export type BookingStatus = "in_attesa" | "confermata" | "rifiutata" | "annullata";
 
@@ -116,6 +126,8 @@ type ExpRow = {
   attiva: boolean;
   giorni_settimana: number[] | null;
   orario: string | null;
+  fasce_orarie: Fascia[] | null;
+  capienza_slot: number | null;
   lingue: string[] | null;
   immagine: string | null;
 };
@@ -131,6 +143,8 @@ const fromExpRow = (r: ExpRow): Experience => ({
   attiva: r.attiva,
   giorniSettimana: r.giorni_settimana ?? undefined,
   orario: r.orario ?? undefined,
+  fasceOrarie: r.fasce_orarie && r.fasce_orarie.length ? r.fasce_orarie : undefined,
+  capienzaSlot: r.capienza_slot ?? undefined,
   lingue: r.lingue && r.lingue.length ? r.lingue : undefined,
   immagine: r.immagine ?? undefined,
 });
@@ -158,14 +172,18 @@ export async function createExperience(
     attiva: e.attiva,
     giorni_settimana: e.giorniSettimana && e.giorniSettimana.length ? e.giorniSettimana : null,
     orario: e.orario || null,
+    fasce_orarie: e.fasceOrarie && e.fasceOrarie.length ? e.fasceOrarie : null,
+    capienza_slot: e.capienzaSlot ?? null,
     lingue: e.lingue && e.lingue.length ? e.lingue : null,
     immagine: e.immagine || null,
   };
   let { error } = await supabase.from("esperienze").insert(payload);
   // se le colonne nuove non esistono ancora nel DB, le tolgo e riprovo
-  if (error && /giorni_settimana|orario|lingue|immagine/i.test(error.message)) {
+  if (error && /giorni_settimana|orario|fasce_orarie|capienza_slot|lingue|immagine/i.test(error.message)) {
     delete payload.giorni_settimana;
     delete payload.orario;
+    delete payload.fasce_orarie;
+    delete payload.capienza_slot;
     delete payload.lingue;
     delete payload.immagine;
     ({ error } = await supabase.from("esperienze").insert(payload));
@@ -186,13 +204,17 @@ export async function updateExperience(
     attiva: e.attiva,
     giorni_settimana: e.giorniSettimana && e.giorniSettimana.length ? e.giorniSettimana : null,
     orario: e.orario || null,
+    fasce_orarie: e.fasceOrarie && e.fasceOrarie.length ? e.fasceOrarie : null,
+    capienza_slot: e.capienzaSlot ?? null,
     lingue: e.lingue && e.lingue.length ? e.lingue : null,
     immagine: e.immagine || null,
   };
   let { error } = await supabase.from("esperienze").update(payload).eq("id", id);
-  if (error && /giorni_settimana|orario|lingue|immagine/i.test(error.message)) {
+  if (error && /giorni_settimana|orario|fasce_orarie|capienza_slot|lingue|immagine/i.test(error.message)) {
     delete payload.giorni_settimana;
     delete payload.orario;
+    delete payload.fasce_orarie;
+    delete payload.capienza_slot;
     delete payload.lingue;
     delete payload.immagine;
     ({ error } = await supabase.from("esperienze").update(payload).eq("id", id));
@@ -202,6 +224,34 @@ export async function updateExperience(
 
 export async function deleteExperience(id: string): Promise<void> {
   await supabase.from("esperienze").delete().eq("id", id);
+}
+
+/** Disponibilità delle fasce orarie di un'esperienza in una certa data: per ogni
+ *  fascia i posti liberi = capienza − persone già prenotate (escluse rifiutate/
+ *  annullate). Serve al cliente per NON prenotare uno slot già al completo. */
+export async function fasceDisponibili(
+  esp: Experience,
+  dataISO: string,
+): Promise<{ fascia: Fascia; label: string; postiLiberi: number; piena: boolean }[]> {
+  const fasce = esp.fasceOrarie ?? [];
+  if (!fasce.length || !dataISO) return [];
+  const capienza = esp.capienzaSlot ?? esp.maxPersone ?? 0;
+  const { data } = await supabase
+    .from("prenotazioni")
+    .select("orario_richiesto, persone, stato")
+    .eq("esperienza_id", esp.id)
+    .eq("data_richiesta", dataISO)
+    .in("stato", ["in_attesa", "confermata"]);
+  const rows =
+    (data as { orario_richiesto: string | null; persone: number | null }[] | null) ?? [];
+  return fasce.map((f) => {
+    const label = fasciaLabel(f);
+    const prese = rows
+      .filter((r) => r.orario_richiesto === label)
+      .reduce((s, r) => s + (r.persone ?? 0), 0);
+    const postiLiberi = Math.max(0, capienza - prese);
+    return { fascia: f, label, postiLiberi, piena: postiLiberi <= 0 };
+  });
 }
 
 /** Esperienze attive dei produttori indicati, raggruppate per owner. */
