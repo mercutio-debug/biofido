@@ -135,6 +135,12 @@ Deno.serve(async (req) => {
           ...(p.foto2 ? { foto2: p.foto2 } : {}),
           ...(p.descrizione ? { description: p.descrizione } : {}),
           ...(p.categoria ? { category: p.categoria } : {}),
+          // confezione/contenuto/unità/durata: erano lasciate indietro → su BioFido
+          // mancava «flacone · 10 ml». Ora la scheda è specchiata come ECO-VISA.
+          ...(p.confezione ? { confezione: p.confezione } : {}),
+          ...(p.contenuto != null ? { contenuto: p.contenuto } : {}),
+          ...(p.unita ? { unita: p.unita } : {}),
+          ...(p.durata ? { durata: p.durata } : {}),
         };
       });
 
