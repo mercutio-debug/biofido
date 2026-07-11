@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Anton, Barlow } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
@@ -9,6 +8,7 @@ import { RegisterSW } from "@/components/RegisterSW";
 import { UpdateChecker } from "@/components/UpdateChecker";
 import { CookieBanner } from "@/components/CookieBanner";
 import { AccessibilityWidget } from "@/components/AccessibilityWidget";
+import { SplashController } from "@/components/SplashController";
 
 const anton = Anton({
   weight: "400",
@@ -95,37 +95,11 @@ export const viewport: Viewport = {
   themeColor: "#5baf38",
 };
 
-// Lancio dell'app: splash bianco a tutto schermo col logo Fido → abbaio → dissolvenza.
-// Script INLINE (beforeInteractive) così lo splash copre SUBITO la pagina, prima
-// dell'hydration di React (niente lampo di homepage). Lo splash è iniettato via JS
-// (non nel tree React → nessun conflitto di hydration) e rimosso dopo la dissolvenza.
-// Una sola volta per SESSIONE: non riappare a ogni navigazione interna. File
-// precaricati (<link>). Autoplay: tentativo subito, fallback al primo tocco.
+// Lancio dell'app: splash bianco col logo Fido (renderizzato SUBITO nell'HTML qui
+// sotto, così copre la homepage dal primo frame), poi SplashController lo tiene
+// ~3s, sfuma e fa partire l'abbaio quando ricompare la homepage. File precaricati.
 const BAU_SRC = `${BASE}/audio/bau.mp3`;
 const SPLASH_SRC = `${BASE}/brand/biofido-splash.png`;
-const launchScript = `(function(){try{
-  if(sessionStorage.getItem('biofido_launch'))return;
-  sessionStorage.setItem('biofido_launch','1');
-  var ov=document.createElement('div');
-  ov.id='biofido-splash';
-  ov.setAttribute('aria-hidden','true');
-  ov.style.cssText='position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:#ffffff;opacity:1;transition:opacity .45s ease;';
-  var img=document.createElement('img');
-  img.src=${JSON.stringify(SPLASH_SRC)};
-  img.alt='BioFido';
-  img.decoding='async';
-  img.style.cssText='width:62vw;max-width:280px;height:auto;';
-  ov.appendChild(img);
-  (document.body||document.documentElement).appendChild(ov);
-  var a=new Audio(${JSON.stringify(BAU_SRC)}); a.preload='auto'; a.volume=0.75;
-  var barked=false;
-  function bark(){if(barked)return;var p=a.play();if(p&&p.then){p.then(function(){barked=true;}).catch(function(){});}}
-  setTimeout(bark,350);
-  window.addEventListener('pointerdown',bark);
-  window.addEventListener('touchstart',bark);
-  window.addEventListener('keydown',bark);
-  setTimeout(function(){ov.style.opacity='0';setTimeout(function(){if(ov&&ov.parentNode)ov.parentNode.removeChild(ov);},520);},1400);
-}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -133,11 +107,36 @@ export default function RootLayout({
   return (
     <html lang="it" className={`${anton.variable} ${barlow.variable}`}>
       <body className="min-h-full flex flex-col">
-        {/* Lancio (splash + abbaio): precarico logo e audio, poi lo script di
-            lancio parte prima dell'hydration (vedi launchScript). */}
+        {/* Splash di lancio: renderizzato SUBITO nell'HTML → copre la homepage dal
+            primo frame (niente lampo). SplashController lo tiene ~3s, poi sfuma +
+            abbaio. Coordinate esplicite (niente `inset`: alcuni WebView lo ignorano
+            → il logo finiva in basso a destra). */}
         <link rel="preload" as="image" href={SPLASH_SRC} />
         <link rel="preload" as="audio" href={BAU_SRC} />
-        <Script id="biofido-launch" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: launchScript }} />
+        <div
+          id="biofido-splash"
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 2147483647,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#ffffff",
+            opacity: 1,
+            transition: "opacity .4s ease",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={SPLASH_SRC} alt="BioFido" style={{ width: "62vw", maxWidth: 280, height: "auto" }} />
+        </div>
+        <SplashController />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
