@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Anton, Barlow } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
@@ -120,7 +121,7 @@ export default function RootLayout({
         {/* Abbaio all'apertura: precarico il file e lo faccio partire subito,
             prima dell'hydration (vedi barkScript). */}
         <link rel="preload" as="audio" href={BAU_SRC} />
-        <script dangerouslySetInnerHTML={{ __html: barkScript }} />
+        <Script id="bark-on-start" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: barkScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
