@@ -122,20 +122,21 @@ export default function RootLayout({
             left: 0,
             right: 0,
             bottom: 0,
-            width: "100%",
-            height: "100%",
+            width: "100vw",
+            height: "100vh",
             zIndex: 2147483647,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "#ffffff",
+            // Logo come BACKGROUND centrato: background-position:center non può
+            // "spostarsi" (a differenza di un <img> in flex, che su certi WebView
+            // finiva in basso a destra). A prova di quirk di rendering.
+            backgroundColor: "#ffffff",
+            backgroundImage: `url(${SPLASH_SRC})`,
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center center",
+            backgroundSize: "min(62vw, 280px)",
             opacity: 1,
             transition: "opacity .4s ease",
           }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={SPLASH_SRC} alt="BioFido" style={{ width: "62vw", maxWidth: 280, height: "auto" }} />
-        </div>
+        />
         <SplashController />
         <script
           type="application/ld+json"
