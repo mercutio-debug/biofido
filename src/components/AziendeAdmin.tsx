@@ -109,6 +109,8 @@ export function AziendeAdmin() {
   const [apertaId, setApertaId] = useState<string | null>(null); // scheda aperta
   // "visto" dall'admin: quando richiude una scheda, la sua notifica si spegne
   const [visto, setVisto] = useState<Record<string, number>>({});
+  // progresso del "Re-sincronizza TUTTE" (bulk): {done, tot} mentre gira, null a riposo
+  const [resyncAll, setResyncAll] = useState<{ done: number; tot: number } | null>(null);
 
   // carica i timestamp "visto" salvati localmente
   useEffect(() => {
@@ -130,6 +132,48 @@ export function AziendeAdmin() {
       }
       return next;
     });
+  }
+
+  // Bulk: ri-sincronizza su BioFido TUTTE le aziende con scheda, una alla volta
+  // (rispetta il rate-limit di OpenStreetMap). La edge backfilla anche le
+  // coordinate degli ingredienti su ECO-VISA (fix impronta «0 km»). Progress live.
+  async function resyncTutte() {
+    const target = companies.filter(
+      (c) => tipoOf(c) === "azienda" && !!(c.azienda as { id?: string } | null)?.id,
+    );
+    if (!target.length) {
+      setMsg("Nessuna azienda con scheda da sincronizzare.");
+      return;
+    }
+    if (
+      !window.confirm(
+        `Ri-sincronizzare su BioFido tutte le ${target.length} aziende con scheda?\n\n` +
+          `Aggiorna semaforo, carrello, confezione e coordinate dell'impronta. ` +
+          `Può richiedere qualche minuto (geocodifica delle origini).`,
+      )
+    )
+      return;
+    let ok = 0;
+    let ko = 0;
+    let prod = 0;
+    setResyncAll({ done: 0, tot: target.length });
+    for (let i = 0; i < target.length; i++) {
+      const c = target[i];
+      const r = await adminResyncBiofido(c.userId, (c.azienda as { id?: string }).id);
+      if (r.error) ko++;
+      else {
+        ok++;
+        prod += r.prodotti ?? 0;
+      }
+      setResyncAll({ done: i + 1, tot: target.length });
+    }
+    setResyncAll(null);
+    setMsg(
+      `✅ Re-sync completato: ${ok} aziende (${prod} prodotti)` +
+        (ko ? ` · ⚠️ ${ko} con errori` : "") +
+        ". Semaforo, schede e impronta allineati.",
+    );
+    load();
   }
 
   const load = useCallback(async () => {
@@ -239,9 +283,19 @@ export function AziendeAdmin() {
             {companies.length} account · {conProfilo} con scheda compilata.
           </p>
         </div>
-        <button onClick={load} className="btn-ghost text-sm" disabled={loading}>
-          {loading ? "Carico…" : "↻ Aggiorna"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={resyncTutte}
+            className="btn-ghost text-sm"
+            disabled={loading || !!resyncAll}
+            title="Ricopia prodotti, ingredienti (semaforo), confezione e coordinate impronta di TUTTE le aziende su BioFido"
+          >
+            {resyncAll ? `Ri-sincronizzo… ${resyncAll.done}/${resyncAll.tot}` : "🔄 Re-sincronizza TUTTE"}
+          </button>
+          <button onClick={load} className="btn-ghost text-sm" disabled={loading}>
+            {loading ? "Carico…" : "↻ Aggiorna"}
+          </button>
+        </div>
       </div>
 
       {msg && (
