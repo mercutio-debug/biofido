@@ -1,7 +1,7 @@
 /* Service worker BioFido — installabilità PWA, cache offline e notifiche Push. */
 
 // Nome cache: cambiare la versione invalida la vecchia cache al prossimo deploy.
-const CACHE = "biofido-cache-v3";
+const CACHE = "biofido-cache-v4";
 // Cartella base dell'app (gestisce il basePath /biofido/ di GitHub Pages).
 const BASE = new URL("./", self.location).pathname;
 // Risorse minime dell'"app shell" da avere subito disponibili offline.
@@ -56,7 +56,10 @@ self.addEventListener("fetch", (event) => {
 async function networkFirst(req) {
   const cache = await caches.open(CACHE);
   try {
-    const res = await fetch(req);
+    // `no-store`: bypassa la cache HTTP del browser/host, così la pagina è SEMPRE
+    // l'ultima versione (altrimenti un HTML vecchio in cache HTTP vanificava il
+    // network-first → l'app restava su una build precedente).
+    const res = await fetch(req, { cache: "no-store" });
     // non mettere in cache i redirect (romperebbero la navigazione offline)
     if (res && res.ok && !res.redirected) cache.put(req, res.clone());
     return res;
