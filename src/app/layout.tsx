@@ -4,7 +4,6 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
-import { BarkOnStart } from "@/components/BarkOnStart";
 import { RegisterSW } from "@/components/RegisterSW";
 import { UpdateChecker } from "@/components/UpdateChecker";
 import { CookieBanner } from "@/components/CookieBanner";
@@ -95,12 +94,33 @@ export const viewport: Viewport = {
   themeColor: "#5baf38",
 };
 
+// Fido saluta con un "bau" all'apertura. Script INLINE (eseguito durante il
+// parsing dell'HTML, PRIMA dell'hydration di React) così parte subito e non
+// "dopo qualche secondo". Tentativo immediato d'autoplay; se bloccato, al primo
+// tocco/tasto. Una sola volta per sessione. Il file è precaricato (<link>).
+const BAU_SRC = `${BASE}/audio/bau.mp3`;
+const barkScript = `(function(){try{
+  if(sessionStorage.getItem('biofido_bark'))return;
+  var d=false, a=new Audio(${JSON.stringify(BAU_SRC)});
+  a.preload='auto'; a.volume=0.75;
+  function c(){window.removeEventListener('pointerdown',g);window.removeEventListener('keydown',g);window.removeEventListener('touchstart',g);}
+  function g(){if(d)return;var p=a.play();if(p&&p.then){p.then(function(){d=true;try{sessionStorage.setItem('biofido_bark','1');}catch(e){}c();}).catch(function(){});}}
+  g();
+  window.addEventListener('pointerdown',g);
+  window.addEventListener('keydown',g);
+  window.addEventListener('touchstart',g);
+}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="it" className={`${anton.variable} ${barlow.variable}`}>
       <body className="min-h-full flex flex-col">
+        {/* Abbaio all'apertura: precarico il file e lo faccio partire subito,
+            prima dell'hydration (vedi barkScript). */}
+        <link rel="preload" as="audio" href={BAU_SRC} />
+        <script dangerouslySetInnerHTML={{ __html: barkScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -109,7 +129,6 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <CartDrawer portale="BioFido" />
-        <BarkOnStart />
         <RegisterSW />
         <UpdateChecker />
         <CookieBanner />
