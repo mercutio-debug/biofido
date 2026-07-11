@@ -95,21 +95,36 @@ export const viewport: Viewport = {
   themeColor: "#5baf38",
 };
 
-// Fido saluta con un "bau" all'apertura. Script INLINE (eseguito durante il
-// parsing dell'HTML, PRIMA dell'hydration di React) così parte subito e non
-// "dopo qualche secondo". Tentativo immediato d'autoplay; se bloccato, al primo
-// tocco/tasto. Una sola volta per sessione. Il file è precaricato (<link>).
+// Lancio dell'app: splash bianco a tutto schermo col logo Fido → abbaio → dissolvenza.
+// Script INLINE (beforeInteractive) così lo splash copre SUBITO la pagina, prima
+// dell'hydration di React (niente lampo di homepage). Lo splash è iniettato via JS
+// (non nel tree React → nessun conflitto di hydration) e rimosso dopo la dissolvenza.
+// Una sola volta per SESSIONE: non riappare a ogni navigazione interna. File
+// precaricati (<link>). Autoplay: tentativo subito, fallback al primo tocco.
 const BAU_SRC = `${BASE}/audio/bau.mp3`;
-const barkScript = `(function(){try{
-  if(sessionStorage.getItem('biofido_bark'))return;
-  var d=false, a=new Audio(${JSON.stringify(BAU_SRC)});
-  a.preload='auto'; a.volume=0.75;
-  function c(){window.removeEventListener('pointerdown',g);window.removeEventListener('keydown',g);window.removeEventListener('touchstart',g);}
-  function g(){if(d)return;var p=a.play();if(p&&p.then){p.then(function(){d=true;try{sessionStorage.setItem('biofido_bark','1');}catch(e){}c();}).catch(function(){});}}
-  g();
-  window.addEventListener('pointerdown',g);
-  window.addEventListener('keydown',g);
-  window.addEventListener('touchstart',g);
+const SPLASH_SRC = `${BASE}/brand/biofido-splash.png`;
+const launchScript = `(function(){try{
+  if(sessionStorage.getItem('biofido_launch'))return;
+  sessionStorage.setItem('biofido_launch','1');
+  var ov=document.createElement('div');
+  ov.id='biofido-splash';
+  ov.setAttribute('aria-hidden','true');
+  ov.style.cssText='position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:#ffffff;opacity:1;transition:opacity .45s ease;';
+  var img=document.createElement('img');
+  img.src=${JSON.stringify(SPLASH_SRC)};
+  img.alt='BioFido';
+  img.decoding='async';
+  img.style.cssText='width:62vw;max-width:280px;height:auto;';
+  ov.appendChild(img);
+  (document.body||document.documentElement).appendChild(ov);
+  var a=new Audio(${JSON.stringify(BAU_SRC)}); a.preload='auto'; a.volume=0.75;
+  var barked=false;
+  function bark(){if(barked)return;var p=a.play();if(p&&p.then){p.then(function(){barked=true;}).catch(function(){});}}
+  setTimeout(bark,350);
+  window.addEventListener('pointerdown',bark);
+  window.addEventListener('touchstart',bark);
+  window.addEventListener('keydown',bark);
+  setTimeout(function(){ov.style.opacity='0';setTimeout(function(){if(ov&&ov.parentNode)ov.parentNode.removeChild(ov);},520);},1400);
 }catch(e){}})();`;
 
 export default function RootLayout({
@@ -118,10 +133,11 @@ export default function RootLayout({
   return (
     <html lang="it" className={`${anton.variable} ${barlow.variable}`}>
       <body className="min-h-full flex flex-col">
-        {/* Abbaio all'apertura: precarico il file e lo faccio partire subito,
-            prima dell'hydration (vedi barkScript). */}
+        {/* Lancio (splash + abbaio): precarico logo e audio, poi lo script di
+            lancio parte prima dell'hydration (vedi launchScript). */}
+        <link rel="preload" as="image" href={SPLASH_SRC} />
         <link rel="preload" as="audio" href={BAU_SRC} />
-        <Script id="bark-on-start" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: barkScript }} />
+        <Script id="biofido-launch" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: launchScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
