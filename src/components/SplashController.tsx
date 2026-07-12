@@ -7,10 +7,13 @@ const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 /**
  * Controlla lo splash di lancio. Lo splash (#biofido-splash) è già renderizzato
  * nell'HTML dal layout, così COPRE la pagina dal primo frame (niente lampo di
- * homepage). Qui: lo tengo ~3s, poi lo faccio sfumare, faccio partire l'ABBAIO
- * proprio quando ricompare la homepage, e lo rimuovo. Una sola volta per
- * sessione (non riappare a ogni navigazione). Se l'autoplay è bloccato, l'abbaio
- * scatta al primo tocco.
+ * homepage). Qui: lo tengo ~3s, poi lo faccio sfumare e rimuovo, e faccio partire
+ * l'ABBAIO. Una sola volta per sessione (non riappare a ogni navigazione).
+ *
+ * Audio: al 3° secondo tento l'autoplay; se il WebView lo blocca (molti motori
+ * richiedono un'ATTIVAZIONE dell'utente — un tocco/clic, non basta lo scroll),
+ * l'abbaio scatta al PRIMO gesto ovunque nella pagina. Ascolto in fase di cattura
+ * su window E document per intercettare quel primo gesto il prima possibile.
  */
 export function SplashController() {
   useEffect(() => {
@@ -27,36 +30,57 @@ export function SplashController() {
     const a = new Audio(`${BASE}/audio/bau.mp3`);
     a.preload = "auto";
     a.volume = 0.75;
-    let barked = false;
-    // Trucco "muted → unmuted": i WebView bloccano l'audio all'apertura senza un
-    // gesto dell'utente, MA l'autoplay MUTO è sempre permesso. Avvio muto e poi
-    // tolgo il muto: il suono si sente lo stesso, senza dover toccare lo schermo.
-    const bark = () => {
-      if (barked) return;
-      a.muted = true;
+    let done = false;
+
+    const EVENTI = [
+      "pointerdown",
+      "pointerup",
+      "touchstart",
+      "touchend",
+      "mousedown",
+      "click",
+      "keydown",
+    ];
+
+    function stacca() {
+      EVENTI.forEach((ev) => {
+        window.removeEventListener(ev, suona, true);
+        document.removeEventListener(ev, suona, true);
+      });
+    }
+
+    function suona() {
+      if (done) return;
       a.currentTime = 0;
       const p = a.play();
       if (p && typeof p.then === "function") {
         p.then(() => {
-          barked = true;
-          a.muted = false;
-        }).catch(() => {});
+          done = true;
+          stacca();
+        }).catch(() => {
+          /* bloccato (nessuna attivazione utente ancora): resto in ascolto */
+        });
+      } else {
+        done = true;
+        stacca();
       }
-    };
-    // fallback: se l'autoplay è bloccato (browser), abbaia al primo tocco
-    window.addEventListener("pointerdown", bark);
-    window.addEventListener("touchstart", bark);
+    }
+
+    // ascolto il primo gesto (in cattura, su window e document → il prima possibile)
+    EVENTI.forEach((ev) => {
+      window.addEventListener(ev, suona, true);
+      document.addEventListener(ev, suona, true);
+    });
 
     const t = window.setTimeout(() => {
-      bark(); // «abbaio quando compare la homepage»
+      suona(); // tentativo di autoplay all'apertura (se il WebView lo consente)
       s.style.opacity = "0";
       window.setTimeout(() => s.remove(), 450);
     }, 3000);
 
     return () => {
       window.clearTimeout(t);
-      window.removeEventListener("pointerdown", bark);
-      window.removeEventListener("touchstart", bark);
+      stacca();
     };
   }, []);
 
