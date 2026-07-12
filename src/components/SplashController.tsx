@@ -28,12 +28,18 @@ export function SplashController() {
     a.preload = "auto";
     a.volume = 0.75;
     let barked = false;
+    // Trucco "muted → unmuted": i WebView bloccano l'audio all'apertura senza un
+    // gesto dell'utente, MA l'autoplay MUTO è sempre permesso. Avvio muto e poi
+    // tolgo il muto: il suono si sente lo stesso, senza dover toccare lo schermo.
     const bark = () => {
       if (barked) return;
+      a.muted = true;
+      a.currentTime = 0;
       const p = a.play();
       if (p && typeof p.then === "function") {
         p.then(() => {
           barked = true;
+          a.muted = false;
         }).catch(() => {});
       }
     };
