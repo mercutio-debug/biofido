@@ -9,6 +9,7 @@ import { UpdateChecker } from "@/components/UpdateChecker";
 import { CookieBanner } from "@/components/CookieBanner";
 import { AccessibilityWidget } from "@/components/AccessibilityWidget";
 import { SplashController } from "@/components/SplashController";
+import { AssistenteWidget } from "@/components/AssistenteWidget";
 
 const anton = Anton({
   weight: "400",
@@ -146,6 +147,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <CartDrawer portale="BioFido" />
+        <AssistenteWidget portale="BioFido" />
         <RegisterSW />
         <UpdateChecker />
         <CookieBanner />
