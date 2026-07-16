@@ -262,14 +262,15 @@ Deno.serve(async (req) => {
         await dispatch({
           userId: rec.owner,
           email: await emailOf(rec.owner),
-          title: "🛍️ Il tuo negozio è pronto!",
+          title: "✅ Onboarding concluso — manca solo la tua autorizzazione",
           body:
-            `Abbiamo preparato il tuo negozio online «Ci pensiamo noi». ` +
-            `Aprilo dalla dashboard, controlla prodotti, prezzi, foto e giacenze, ` +
-            `poi premi «Approva e pubblica» (con la spunta di manleva) per renderlo ` +
-            `visibile al pubblico e iniziare a vendere.`,
+            `Abbiamo preparato e verificato la tua scheda «Ci pensiamo noi». ` +
+            `Per pubblicarla serve la TUA autorizzazione: aprila dalla dashboard, ` +
+            `controlla prodotti, prezzi, foto, descrizioni e giacenze, poi premi ` +
+            `«Approvo e pubblico la scheda» spuntando l'assunzione di responsabilità sui dati. ` +
+            `Senza la tua approvazione la scheda resta nascosta al pubblico.`,
           url: `${SITE_URL}/dashboard/`,
-          ctaLabel: "Apri e approva il negozio",
+          ctaLabel: "Rivedi e pubblica la scheda",
         });
         return ok();
       }

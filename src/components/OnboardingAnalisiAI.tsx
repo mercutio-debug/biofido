@@ -67,6 +67,11 @@ export function OnboardingAnalisiAI({ files, portale }: { files: FileMin[]; port
               ? "L'origine delle materie prime (il semaforo della filiera) è facoltativa: la riportiamo solo se la dichiari."
               : "L'origine delle materie prime (per il semaforo della filiera) la riportiamo solo se la dichiari — non la inventiamo."}
           </li>
+          <li>
+            La scheda <strong>non viene mai pubblicata automaticamente</strong>: dopo la nostra
+            verifica, sei <strong>tu</strong> a pubblicarla, con la tua approvazione finale e
+            l&apos;accettazione della responsabilità sui dati.
+          </li>
         </ul>
       </div>
 

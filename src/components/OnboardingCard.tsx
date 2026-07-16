@@ -154,11 +154,12 @@ export function OnboardingCard() {
               onChange={(e) => setManleva(e.target.checked)}
             />
             <span>
-              Ho verificato il negozio e ne <strong>approvo la pubblicazione</strong>. I dati
-              (prodotti, prezzi, foto, descrizioni, giacenze) sono corretti e di mia
-              responsabilità; <strong>manlevo la piattaforma</strong> — che agisce solo da
-              intermediario tecnico — da ogni responsabilità su prezzi, disponibilità, contenuti
-              e adempimenti fiscali dei miei prodotti.
+              La responsabilità delle informazioni presenti su questa scheda è
+              <strong> interamente dell&apos;azienda</strong> che usufruisce del servizio — azienda
+              che le ha <strong>approvate e visionate</strong> — e <strong>non del portale
+              BioFido</strong>, che è <strong>manlevato da qualsiasi responsabilità</strong> in
+              merito. Confermo di aver verificato prodotti, prezzi, foto, descrizioni e giacenze, e
+              ne approvo la pubblicazione.
             </span>
           </label>
           <button
@@ -167,7 +168,7 @@ export function OnboardingCard() {
             disabled={!manleva || approvando}
             className="btn-lime mt-3 w-full justify-center disabled:opacity-50"
           >
-            {approvando ? "Pubblico…" : "✅ Approva e pubblica il negozio"}
+            {approvando ? "Pubblico…" : "✅ Approvo e pubblico la scheda"}
           </button>
           <p className="mt-2 text-center text-[11px] text-green-900/55">
             Senza la spunta e l&apos;approvazione, il negozio resta nascosto al pubblico.
