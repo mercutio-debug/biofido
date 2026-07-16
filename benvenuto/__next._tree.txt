@@ -6,4 +6,4 @@
 :HL["/_next/static/media/c6e2684784a55443-s.p.2p4adm_386h58.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/brand/biofido-splash.png","image"]
 :HL["/audio/bau.mp3","audio"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"benvenuto","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"cW8ulsOTQjm9qra7af9-A"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"benvenuto","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"LLEdK3YjeuR_VlXgMr6QS"}
