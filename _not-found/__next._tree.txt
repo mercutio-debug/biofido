@@ -1,4 +1,4 @@
-:HL["/_next/static/chunks/3jl3oy6dl4h8u.css","style"]
+:HL["/_next/static/chunks/3a_rcsalrzalb.css","style"]
 :HL["/brand/biofido-splash.png","image"]
 :HL["/audio/bau.mp3","audio"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"INk1dzgrP_eoIFuuI5DCc"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"cW8ulsOTQjm9qra7af9-A"}
