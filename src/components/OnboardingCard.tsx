@@ -13,6 +13,7 @@ import {
   type FileOnboarding,
   type StatoOnboarding,
 } from "@/lib/onboarding";
+import { OnboardingAnalisiAI } from "@/components/OnboardingAnalisiAI";
 
 /**
  * Cornice «Ci pensiamo noi» (onboarding): compare solo se acquistato e finché il
@@ -273,6 +274,8 @@ export function OnboardingCard() {
           ))}
         </ul>
       )}
+
+      {!inAttesa && <OnboardingAnalisiAI files={files} portale="BioFido" />}
 
       {!inAttesa && (
         <button
