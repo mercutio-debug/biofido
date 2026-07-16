@@ -239,6 +239,13 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Salvo la BOZZA (non tocca i dati pubblici): la rivede/completa l'azienda,
+    // la verifica l'admin, e viene pubblicata SOLO all'approvazione finale.
+    await admin.from("onboarding_bozza").upsert(
+      { owner: user.id, prodotti, testo, portale, updated_at: new Date().toISOString() },
+      { onConflict: "owner" },
+    );
+
     // RICEVUTA: cosa ha caricato l'azienda e cosa ha fatto l'IA, prodotto per prodotto
     const ricevuta = prodotti.map((p, i) => {
       const desc = p.descrizione_fornita

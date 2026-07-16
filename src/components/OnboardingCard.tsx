@@ -14,6 +14,7 @@ import {
   type StatoOnboarding,
 } from "@/lib/onboarding";
 import { OnboardingAnalisiAI } from "@/components/OnboardingAnalisiAI";
+import { pubblicaBozza } from "@/lib/onboarding-ai";
 
 /**
  * Cornice «Ci pensiamo noi» (onboarding): compare solo se acquistato e finché il
@@ -69,6 +70,14 @@ export function OnboardingCard() {
   async function approva() {
     if (!manleva) return;
     setApprovando(true);
+    // se c'è una bozza AI, ora la scrivo nella scheda reale (best-effort: chi ha
+    // costruito a mano non ha bozza → si salta senza bloccare l'approvazione)
+    const pub = await pubblicaBozza();
+    if (pub.error && !/nessun prodotto in bozza/i.test(pub.error)) {
+      setApprovando(false);
+      alert("Non sono riuscito a pubblicare i prodotti della bozza: " + pub.error);
+      return;
+    }
     const { error } = await approveShop();
     setApprovando(false);
     if (error) {
@@ -77,7 +86,7 @@ export function OnboardingCard() {
     }
     setStato("completato");
     setAttivo(false);
-    alert("Negozio pubblicato! I tuoi prodotti sono ora in vendita. 🌱");
+    alert("Scheda pubblicata! I tuoi prodotti sono ora online. 🌱");
   }
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
