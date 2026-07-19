@@ -52,14 +52,22 @@ export function AssistenteWidget({ portale }: { portale: string }) {
   return (
     <>
       {!open && (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label="Apri l'assistente"
-          className="fixed bottom-20 left-4 z-[150] flex h-14 w-14 items-center justify-center rounded-full bg-green-700 text-2xl shadow-xl ring-4 ring-lime-400/50 transition hover:bg-green-800"
-        >
-          💬
-        </button>
+        <div className="group fixed bottom-20 left-4 z-[150]">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label="Apri l'assistente"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-green-700 text-2xl shadow-xl ring-4 ring-lime-400/50 transition hover:bg-green-800"
+          >
+            💬
+          </button>
+          <span
+            role="tooltip"
+            className="pointer-events-none absolute left-16 top-1/2 hidden -translate-y-1/2 whitespace-nowrap rounded-xl bg-green-800 px-3 py-2 text-sm font-semibold text-white shadow-lg opacity-0 transition-opacity duration-200 group-hover:opacity-100 md:block"
+          >
+            Bisogno di aiuto? Chatta con il nostro assistente
+          </span>
+        </div>
       )}
 
       {open && (
