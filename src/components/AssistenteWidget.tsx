@@ -56,7 +56,7 @@ export function AssistenteWidget({ portale }: { portale: string }) {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Apri l'assistente"
-          className="fixed bottom-5 left-4 z-[150] flex h-14 w-14 items-center justify-center rounded-full bg-green-700 text-2xl shadow-xl ring-4 ring-lime-400/50 transition hover:bg-green-800"
+          className="fixed bottom-20 left-4 z-[150] flex h-14 w-14 items-center justify-center rounded-full bg-green-700 text-2xl shadow-xl ring-4 ring-lime-400/50 transition hover:bg-green-800"
         >
           💬
         </button>

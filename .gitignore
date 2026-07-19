@@ -45,3 +45,7 @@ next-env.d.ts
 
 # artefatto di build (id versione per auto-aggiornamento)
 public/version.json
+
+# chiavi/segreti locali — MAI committare
+CHIAVE_API*.txt
+*.secret.txt
